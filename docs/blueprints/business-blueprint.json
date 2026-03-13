@@ -1,3 +1,763 @@
 {
-  "description": "Placeholder: Business Blueprint JSON. Content to be added."
+  "meta": {
+    "schema_version": "1.0.0",
+    "business_type": "ai_automation_agency",
+    "status": "draft",
+    "created_at": "2026-03-13",
+    "last_updated_at": "2026-03-13",
+    "author": "Blueprint Agent (normalised from founder-authored source document)",
+    "blueprint_id": "bp-phoenix-automation-001"
+  },
+
+  "business": {
+    "name": "Phoenix Automation",
+    "tagline": "Transform Your Business With Intelligent Automation",
+    "description": "Phoenix Automation helps businesses eliminate manual processes by identifying operational inefficiencies and implementing AI-powered workflows that run automatically. The model is simple: free assessment to earn trust, paid build to deliver value, monthly retainer to sustain the relationship. The agency runs on a minimal team with Claude and n8n as the operational core.",
+    "stage": "pre-revenue",
+    "founded": "2026-03-01",
+    "location": "Clearwater, FL / Da Nang, Vietnam (remote-first)"
+  },
+
+  "market": {
+    "target_segments": [
+      {
+        "name": "E-commerce Brands",
+        "description": "Online retailers drowning in manual order management, inventory updates, customer comms, and fulfilment ops that consume hours daily.",
+        "estimated_size": "Large — millions of SMB e-commerce operators globally"
+      },
+      {
+        "name": "Professional Services",
+        "description": "Law firms, financial advisors, and consultancies paying staff to handle intake, document processing, reporting, and scheduling that can be automated.",
+        "estimated_size": "Large — hundreds of thousands of professional services SMBs in the US alone"
+      },
+      {
+        "name": "Healthcare Admin",
+        "description": "Healthcare practices and admin teams with data management overhead — appointment scheduling, patient comms, billing reconciliation, and report generation.",
+        "estimated_size": "Large — underserved by AI tooling due to complexity"
+      },
+      {
+        "name": "SMBs with Repetitive Manual Ops",
+        "description": "Any small-to-medium business paying people to do repetitive tasks — data entry, copy-paste between tools, report generation, follow-up sequences — that should be automated.",
+        "estimated_size": "Broad horizontal market across industries"
+      }
+    ],
+    "icp": {
+      "description": "Operations managers, founders, and business owners at SMBs who are actively paying staff to do repetitive manual tasks and know it is a problem. They are time-poor, growth-constrained by operational overhead, and open to technology — but not developers themselves.",
+      "company_size": "10–200 employees",
+      "role": "Operations Manager, Founder, or Business Owner",
+      "industries": ["e-commerce", "professional-services", "healthcare", "logistics", "marketing-agencies"],
+      "geographies": ["United States", "Australia", "United Kingdom", "Remote / Global"],
+      "trigger_events": [
+        "Hiring more staff to handle volume that should be automated",
+        "Manually copying data between platforms every day",
+        "Losing 10+ hours per week to repetitive admin that creates no strategic value",
+        "Growth stalling because operations cannot scale with the team size",
+        "Recent failed attempt to use off-the-shelf tools that didn't fit their workflow"
+      ],
+      "disqualifiers": [
+        "Fewer than 10 employees — ROI on automation is too thin",
+        "Unwilling to own their own API accounts and pay their own usage costs",
+        "Expects AI to fully replace human judgment with no oversight",
+        "Highly regulated environments requiring certified compliance (e.g. HIPAA-covered entities without legal counsel)"
+      ]
+    },
+    "pain_points": [
+      "Paying staff to do repetitive tasks that take hours but create no strategic value",
+      "Manual data entry between disconnected tools causing errors and delays",
+      "No operational visibility without pulling manual reports",
+      "Unable to scale revenue without proportionally growing headcount",
+      "Spending 3–5 hours per week on follow-ups, status updates, and scheduling that could be automated"
+    ],
+    "competitors": [
+      {
+        "name": "Freelance n8n / Zapier builders",
+        "differentiator": "Phoenix Automation uses Claude Code + n8n-MCP to build in under 1 hour vs. 3–5 hours manually — delivering faster, at lower cost, with self-healing workflows"
+      },
+      {
+        "name": "Traditional software agencies",
+        "differentiator": "No custom code, no lock-in — clients own all credentials and workflow docs. Faster delivery, lower price, async-first model"
+      },
+      {
+        "name": "Off-the-shelf automation tools (Zapier, Make)",
+        "differentiator": "Done-for-you implementation with Claude AI baked in — not a tool the client has to learn and maintain themselves"
+      }
+    ]
+  },
+
+  "services": [
+    {
+      "id": "free-assessment",
+      "name": "Free Business Assessment",
+      "description": "A 30-minute consultation that identifies 3–5 automation opportunities in the client's business and calculates rough ROI. This is the sales entry point — it doubles as the trust-builder and the sales call. Every assessment ends with a proposal outline.",
+      "delivery_type": "consulting",
+      "automation_complexity": "low",
+      "inputs": [
+        "Typeform pre-assessment (industry, team size, biggest operational pain, hours lost per week to manual tasks)",
+        "30-minute Zoom or Meet call"
+      ],
+      "outputs": [
+        "3–5 identified automation opportunities",
+        "Rough ROI calculation",
+        "Proposal outline presented on the call"
+      ],
+      "typical_duration": "30-minute call + 24-hour proposal turnaround",
+      "pricing_ref": "tier_assessment",
+      "agent_dependencies": ["lead-scorer", "proposal-drafting-agent"]
+    },
+    {
+      "id": "starter-build",
+      "name": "Starter Build",
+      "description": "1–2 automations built and deployed using Claude Code + n8n-MCP. Designed for first-time clients testing AI-powered automation before committing to a larger engagement. Example: lead qualifier + CRM auto-update.",
+      "delivery_type": "agent_workflow",
+      "automation_complexity": "medium",
+      "inputs": [
+        "Client API credentials via 1Password or encrypted form",
+        "Access to client's n8n workspace (own project folder)",
+        "Defined workflow requirements from assessment call"
+      ],
+      "outputs": [
+        "1–2 live, tested automated workflows in client's n8n instance",
+        "Loom video walkthrough (async — no live training call)",
+        "ClickUp project documentation (shared read-only link)"
+      ],
+      "typical_duration": "1–2 weeks",
+      "pricing_ref": "tier_starter_build",
+      "agent_dependencies": ["onboarding-automation", "build-agent", "status-update-agent"]
+    },
+    {
+      "id": "growth-package",
+      "name": "Growth Package",
+      "description": "3–5 workflow automations with custom Claude AI integrations, full deployment, and async training via Loom. The most common engagement for ops-heavy SMBs who are ready to automate at scale. Typically includes the client's highest-volume manual processes.",
+      "delivery_type": "agent_workflow",
+      "automation_complexity": "high",
+      "inputs": [
+        "Client API credentials for all tools being automated",
+        "Full access to client's tool stack (CRM, comms, data sources)",
+        "Stakeholder interview notes from assessment call"
+      ],
+      "outputs": [
+        "3–5 live, tested automated workflows",
+        "Custom Claude AI integrations where applicable",
+        "Loom training library (one video per workflow)",
+        "ClickUp project documentation with workflow logic explained"
+      ],
+      "typical_duration": "3–6 weeks",
+      "pricing_ref": "tier_growth_package",
+      "agent_dependencies": ["onboarding-automation", "build-agent", "status-update-agent", "reporting-agent"]
+    },
+    {
+      "id": "agency-retainer",
+      "name": "Agency Retainer",
+      "description": "Monthly monitoring, bug fixes, new automations, and Claude-generated performance reports. n8n monitors automations and alerts on failures. Claude auto-generates a monthly performance report from n8n execution data. The recurring revenue backbone of the agency.",
+      "delivery_type": "retainer",
+      "automation_complexity": "medium",
+      "inputs": [
+        "Existing live automations in client's n8n instance",
+        "n8n monitoring access",
+        "Monthly automation performance data"
+      ],
+      "outputs": [
+        "Monthly performance report (Claude-generated from n8n data)",
+        "Bug fixes and maintenance within agreed SLA",
+        "n8n monitoring and automated failure alerts",
+        "New automation additions as included in tier"
+      ],
+      "typical_duration": "Ongoing monthly",
+      "pricing_ref": "tier_agency_retainer",
+      "agent_dependencies": ["reporting-agent", "referral-trigger-agent"]
+    }
+  ],
+
+  "value_proposition": {
+    "headline": "We replace your manual operations with AI workflows in under a week — starting with a free assessment that always ends with a concrete ROI estimate.",
+    "differentiators": [
+      "Claude Code + n8n-MCP builds client automations in 30–60 minutes vs. 3–5 hours manually — enabling 4–6× more client capacity without adding headcount",
+      "Free assessment IS the sales call — removes purchase risk and pre-qualifies ROI before the client spends a dollar",
+      "Clients own all their API credentials and workflow documentation — clean break with no vendor lock-in if they ever leave",
+      "Fully async delivery model (proposals, training, status updates all automated) — premium experience with minimal founder hours per client",
+      "Self-healing automations: Claude Code detects and self-corrects n8n errors automatically, reducing support burden"
+    ],
+    "proof_points": [
+      "[TO BE CONFIRMED] — First client case studies in progress. Replace after first 1–2 deliveries.",
+      "Efficiency benchmark: 3–5 hrs/workflow manual → 30–60 min with Claude Code + n8n-MCP (4–6× improvement)"
+    ],
+    "positioning_statement": "For SMB operations managers and founders who are paying people to do repetitive tasks, Phoenix Automation provides done-for-you AI workflow automation — unlike freelancers who build and disappear or software agencies that lock you into custom code you can't own."
+  },
+
+  "tech_stack": {
+    "primary_llm": "claude-sonnet-4-6",
+    "fallback_llm": "claude-haiku-4-5",
+    "orchestration": "Claude Code + n8n-MCP (czlonkowski/n8n-mcp)",
+    "databases": ["Airtable (lead and client database — single source of truth for the agency)"],
+    "integrations": [
+      "n8n (automation backbone — self-hosted free or n8n Cloud ~$20/mo)",
+      "Apollo.io (lead prospecting by industry, company size, job title)",
+      "Instantly.ai (personalised cold email sequences, inbox health management)",
+      "Calendly (booking — auto-scheduling, no manual coordination)",
+      "Typeform (intake & pre-assessment form, 5 questions, auto-posts to Airtable via n8n)",
+      "Loom (async client training — replaces live walkthrough calls)",
+      "LinkedIn Sales Navigator (decision-maker filtering for outreach)",
+      "Meta Ads (free automation audit lead magnet)",
+      "1Password (secure credential handoff from client to agency)",
+      "Zoom / Google Meet (assessment calls only)",
+      "Notion (proposal drafting workspace)"
+    ],
+    "hosting": "n8n self-hosted (free, preferred) or n8n Cloud (~$20/mo). Client automations run in client's own n8n workspace.",
+    "internal_tools": ["Claude Code ($20/mo or pay-per-use API)", "n8n", "ClickUp", "Airtable", "Apollo.io", "Instantly.ai", "Loom"],
+    "client_facing_tools": [
+      "ClickUp (shared read-only project links — replaces client portal until 5+ clients)",
+      "Loom (async video walkthroughs — no live training sessions)",
+      "Typeform (pre-assessment intake form embedded before Calendly)",
+      "Calendly (self-serve booking)"
+    ]
+  },
+
+  "operations": {
+    "client_intake": {
+      "steps": [
+        "Client discovers Phoenix Automation via ad, referral, LinkedIn, or website organic",
+        "Client clicks CTA ('Get Free Assessment') and is directed to Typeform intake form",
+        "Client fills 5-question Typeform: industry, team size, biggest operational pain, hours lost per week to manual tasks — data auto-posts to Airtable via n8n",
+        "Claude pre-scores the lead automatically from Typeform data and updates Airtable record",
+        "Client books 30-minute assessment call via Calendly (embedded after Typeform)",
+        "Owner conducts assessment call on Zoom/Meet: identifies 3–5 automation opportunities, calculates rough ROI — this IS the sales call, always ends with a proposal outline",
+        "Owner reviews Claude-drafted proposal (from call notes) within 24 hours and sends to client",
+        "Client signs agreement and pays — onboarding checklist triggers automatically via n8n + ClickUp, including API key collection request"
+      ],
+      "crm": "Airtable"
+    },
+    "delivery_workflow": {
+      "methodology": "Blueprint-first, async delivery — no live check-ins, no manual status updates",
+      "phases": [
+        {
+          "name": "Onboarding",
+          "description": "Client signs and pays. ClickUp shared project link sent automatically. n8n onboarding automation triggers: API key collection form (1Password or encrypted), client n8n workspace created, credentials template populated with pre-authenticated nodes. Zero risk of credentials crossing between projects.",
+          "typical_duration": "1–2 days"
+        },
+        {
+          "name": "Build",
+          "description": "Owner describes workflow to Claude Code in plain English. Claude Code plans the n8n workflow, n8n-MCP builds it node by node via API (access to 1,084+ node schemas), Claude Code tests each node immediately and self-corrects on errors. Owner reviews the completed, tested workflow and activates it. Client receives weekly auto-status updates from ClickUp — no manual check-ins.",
+          "typical_duration": "1 week (Starter) to 4 weeks (Growth Package)"
+        },
+        {
+          "name": "Launch & Handoff",
+          "description": "Automations go live. Client receives short Loom video walkthroughs (one per workflow) — no live training sessions needed. Client confirms everything works as expected. Referral trigger sequence queued in n8n for 30 days post-launch.",
+          "typical_duration": "1–3 days"
+        },
+        {
+          "name": "Retainer",
+          "description": "Client moves to monthly retainer. n8n monitors automations and alerts on failures automatically. Claude auto-generates a monthly performance report from n8n execution data. Owner handles relationship management, upsells, and complex architecture decisions only.",
+          "typical_duration": "Ongoing"
+        }
+      ]
+    },
+    "communication_channels": [
+      "ClickUp (weekly automated status updates — no manual emails)",
+      "Loom (async video walkthroughs for training and handoff)",
+      "Email via Instantly.ai (Claude-written cold outreach and follow-up sequences)",
+      "Calendly (all scheduling — zero manual coordination)"
+    ],
+    "project_management": "ClickUp — one Space per client, tracks every task from assessment to retainer. Shared read-only links replace the need for a custom client portal initially.",
+    "sops": [
+      "Credentials handoff: client creates API key → sends via 1Password or encrypted form → added to n8n client folder only → Claude Code references template → live automation billed to client",
+      "Assessment call framework: identify 3–5 automatable processes, calculate rough ROI, always close with proposal outline — never deliver assessment without next steps",
+      "Proposal rule: every proposal states clearly that client pays their own API costs ($50–$300/mo typical) — no surprises",
+      "Referral SOP: automated email sequence triggered 30 days post-launch via n8n — never ask for referrals manually",
+      "AI boundary rule: Claude handles cold outreach, lead scoring, proposal drafting, status updates, reports — human handles assessment calls, final proposal review, complex architecture, and relationship management"
+    ]
+  },
+
+  "pricing": {
+    "model": "hybrid",
+    "currency": "USD",
+    "tiers": [
+      {
+        "id": "tier_assessment",
+        "name": "Free Assessment",
+        "price": "Free",
+        "description": "30-minute consultation identifying automation opportunities and calculating ROI. The sales entry point — always ends with a proposal. Never delivered without presenting next steps.",
+        "inclusions": [
+          "30-minute Zoom / Meet consultation",
+          "3–5 automation opportunities identified",
+          "Rough ROI calculation",
+          "Custom proposal outline presented on the call"
+        ],
+        "target_segment": "All inbound and outbound leads"
+      },
+      {
+        "id": "tier_starter_build",
+        "name": "Starter Build",
+        "price": "$1,500–$3,000",
+        "description": "1–2 automations built and deployed. Entry-level paid engagement for first-time clients testing AI before committing to a larger package.",
+        "inclusions": [
+          "1–2 live automated workflows in client's n8n instance",
+          "Claude Code + n8n-MCP build (30–60 min per workflow)",
+          "Loom video walkthrough (async — no live training)",
+          "ClickUp project tracking (shared read-only link)"
+        ],
+        "exclusions": [
+          "Ongoing monitoring and bug fixes (add Agency Retainer)",
+          "More than 2 workflows"
+        ],
+        "target_segment": "First-time clients testing AI automation"
+      },
+      {
+        "id": "tier_growth_package",
+        "name": "Growth Package",
+        "price": "$3,000–$7,000",
+        "description": "3–5 workflow automations with custom Claude AI integrations, full deployment, and async Loom training. The most common engagement. Targets clients ready to automate at scale.",
+        "inclusions": [
+          "3–5 live automated workflows",
+          "Custom Claude AI integrations where applicable",
+          "Full deployment and node-by-node testing",
+          "Loom training library (one video per workflow)",
+          "ClickUp project documentation with workflow logic"
+        ],
+        "exclusions": [
+          "Ongoing monitoring (add Agency Retainer)"
+        ],
+        "target_segment": "Ops-heavy SMBs ready to automate multiple processes"
+      },
+      {
+        "id": "tier_agency_retainer",
+        "name": "Agency Retainer",
+        "price": "$500–$1,500/mo",
+        "description": "Monthly monitoring, bug fixes, new automations, and Claude-generated performance reports. The recurring revenue backbone — converts one-time builds into ongoing relationships.",
+        "inclusions": [
+          "n8n monitoring with automated failure alerts",
+          "Monthly performance report (Claude-generated from n8n data)",
+          "Bug fixes and maintenance",
+          "New automation additions (scope defined per tier level)"
+        ],
+        "target_segment": "Existing build clients moving to ongoing partnership"
+      }
+    ],
+    "notes": "The free assessment IS the sales call — never deliver one without presenting a proposal and next steps. Clients pay their own API usage costs ($50–$300/mo typical) — state this in every proposal. Agency fee covers build, deploy, and maintain only. Think contractor model: agency brings tools and expertise, client pays for materials (API accounts)."
+  },
+
+  "team": {
+    "current_headcount": 1,
+    "roles": [
+      {
+        "title": "Founder / Agency Owner",
+        "count": 1,
+        "responsibilities": [
+          "Assessment calls and sales (30 min per prospect — only human touchpoint in acquisition)",
+          "Final proposal review before sending (Claude drafts, owner reviews)",
+          "Complex build architecture decisions",
+          "Client relationship management and upsells",
+          "Oversight and sign-off on all delivered automations"
+        ],
+        "type": "founder"
+      }
+    ],
+    "hiring_plan": [
+      {
+        "title": "Outreach VA",
+        "trigger": "When outbound volume and Apollo list management exceed founder's available time (approx. 8+ active outreach campaigns)"
+      },
+      {
+        "title": "Delivery VA",
+        "trigger": "When active client count exceeds 5 concurrent projects and simpler n8n workflows need building"
+      },
+      {
+        "title": "Support VA",
+        "trigger": "When client portal launches (5+ clients) and support ticket volume requires dedicated response time"
+      }
+    ]
+  },
+
+  "financials": {
+    "current_mrr": "$0",
+    "mrr_target_3mo": "[TO BE CONFIRMED]",
+    "mrr_target_12mo": "[TO BE CONFIRMED]",
+    "target_client_count_12mo": 10,
+    "cost_structure": [
+      "Claude Code — $20/mo or pay-per-use Anthropic API",
+      "n8n — $0 (self-hosted) or ~$20/mo (n8n Cloud)",
+      "ClickUp — $0–$10/mo",
+      "Apollo.io — subscription for outbound prospecting",
+      "Instantly.ai — subscription for cold email sequences",
+      "Airtable — free tier initially",
+      "Loom — free tier initially"
+    ],
+    "runway": "[TO BE CONFIRMED]"
+  },
+
+  "agents": {
+    "agent_map": [
+      {
+        "id": "lead-qualifier-chatbot",
+        "name": "Lead Qualifier Chatbot",
+        "role": "Qualifies inbound website visitors 24/7 using Claude API, asks 3 screening questions, routes hot leads to Calendly and cold leads to a nurture response.",
+        "status": "planned",
+        "triggers": ["Visitor clicks chat bubble on Phoenix Automation website"],
+        "inputs": ["Visitor message", "Visitor's answers to 3 qualification questions (industry, team size, biggest pain)"],
+        "outputs": ["Qualification verdict (hot / cold)", "Calendly booking link for hot leads", "Nurture message for cold leads"],
+        "tools": ["Claude API (claude-sonnet-4-6)", "Calendly API", "Website chat widget embed"],
+        "depends_on": [],
+        "services_powered": ["free-assessment"],
+        "definition_path": "[TO BE CREATED] .claude/agents/lead-qualifier-chatbot.md"
+      },
+      {
+        "id": "outreach-agent",
+        "name": "Outreach Agent",
+        "role": "Writes personalised cold outreach emails from Apollo prospect data and queues them in Instantly for automated sending — targeting 30–50 new contacts per day.",
+        "status": "planned",
+        "triggers": ["New prospect added to Airtable from Apollo export", "n8n scheduled batch (daily)"],
+        "inputs": ["Prospect name", "Company name", "Industry", "Job title", "Company size"],
+        "outputs": ["Personalised cold email (Claude-written)", "3-step follow-up sequence queued in Instantly"],
+        "tools": ["Claude API", "n8n", "Airtable", "Instantly.ai", "Apollo.io"],
+        "depends_on": [],
+        "services_powered": [],
+        "definition_path": "[TO BE CREATED] .claude/agents/outreach-agent.md"
+      },
+      {
+        "id": "lead-scorer",
+        "name": "Lead Scorer",
+        "role": "Pre-scores inbound leads from Typeform submissions before the assessment call, updating Airtable with a qualification score and briefing notes for the owner.",
+        "status": "planned",
+        "triggers": ["New Typeform submission received (webhook via n8n)"],
+        "inputs": ["Industry", "Team size", "Biggest operational pain", "Hours lost per week to manual tasks"],
+        "outputs": ["Lead score (high / medium / low)", "Pre-call briefing summary for owner", "Airtable record updated"],
+        "tools": ["Claude API", "n8n", "Typeform webhook", "Airtable"],
+        "depends_on": [],
+        "services_powered": ["free-assessment"],
+        "definition_path": "[TO BE CREATED] .claude/agents/lead-scorer.md"
+      },
+      {
+        "id": "proposal-drafting-agent",
+        "name": "Proposal Drafting Agent",
+        "role": "Drafts a custom proposal document within 24 hours of an assessment call using owner's call notes — including automations identified, timeline, cost estimate, and expected ROI.",
+        "status": "planned",
+        "triggers": ["Owner pastes assessment call notes into Claude Code or triggers via n8n"],
+        "inputs": ["Assessment call notes", "Identified automation opportunities", "ROI estimates", "Client industry and team size"],
+        "outputs": ["Custom proposal draft (Notion document): automations, timeline, cost, expected ROI"],
+        "tools": ["Claude API (claude-sonnet-4-6)", "Notion API"],
+        "depends_on": ["lead-scorer"],
+        "services_powered": ["starter-build", "growth-package"],
+        "definition_path": "[TO BE CREATED] .claude/agents/proposal-drafting-agent.md"
+      },
+      {
+        "id": "onboarding-automation",
+        "name": "Onboarding Automation",
+        "role": "Triggers the full client onboarding sequence when payment is confirmed — creates ClickUp project, sends welcome message, and initiates API key collection.",
+        "status": "planned",
+        "triggers": ["Client payment confirmed (payment platform webhook via n8n)"],
+        "inputs": ["Client name", "Email address", "Package purchased", "Project start date"],
+        "outputs": [
+          "ClickUp project created with template tasks",
+          "Welcome email with ClickUp shared link sent to client",
+          "API key collection form triggered (1Password or encrypted form)",
+          "Client n8n workspace and credentials template created"
+        ],
+        "tools": ["n8n", "ClickUp API", "Airtable", "Email (Instantly or SMTP)"],
+        "depends_on": ["lead-scorer"],
+        "services_powered": ["starter-build", "growth-package", "agency-retainer"],
+        "definition_path": "[TO BE CREATED] .claude/agents/onboarding-automation.md"
+      },
+      {
+        "id": "build-agent",
+        "name": "Build Agent (Claude Code + n8n-MCP)",
+        "role": "Builds, tests, and self-corrects n8n automation workflows from plain English descriptions using the n8n-MCP bridge — reducing build time from 3–5 hours to 30–60 minutes per workflow.",
+        "status": "planned",
+        "triggers": ["Owner describes workflow to Claude Code in plain English"],
+        "inputs": [
+          "Plain English workflow description",
+          "Client credentials template in n8n (per-client folder)",
+          "n8n-skills companion repo for expert node knowledge"
+        ],
+        "outputs": [
+          "Live, tested n8n workflow built node by node via n8n API",
+          "Self-corrected on any errors before presenting to owner",
+          "Owner review and final activation"
+        ],
+        "tools": ["Claude Code", "n8n-MCP (czlonkowski/n8n-mcp)", "n8n API (1,084+ node schemas)", "n8n-skills repo"],
+        "depends_on": [],
+        "services_powered": ["starter-build", "growth-package"],
+        "definition_path": "[TO BE CREATED] .claude/agents/build-agent.md"
+      },
+      {
+        "id": "status-update-agent",
+        "name": "Status Update Agent",
+        "role": "Sends automated weekly project status updates to clients from ClickUp task data — eliminating the need for manual check-in emails.",
+        "status": "planned",
+        "triggers": ["Weekly n8n cron schedule (Monday morning client timezone)"],
+        "inputs": ["ClickUp project data (tasks completed, in progress, next milestone)"],
+        "outputs": ["Weekly status email to client with project progress and next steps"],
+        "tools": ["n8n", "ClickUp API", "Claude API (for email copy)", "Email (SMTP or Instantly)"],
+        "depends_on": ["onboarding-automation"],
+        "services_powered": ["starter-build", "growth-package", "agency-retainer"],
+        "definition_path": "[TO BE CREATED] .claude/agents/status-update-agent.md"
+      },
+      {
+        "id": "reporting-agent",
+        "name": "Reporting Agent",
+        "role": "Auto-generates monthly performance reports for retainer clients from n8n workflow execution data — showing automations run, errors caught, time saved, and value delivered.",
+        "status": "planned",
+        "triggers": ["Monthly n8n cron schedule (1st of each month)", "Retainer billing date trigger"],
+        "inputs": ["n8n workflow execution logs for client", "Automation performance metrics", "Error count and resolution data"],
+        "outputs": ["Monthly performance report (Claude-written, data-backed)", "Email to client with report attached or linked"],
+        "tools": ["Claude API (claude-sonnet-4-6)", "n8n", "Airtable"],
+        "depends_on": ["onboarding-automation"],
+        "services_powered": ["agency-retainer"],
+        "definition_path": "[TO BE CREATED] .claude/agents/reporting-agent.md"
+      },
+      {
+        "id": "referral-trigger-agent",
+        "name": "Referral Trigger Agent",
+        "role": "Sends an automated referral request email sequence 30 days after client launch — systematically converting happy clients into referral sources without manual outreach.",
+        "status": "planned",
+        "triggers": ["30 days after client project launch date (n8n scheduled trigger)"],
+        "inputs": ["Client name", "Project outcomes and automations delivered", "Launch date"],
+        "outputs": ["Referral request email sequence (Claude-written, 2–3 touch points via Instantly)"],
+        "tools": ["n8n", "Claude API", "Instantly.ai", "Airtable"],
+        "depends_on": ["reporting-agent"],
+        "services_powered": [],
+        "definition_path": "[TO BE CREATED] .claude/agents/referral-trigger-agent.md"
+      }
+    ],
+    "planned_builds": [
+      {
+        "name": "Client Portal (Phase 2)",
+        "rationale": "ClickUp shared links are sufficient until 5+ active clients. Build on Lovable or Bubble with Airtable API backend. Must-haves: secure login, onboarding checklist, project tracker, deliverables library, support tickets, invoice history, monthly report."
+      }
+    ]
+  },
+
+  "kpis": {
+    "operational": [
+      {
+        "metric": "Prospects contacted per day via automated outreach",
+        "target": "30–50",
+        "frequency": "daily"
+      },
+      {
+        "metric": "Assessment calls booked per week",
+        "target": "5+",
+        "frequency": "weekly"
+      },
+      {
+        "metric": "Build time per automation workflow",
+        "target": "< 1 hour with Claude Code + n8n-MCP",
+        "frequency": "per-project"
+      },
+      {
+        "metric": "Proposal turnaround time from assessment call",
+        "target": "< 24 hours",
+        "frequency": "per-project"
+      }
+    ],
+    "financial": [
+      {
+        "metric": "Monthly Recurring Revenue (MRR)",
+        "target": "[TO BE CONFIRMED]",
+        "frequency": "monthly"
+      },
+      {
+        "metric": "Active retainer clients",
+        "target": "10 within 12 months",
+        "frequency": "monthly"
+      },
+      {
+        "metric": "Assessment-to-paid-build conversion rate",
+        "target": "> 30%",
+        "frequency": "monthly"
+      }
+    ],
+    "client_success": [
+      {
+        "metric": "Client automation uptime",
+        "target": "> 99% (monitored via n8n alerts)",
+        "frequency": "monthly"
+      },
+      {
+        "metric": "Hours saved per client per week",
+        "target": "> 10 hours",
+        "frequency": "monthly"
+      },
+      {
+        "metric": "Referral rate",
+        "target": "1 referral per client within 60 days of launch",
+        "frequency": "per-client"
+      }
+    ]
+  },
+
+  "assumptions": [
+    {
+      "assumption": "The free assessment + same-call proposal model will convert at > 30% to paid builds",
+      "risk_if_wrong": "Revenue pipeline collapses — all effort on assessments yields no revenue and burns founder time",
+      "validation_method": "Track assessment-to-proposal and proposal-to-paid conversion rates over the first 10 assessments; adjust offer if rate is below 20%",
+      "validated": false
+    },
+    {
+      "assumption": "Claude Code + n8n-MCP reliably builds production-grade client workflows in under 1 hour",
+      "risk_if_wrong": "Build times stay at 3–5 hours — the core operational advantage disappears and pricing model breaks",
+      "validation_method": "Run 5 test builds across different workflow types (simple trigger-action, multi-step, AI-integrated) before signing the first client",
+      "validated": false
+    },
+    {
+      "assumption": "SMB clients will accept the credential ownership model without friction during onboarding",
+      "risk_if_wrong": "Clients object to managing their own API accounts — onboarding drags and trust breaks early",
+      "validation_method": "Include the credential handoff script in the first 3 proposals and track objection rate; prepare a simplified 15-minute guided setup if needed",
+      "validated": false
+    },
+    {
+      "assumption": "30–50 automated cold outreach contacts per day will generate sufficient assessment bookings to close 2+ clients per month",
+      "risk_if_wrong": "Pipeline is too thin — monthly revenue targets miss and the agency burns months in low-revenue limbo",
+      "validation_method": "Measure booking rate per 100 contacts over the first 30 days of outreach; if < 2%, adjust channel mix (LinkedIn DMs, Meta Ads) or ICP targeting",
+      "validated": false
+    },
+    {
+      "assumption": "Async delivery (Loom videos, no live training sessions) will be accepted as sufficient by clients paying $1,500–$7,000",
+      "risk_if_wrong": "Clients demand live calls — adds founder hours, caps capacity, and breaks the async-first model",
+      "validation_method": "Track requests for live calls in the first 5 projects; if > 40% request them, introduce a paid live walkthrough add-on rather than including it free",
+      "validated": false
+    }
+  ],
+
+  "gaps": [
+    {
+      "gap": "CTA buttons on website are not yet connected to Calendly — the site cannot generate revenue",
+      "severity": "blocking",
+      "owner": "Founder",
+      "resolution": "Connect both 'Get Free Assessment' and 'Schedule Your Free Assessment' buttons to a live Calendly booking page. 15-minute fix. Do today."
+    },
+    {
+      "gap": "Website chatbot is not yet activated — inbound lead qualification is non-functional",
+      "severity": "high",
+      "owner": "Founder",
+      "resolution": "Connect chat widget to Claude API with a 3-question qualification prompt (industry, team size, biggest pain). Route hot leads to Calendly, cold leads to nurture. Target: this week."
+    },
+    {
+      "gap": "Typeform intake form is not yet embedded on the website — leads arrive to assessment call unqualified",
+      "severity": "high",
+      "owner": "Founder",
+      "resolution": "Embed Typeform before Calendly booking step. Questions: industry, team size, biggest operational pain, hours lost per week. Auto-post to Airtable via n8n. Target: this week."
+    },
+    {
+      "gap": "Claude Code + n8n-MCP not yet installed or tested — core delivery system unproven",
+      "severity": "high",
+      "owner": "Founder",
+      "resolution": "Install Claude Code, connect n8n-MCP (czlonkowski/n8n-mcp via npm), create credentials template in n8n, run a test build end-to-end. Target: Week 2–3."
+    },
+    {
+      "gap": "No real client case studies — website's 'Real Results' section shows placeholder content",
+      "severity": "high",
+      "owner": "Founder",
+      "resolution": "Replace placeholder case studies after first 1–2 client deliveries. In the interim, add the efficiency benchmark (3–5 hrs → 30–60 min) as a concrete proof point."
+    },
+    {
+      "gap": "MRR targets (3-month, 12-month) not formally defined — makes financial planning and decision-making inconsistent",
+      "severity": "medium",
+      "owner": "Founder",
+      "resolution": "Define after closing the first 2 clients. Use retainer conversion rate from early projects to project realistic MRR curve."
+    },
+    {
+      "gap": "No pricing anchor on website — visitors cannot gauge affordability before booking",
+      "severity": "medium",
+      "owner": "Founder",
+      "resolution": "Add 'Projects start from $1,500' line or a 3-tier pricing card to the website. Quick win — reduces the largest pre-call objection."
+    },
+    {
+      "gap": "No defined scope limit on Agency Retainer — risk of scope creep once clients move to monthly",
+      "severity": "medium",
+      "owner": "Founder",
+      "resolution": "Define maximum number of new automations and support hours included per retainer tier before signing the first retainer client."
+    },
+    {
+      "gap": "Privacy Policy and Terms of Service pages on website are empty",
+      "severity": "medium",
+      "owner": "Founder",
+      "resolution": "Draft and publish both pages before acquiring paying clients. Use a privacy policy generator for the first version."
+    },
+    {
+      "gap": "No defined process for handling client automation failures outside business hours",
+      "severity": "low",
+      "owner": "Founder",
+      "resolution": "Define SLA for retainer clients (e.g. 24-hour response for non-critical failures, 4-hour for revenue-impacting). Include in retainer agreement template."
+    }
+  ],
+
+  "build_priority": [
+    {
+      "priority": 1,
+      "item": "Connect CTA buttons to live Calendly booking page",
+      "type": "process",
+      "rationale": "The website cannot generate a single lead without this. Both 'Get Free Assessment' buttons are currently decorative. 15-minute fix that unlocks all revenue.",
+      "effort": "XS",
+      "impact": "critical"
+    },
+    {
+      "priority": 2,
+      "item": "Embed Typeform intake form before Calendly step",
+      "type": "process",
+      "rationale": "Pre-qualifies every lead before the call. Feeds Airtable automatically. Saves 10 minutes per assessment and enables lead-scorer agent. Deploy this week.",
+      "effort": "XS",
+      "impact": "high",
+      "depends_on": ["Connect CTA buttons to live Calendly booking page"]
+    },
+    {
+      "priority": 3,
+      "item": "Activate lead qualifier chatbot on website",
+      "type": "agent",
+      "rationale": "Qualifies inbound visitors 24/7 and routes hot leads to Calendly. Claude API + 3-question prompt. Inbound channel is dead without it.",
+      "effort": "S",
+      "impact": "high",
+      "depends_on": ["Connect CTA buttons to live Calendly booking page"]
+    },
+    {
+      "priority": 4,
+      "item": "Add pricing anchor to website",
+      "type": "content",
+      "rationale": "Removes the largest pre-call objection. 'Projects start from $1,500' or a 3-tier card. Visitors leave when they cannot gauge affordability. Quick win.",
+      "effort": "XS",
+      "impact": "medium"
+    },
+    {
+      "priority": 5,
+      "item": "Set up outbound lead pipeline (Apollo + Instantly)",
+      "type": "agent",
+      "rationale": "Outbound is the primary revenue driver pre-referral. Apollo prospect list (100–200 contacts), Claude writes email copy, Instantly sends. Target 30 outreaches/day. Airtable as CRM.",
+      "effort": "M",
+      "impact": "critical",
+      "depends_on": ["Connect CTA buttons to live Calendly booking page"]
+    },
+    {
+      "priority": 6,
+      "item": "Install Claude Code + n8n-MCP and run test build",
+      "type": "integration",
+      "rationale": "The core operational advantage of the agency. Must be installed, connected, and proven before signing the first client. Enables 4–6× build capacity.",
+      "effort": "M",
+      "impact": "critical"
+    },
+    {
+      "priority": 7,
+      "item": "Close first 3 clients and deliver exceptional results",
+      "type": "process",
+      "rationale": "Generates first revenue, real case studies, and proof that the delivery model works end to end. Use personal network and early outreach pipeline.",
+      "effort": "L",
+      "impact": "critical",
+      "depends_on": ["Install Claude Code + n8n-MCP and run test build", "Set up outbound lead pipeline (Apollo + Instantly)"]
+    },
+    {
+      "priority": 8,
+      "item": "Replace website placeholder case studies with real client outcomes",
+      "type": "content",
+      "rationale": "Social proof is the strongest conversion lever on the website. Cannot be done until first deliveries are complete.",
+      "effort": "S",
+      "impact": "high",
+      "depends_on": ["Close first 3 clients and deliver exceptional results"]
+    },
+    {
+      "priority": 9,
+      "item": "Build client portal (Lovable or Bubble + Airtable API)",
+      "type": "product",
+      "rationale": "ClickUp shared links are sufficient until 5+ active clients. Build the portal only once delivery is proven and client volume justifies the investment.",
+      "effort": "XL",
+      "impact": "medium",
+      "depends_on": ["Close first 3 clients and deliver exceptional results"]
+    }
+  ]
 }
