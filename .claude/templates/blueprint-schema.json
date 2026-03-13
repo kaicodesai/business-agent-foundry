@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BlueprintSchema",
+  "description": "Placeholder: Blueprint schema definition. Content to be added.",
+  "type": "object",
+  "properties": {}
+}
