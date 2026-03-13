@@ -1,7 +1,754 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "BlueprintSchema",
-  "description": "Placeholder: Blueprint schema definition. Content to be added.",
+  "title": "BusinessBlueprint",
+  "description": "Canonical schema for a business blueprint produced by the Blueprint Agent system. Designed for AI automation agencies v1; reusable across business types via the meta.business_type field.",
+  "version": "1.0.0",
   "type": "object",
-  "properties": {}
+  "required": [
+    "meta",
+    "business",
+    "market",
+    "services",
+    "value_proposition",
+    "tech_stack",
+    "operations",
+    "pricing",
+    "team",
+    "agents",
+    "kpis",
+    "assumptions",
+    "gaps",
+    "build_priority"
+  ],
+  "additionalProperties": false,
+  "properties": {
+
+    "meta": {
+      "type": "object",
+      "description": "Schema and document metadata. Used for versioning, routing, and audit.",
+      "required": ["schema_version", "business_type", "status", "created_at", "last_updated_at"],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "type": "string",
+          "description": "Version of this schema the blueprint was written against.",
+          "example": "1.0.0"
+        },
+        "business_type": {
+          "type": "string",
+          "description": "Category of the business. Drives which validation rules and agent templates are applied.",
+          "enum": [
+            "ai_automation_agency",
+            "saas",
+            "consulting",
+            "ecommerce",
+            "marketplace",
+            "media",
+            "other"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "description": "Lifecycle state of this blueprint.",
+          "enum": ["draft", "in_review", "approved", "archived"]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO 8601 date the blueprint was first created."
+        },
+        "last_updated_at": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO 8601 date of the most recent update."
+        },
+        "author": {
+          "type": "string",
+          "description": "Name or identifier of the person or agent that created this blueprint."
+        },
+        "blueprint_id": {
+          "type": "string",
+          "description": "Optional unique identifier for this blueprint document.",
+          "example": "bp-acme-ai-001"
+        }
+      }
+    },
+
+    "business": {
+      "type": "object",
+      "description": "Core identity of the business.",
+      "required": ["name", "description", "stage"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Legal or operating name of the business."
+        },
+        "tagline": {
+          "type": "string",
+          "description": "One-line positioning statement. Should be externally facing."
+        },
+        "description": {
+          "type": "string",
+          "description": "2–4 sentence description of what the business does, for whom, and why it matters."
+        },
+        "stage": {
+          "type": "string",
+          "description": "Current maturity stage of the business.",
+          "enum": ["idea", "pre-revenue", "early-revenue", "growth", "scale"]
+        },
+        "founded": {
+          "type": "string",
+          "format": "date",
+          "description": "Date the business was formally founded."
+        },
+        "website": {
+          "type": "string",
+          "format": "uri"
+        },
+        "location": {
+          "type": "string",
+          "description": "Primary operating location or 'Remote'."
+        }
+      }
+    },
+
+    "market": {
+      "type": "object",
+      "description": "Market context, customer profile, and competitive landscape.",
+      "required": ["target_segments", "icp", "pain_points"],
+      "additionalProperties": false,
+      "properties": {
+        "target_segments": {
+          "type": "array",
+          "description": "List of distinct customer or market segments this business serves.",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["name", "description"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string" },
+              "description": { "type": "string" },
+              "estimated_size": { "type": "string", "description": "Approximate TAM/SAM for this segment." }
+            }
+          }
+        },
+        "icp": {
+          "type": "object",
+          "description": "Ideal Customer Profile — the single best-fit client archetype.",
+          "required": ["description", "company_size", "role", "trigger_events"],
+          "additionalProperties": false,
+          "properties": {
+            "description": { "type": "string" },
+            "company_size": {
+              "type": "string",
+              "description": "Employee count range or revenue range of ideal client.",
+              "example": "10–100 employees"
+            },
+            "role": {
+              "type": "string",
+              "description": "Job title or function of the primary buyer.",
+              "example": "Head of Operations"
+            },
+            "industries": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "geographies": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "trigger_events": {
+              "type": "array",
+              "description": "Events or conditions that cause the ICP to seek this solution.",
+              "minItems": 1,
+              "items": { "type": "string" }
+            },
+            "disqualifiers": {
+              "type": "array",
+              "description": "Traits that make a prospect a bad fit.",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "pain_points": {
+          "type": "array",
+          "description": "Core problems the ICP experiences that this business solves.",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
+        "competitors": {
+          "type": "array",
+          "description": "Known competitors or substitute solutions.",
+          "items": {
+            "type": "object",
+            "required": ["name", "differentiator"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string" },
+              "differentiator": {
+                "type": "string",
+                "description": "How this business differs from or beats this competitor."
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "services": {
+      "type": "array",
+      "description": "The full catalogue of services or products offered.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "description", "delivery_type", "inputs", "outputs"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Short slug identifier for this service.",
+            "example": "lead-gen-automation"
+          },
+          "name": { "type": "string" },
+          "description": {
+            "type": "string",
+            "description": "What this service does and what problem it solves."
+          },
+          "delivery_type": {
+            "type": "string",
+            "description": "How the service is delivered.",
+            "enum": ["agent_workflow", "integration_build", "consulting", "productized", "retainer", "one_time"]
+          },
+          "automation_complexity": {
+            "type": "string",
+            "description": "Engineering effort classification (relevant for AI automation agencies).",
+            "enum": ["low", "medium", "high", "very_high"]
+          },
+          "inputs": {
+            "type": "array",
+            "description": "What the client provides to enable delivery.",
+            "minItems": 1,
+            "items": { "type": "string" }
+          },
+          "outputs": {
+            "type": "array",
+            "description": "Tangible deliverables the client receives.",
+            "minItems": 1,
+            "items": { "type": "string" }
+          },
+          "typical_duration": {
+            "type": "string",
+            "description": "Expected delivery timeline.",
+            "example": "2–4 weeks"
+          },
+          "pricing_ref": {
+            "type": "string",
+            "description": "Reference to a pricing tier ID in the pricing section.",
+            "example": "tier_starter"
+          },
+          "agent_dependencies": {
+            "type": "array",
+            "description": "IDs of agents in the agent_map that power or support this service.",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+
+    "value_proposition": {
+      "type": "object",
+      "description": "External-facing articulation of why clients choose this business.",
+      "required": ["headline", "differentiators"],
+      "additionalProperties": false,
+      "properties": {
+        "headline": {
+          "type": "string",
+          "description": "Single-sentence value prop. Should be specific, not generic."
+        },
+        "differentiators": {
+          "type": "array",
+          "description": "3–5 concrete reasons clients pick this business over alternatives.",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
+        "proof_points": {
+          "type": "array",
+          "description": "Evidence that supports the value prop (case studies, metrics, testimonials).",
+          "items": { "type": "string" }
+        },
+        "positioning_statement": {
+          "type": "string",
+          "description": "For [ICP], who [pain point], [Business] provides [solution] unlike [alternative]."
+        }
+      }
+    },
+
+    "tech_stack": {
+      "type": "object",
+      "description": "Technology choices that underpin service delivery and internal operations.",
+      "required": ["primary_llm", "orchestration"],
+      "additionalProperties": false,
+      "properties": {
+        "primary_llm": {
+          "type": "string",
+          "description": "Primary language model used for agent workflows.",
+          "example": "claude-sonnet-4-6"
+        },
+        "fallback_llm": {
+          "type": "string",
+          "description": "Secondary LLM used for cost optimisation or fallback.",
+          "example": "claude-haiku-4-5"
+        },
+        "orchestration": {
+          "type": "string",
+          "description": "Framework or platform used to orchestrate multi-agent workflows.",
+          "example": "Claude Code / Agent SDK"
+        },
+        "databases": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "integrations": {
+          "type": "array",
+          "description": "Third-party APIs and platforms the agency connects to for clients.",
+          "items": { "type": "string" }
+        },
+        "hosting": {
+          "type": "string",
+          "example": "AWS / Railway / Vercel"
+        },
+        "internal_tools": {
+          "type": "array",
+          "description": "Tools used to run the agency's own operations.",
+          "items": { "type": "string" }
+        },
+        "client_facing_tools": {
+          "type": "array",
+          "description": "Tools clients interact with directly.",
+          "items": { "type": "string" }
+        }
+      }
+    },
+
+    "operations": {
+      "type": "object",
+      "description": "How the business runs day-to-day: intake, delivery, and communication.",
+      "required": ["client_intake", "delivery_workflow"],
+      "additionalProperties": false,
+      "properties": {
+        "client_intake": {
+          "type": "object",
+          "required": ["steps"],
+          "additionalProperties": false,
+          "properties": {
+            "steps": {
+              "type": "array",
+              "description": "Ordered steps from first contact to project kick-off.",
+              "minItems": 1,
+              "items": { "type": "string" }
+            },
+            "intake_form_url": { "type": "string", "format": "uri" },
+            "crm": { "type": "string" }
+          }
+        },
+        "delivery_workflow": {
+          "type": "object",
+          "required": ["phases"],
+          "additionalProperties": false,
+          "properties": {
+            "methodology": {
+              "type": "string",
+              "description": "Delivery methodology used.",
+              "example": "Agile sprints / Blueprint-first / Continuous deployment"
+            },
+            "phases": {
+              "type": "array",
+              "description": "Ordered delivery phases with descriptions.",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": ["name", "description"],
+                "additionalProperties": false,
+                "properties": {
+                  "name": { "type": "string" },
+                  "description": { "type": "string" },
+                  "typical_duration": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "communication_channels": {
+          "type": "array",
+          "description": "How the team communicates internally and with clients.",
+          "items": { "type": "string" }
+        },
+        "project_management": {
+          "type": "string",
+          "description": "PM tool used.",
+          "example": "Linear / Notion / ClickUp"
+        },
+        "sops": {
+          "type": "array",
+          "description": "Links or names of Standard Operating Procedures.",
+          "items": { "type": "string" }
+        }
+      }
+    },
+
+    "pricing": {
+      "type": "object",
+      "description": "Pricing model and tier structure.",
+      "required": ["model", "tiers"],
+      "additionalProperties": false,
+      "properties": {
+        "model": {
+          "type": "string",
+          "description": "Primary pricing model.",
+          "enum": ["retainer", "project", "outcome_based", "hybrid", "usage_based", "productized"]
+        },
+        "currency": {
+          "type": "string",
+          "default": "USD"
+        },
+        "tiers": {
+          "type": "array",
+          "description": "Defined pricing tiers.",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "name", "price", "description", "inclusions"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "example": "tier_starter" },
+              "name": { "type": "string" },
+              "price": {
+                "type": "string",
+                "description": "Price as a human-readable string.",
+                "example": "$3,000/mo"
+              },
+              "description": { "type": "string" },
+              "inclusions": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "exclusions": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "target_segment": { "type": "string" }
+            }
+          }
+        },
+        "notes": {
+          "type": "string",
+          "description": "Any pricing nuances, discounts, or edge cases."
+        }
+      }
+    },
+
+    "team": {
+      "type": "object",
+      "description": "Current team composition and near-term hiring plan.",
+      "required": ["current_headcount", "roles"],
+      "additionalProperties": false,
+      "properties": {
+        "current_headcount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "roles": {
+          "type": "array",
+          "description": "Active roles in the business.",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["title", "count", "responsibilities"],
+            "additionalProperties": false,
+            "properties": {
+              "title": { "type": "string" },
+              "count": { "type": "integer", "minimum": 0 },
+              "responsibilities": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "type": {
+                "type": "string",
+                "enum": ["founder", "employee", "contractor", "agent"]
+              }
+            }
+          }
+        },
+        "hiring_plan": {
+          "type": "array",
+          "description": "Planned hires, in priority order.",
+          "items": {
+            "type": "object",
+            "required": ["title", "trigger"],
+            "additionalProperties": false,
+            "properties": {
+              "title": { "type": "string" },
+              "trigger": {
+                "type": "string",
+                "description": "Revenue or capacity threshold that triggers this hire.",
+                "example": "When MRR exceeds $20k"
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "financials": {
+      "type": "object",
+      "description": "Financial targets and cost structure. Used to validate pricing and build priority.",
+      "additionalProperties": false,
+      "properties": {
+        "current_mrr": {
+          "type": "string",
+          "description": "Current Monthly Recurring Revenue.",
+          "example": "$0"
+        },
+        "mrr_target_3mo": { "type": "string", "example": "$10,000" },
+        "mrr_target_12mo": { "type": "string", "example": "$50,000" },
+        "target_client_count_12mo": { "type": "integer" },
+        "cost_structure": {
+          "type": "array",
+          "description": "Main cost categories (not precise figures).",
+          "items": { "type": "string" }
+        },
+        "runway": {
+          "type": "string",
+          "description": "Current cash runway if pre-revenue.",
+          "example": "6 months"
+        }
+      }
+    },
+
+    "agents": {
+      "type": "object",
+      "description": "The internal AI agent ecosystem — what agents exist and what they do.",
+      "required": ["agent_map"],
+      "additionalProperties": false,
+      "properties": {
+        "agent_map": {
+          "type": "array",
+          "description": "Inventory of all agents, built or planned, that power this business.",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "name", "role", "status", "triggers", "outputs"],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique slug identifier.",
+                "example": "blueprint-agent"
+              },
+              "name": { "type": "string" },
+              "role": {
+                "type": "string",
+                "description": "What this agent does in one sentence."
+              },
+              "status": {
+                "type": "string",
+                "enum": ["live", "in_progress", "planned", "deprecated"]
+              },
+              "triggers": {
+                "type": "array",
+                "description": "What causes this agent to run.",
+                "minItems": 1,
+                "items": { "type": "string" }
+              },
+              "inputs": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "outputs": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string" }
+              },
+              "tools": {
+                "type": "array",
+                "description": "Claude Code tools or external APIs this agent uses.",
+                "items": { "type": "string" }
+              },
+              "depends_on": {
+                "type": "array",
+                "description": "IDs of agents this agent depends on.",
+                "items": { "type": "string" }
+              },
+              "services_powered": {
+                "type": "array",
+                "description": "Service IDs from the services section that this agent enables.",
+                "items": { "type": "string" }
+              },
+              "definition_path": {
+                "type": "string",
+                "description": "Relative path to the agent's .md definition file.",
+                "example": ".claude/agents/blueprint-agent.md"
+              }
+            }
+          }
+        },
+        "planned_builds": {
+          "type": "array",
+          "description": "Agent ideas not yet added to the agent_map.",
+          "items": {
+            "type": "object",
+            "required": ["name", "rationale"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string" },
+              "rationale": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+
+    "kpis": {
+      "type": "object",
+      "description": "Key performance indicators used to measure success.",
+      "required": ["operational", "financial", "client_success"],
+      "additionalProperties": false,
+      "properties": {
+        "operational": {
+          "type": "array",
+          "description": "Metrics about how efficiently the business runs.",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["metric", "target"],
+            "additionalProperties": false,
+            "properties": {
+              "metric": { "type": "string" },
+              "target": { "type": "string" },
+              "frequency": { "type": "string", "example": "weekly" }
+            }
+          }
+        },
+        "financial": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["metric", "target"],
+            "additionalProperties": false,
+            "properties": {
+              "metric": { "type": "string" },
+              "target": { "type": "string" },
+              "frequency": { "type": "string" }
+            }
+          }
+        },
+        "client_success": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["metric", "target"],
+            "additionalProperties": false,
+            "properties": {
+              "metric": { "type": "string" },
+              "target": { "type": "string" },
+              "frequency": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+
+    "assumptions": {
+      "type": "array",
+      "description": "Beliefs held as true that have not yet been validated. Each assumption is a risk.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["assumption", "risk_if_wrong", "validation_method"],
+        "additionalProperties": false,
+        "properties": {
+          "assumption": { "type": "string" },
+          "risk_if_wrong": {
+            "type": "string",
+            "description": "What breaks if this assumption is false."
+          },
+          "validation_method": {
+            "type": "string",
+            "description": "How this assumption can be tested or confirmed."
+          },
+          "validated": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+
+    "gaps": {
+      "type": "array",
+      "description": "Known unknowns or missing pieces required to execute this blueprint.",
+      "items": {
+        "type": "object",
+        "required": ["gap", "severity"],
+        "additionalProperties": false,
+        "properties": {
+          "gap": { "type": "string" },
+          "severity": {
+            "type": "string",
+            "enum": ["low", "medium", "high", "blocking"]
+          },
+          "owner": { "type": "string" },
+          "resolution": { "type": "string" }
+        }
+      }
+    },
+
+    "build_priority": {
+      "type": "array",
+      "description": "Ordered list of what to build or execute next, with rationale. Drives sprint planning and agent development order.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["priority", "item", "rationale", "type"],
+        "additionalProperties": false,
+        "properties": {
+          "priority": {
+            "type": "integer",
+            "description": "1 = highest priority.",
+            "minimum": 1
+          },
+          "item": {
+            "type": "string",
+            "description": "Name of the thing to build or task to complete."
+          },
+          "type": {
+            "type": "string",
+            "enum": ["agent", "integration", "process", "content", "hire", "product", "other"]
+          },
+          "rationale": {
+            "type": "string",
+            "description": "Why this is the right thing to do at this stage."
+          },
+          "depends_on": {
+            "type": "array",
+            "description": "Other build_priority items (by item name) that must complete first.",
+            "items": { "type": "string" }
+          },
+          "effort": {
+            "type": "string",
+            "enum": ["XS", "S", "M", "L", "XL"]
+          },
+          "impact": {
+            "type": "string",
+            "enum": ["low", "medium", "high", "critical"]
+          }
+        }
+      }
+    }
+
+  }
 }
