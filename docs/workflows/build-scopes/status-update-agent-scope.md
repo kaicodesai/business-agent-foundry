@@ -1,4 +1,4 @@
-# Workflow Build Scope — status-update-agent
+# Workflow Build Scope — [PA] Status Update Agent
 Version: 1.0
 Last updated: 2026-03-15
 For: workflow-builder-agent
@@ -29,7 +29,7 @@ Build and test each node individually before proceeding to the next.
 ### Node 1 — Fetch active clients (Airtable node)
 
 **Type:** Airtable
-**Credential:** `airtable-phoenix-automation`
+**Credential:** `pa-airtable`
 **Operation:** Search Records
 **Filter by formula:** `{project_status} = 'live'`
 **Fields to return:** `client_name`, `client_email`, `clickup_project_id`,
@@ -54,7 +54,7 @@ cleanly (no error).
 ### Node 4 — Get ClickUp tasks (ClickUp node)
 
 **Type:** ClickUp
-**Credential:** `clickup-phoenix-automation`
+**Credential:** `pa-clickup`
 **Operation:** Get All Tasks
 **Project/List ID:** `{{ $json.clickup_project_id }}`
 **Filters:**
@@ -114,7 +114,7 @@ return [{
 **Type:** HTTP Request
 **Method:** POST
 **URL:** `https://api.anthropic.com/v1/messages`
-**Credential:** `anthropic-api`
+**Credential:** `pa-anthropic`
 **Headers:**
 ```json
 {
@@ -139,7 +139,7 @@ return [{
 ### Node 7 — Send email (Send Email node)
 
 **Type:** Send Email
-**Credential:** `smtp-phoenix-automation`
+**Credential:** `pa-smtp`
 **To:** `{{ $json.client_email }}`
 **Subject:** `{{ $json.client_name }} — Project Update {{ $now.toFormat('MMMM d') }}`
 **Body:** `{{ $json.email_body }}`
@@ -150,7 +150,7 @@ return [{
 ### Node 8 — Update Airtable (Airtable node)
 
 **Type:** Airtable
-**Credential:** `airtable-phoenix-automation`
+**Credential:** `pa-airtable`
 **Operation:** Update Record
 **Record ID:** `{{ $json.record_id }}`
 **Fields to update:**
@@ -172,10 +172,10 @@ return [{
 
 | Credential name | Used by |
 |----------------|---------|
-| `airtable-phoenix-automation` | Nodes 1, 8 |
-| `clickup-phoenix-automation` | Node 4 |
-| `anthropic-api` | Node 6 |
-| `smtp-phoenix-automation` | Node 7 |
+| `pa-airtable` | Nodes 1, 8 |
+| `pa-clickup` | Node 4 |
+| `pa-anthropic` | Node 6 |
+| `pa-smtp` | Node 7 |
 
 ---
 

@@ -1,4 +1,4 @@
-# Workflow Build Scope — onboarding-automation
+# Workflow Build Scope — [PA] Onboarding Automation
 Version: 1.0
 Last updated: 2026-03-15
 For: workflow-builder-agent
@@ -60,7 +60,7 @@ return [{ json: { ...$input.first().json, client_slug: slug } }];
 ### Node 3 — Airtable lookup (Airtable node — Search)
 
 **Type:** Airtable
-**Credential:** `airtable-phoenix-automation`
+**Credential:** `pa-airtable`
 **Purpose:** Read lead record to get any additional context (lead_score, package details)
 **Operation:** Search
 **Filter by formula:** `{email} = '{{$json.client_email}}'`
@@ -72,7 +72,7 @@ return [{ json: { ...$input.first().json, client_slug: slug } }];
 **Purpose:** Create client project folder in n8n
 **Method:** POST
 **URL:** `http://localhost:5678/api/v1/projects`
-**Credential:** `n8n-internal-api`
+**Credential:** `pa-n8n-api`
 **Body:**
 ```json
 {
@@ -97,7 +97,7 @@ return [{ json: { ...$input.first().json, client_slug: slug } }];
 ### Node 6 — Create credentials template workflow (HTTP Request node)
 
 **Type:** HTTP Request
-**Credential:** `n8n-internal-api`
+**Credential:** `pa-n8n-api`
 **Method:** POST
 **URL:** `http://localhost:5678/api/v1/workflows`
 **Body:** JSON workflow object with:
@@ -122,7 +122,7 @@ return [{ json: { ...$input.first().json, client_slug: slug } }];
 ### Node 7 — Create ClickUp project (ClickUp node)
 
 **Type:** ClickUp
-**Credential:** `clickup-phoenix-automation`
+**Credential:** `pa-clickup`
 **Operation:** Create List (or Create Space, depending on ClickUp structure)
 **Name:** `{{ $json.client_slug }}`
 **Space:** Phoenix Automation delivery space
@@ -131,7 +131,7 @@ return [{ json: { ...$input.first().json, client_slug: slug } }];
 ### Node 8 — Update Airtable record (Airtable node)
 
 **Type:** Airtable
-**Credential:** `airtable-phoenix-automation`
+**Credential:** `pa-airtable`
 **Operation:** Update Record
 **Match by:** `email = {{ $json.client_email }}`
 **Fields to update:**
@@ -145,7 +145,7 @@ return [{ json: { ...$input.first().json, client_slug: slug } }];
 ### Node 9 — Send internal summary email (Email/SMTP node)
 
 **Type:** Send Email
-**Credential:** `smtp-phoenix-automation`
+**Credential:** `pa-smtp`
 **To:** owner email address (hardcoded — this is always Phoenix Automation's owner)
 **Subject:** `Onboarding started — {{ $json.client_slug }}`
 **Body:** Plain text summary:
@@ -181,10 +181,10 @@ internal credential store. Do not hardcode any values.
 
 | Credential name | Used by |
 |----------------|---------|
-| `airtable-phoenix-automation` | Nodes 3, 8 |
-| `n8n-internal-api` | Nodes 4, 6 |
-| `clickup-phoenix-automation` | Node 7 |
-| `smtp-phoenix-automation` | Node 9 |
+| `pa-airtable` | Nodes 3, 8 |
+| `pa-n8n-api` | Nodes 4, 6 |
+| `pa-clickup` | Node 7 |
+| `pa-smtp` | Node 9 |
 
 ---
 
