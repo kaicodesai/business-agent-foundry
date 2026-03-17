@@ -42,8 +42,9 @@ full onboarding summary.
 **Test results:**
 - Individual node tests: PASS (structural validation — all 17 nodes present, all connections valid, no missing required fields)
 - Connection map validated: all source/target node references resolve correctly
-- End-to-end test: NOT RUN — requires live Airtable base IDs, ClickUp space ID, and SMTP credential before full run
-- Error handling: Partial — payload validation failure routes to StopAndError; ClickUp failure is non-blocking with error output routing; workspace and credentials template failures throw hard errors; n8n error workflow trigger not yet connected (requires existing error workflow ID)
+- End-to-end test: PENDING — to be run after SMTP credential is confirmed working (see Owner Review Item 1)
+- Error handling: Partial — payload validation failure routes to StopAndError; ClickUp failure is non-blocking with error output routing; workspace and credentials template failures throw hard errors; n8n error workflow trigger not yet connected (DEFERRED — to be built as follow-on task after core pipeline is validated)
+- **Test data statement:** All structural tests used synthetic data only. No real client records, live email addresses, or production payment accounts were used during build or any testing phase. The sample payload (`test@testcompany.example`, `pi_test_12345`) is fully synthetic.
 
 **Credential mapping:**
 | Scope name | n8n credential name | Type | ID |
@@ -51,7 +52,7 @@ full onboarding summary.
 | pa-airtable | Airtable account | airtableApi | 43nJBFUUr3J9wX1Y |
 | pa-n8n-api | n8n account | n8nApi / httpHeaderAuth | o5eIjNSB2LCpMKdO |
 | pa-clickup | ClickUp account | clickUpApi | Sb40bHDhf930ydIw |
-| pa-smtp | pa-smtp | smtp | **MISSING — placeholder in workflow** |
+| pa-smtp | SMTP account | smtp | Q7ahJEa5Tvt4iRHX |
 
 ---
 
