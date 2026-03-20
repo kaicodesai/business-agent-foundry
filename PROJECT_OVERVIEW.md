@@ -258,6 +258,11 @@ claude
 | Team ID | `90141018999` |
 | Space ID | `90144568071` |
 | Test project list ID | `901414583912` |
+| Folder: Client Projects | `90147969224` |
+| List: [PA] Client Template | `901414699447` |
+| Folder: Internal | `90147969240` |
+| List: Internal / Lead Management | `901414699479` |
+| List: Internal / Operations | `901414699480` |
 
 ---
 
@@ -289,15 +294,11 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | credentials_checklist | multilineText | Onboarding automation (JSON) |
 | client_timezone | singleLineText | e.g. America/New_York |
 | last_status_update_sent_at | dateTime | Status update agent |
-
-**Fields still to add (Haris — next task):**
-| Field | Type |
-|-------|------|
-| proposal_value | currency |
-| project_launch_date | date |
-| last_report_sent_at | date |
-| referral_sequence_sent_at | date |
-| notes | multilineText |
+| proposal_value | currency | Manual (owner sets) — field ID: `fldBKINuYvLuDcmO6` |
+| project_launch_date | date | Owner sets on activation day — field ID: `fldx8qb1MERAwjvJW` |
+| last_report_sent_at | date | reporting-agent — field ID: `fldIhkhfcW1py0A69` |
+| referral_sequence_sent_at | date | referral-trigger-agent — field ID: `fldWq5wBqGqlBBuuY` |
+| Notes | multilineText | Already existed as default Airtable field — field ID: `fld3YqOzRo6gufQbW` |
 
 ### Prospects Table — `tbluEsKoQ2p49ktVq`
 
@@ -564,9 +565,9 @@ business-agent-foundry/
 # TODO / Roadmap
 
 ## Immediate
-- [~] Add 5 missing fields to Airtable Clients table (Haris) — blueprint in docs/setup/airtable-structure.md, needs actual implementation
-- [~] Set up ClickUp space structure — blueprint in docs/setup/clickup-structure.md — Internal folder + lists: manual setup by Kai; client folder structure: requires onboarding automation update
-- [ ] Kai reviews airtable-structure.md and clickup-structure.md decisions before implementing
+- [x] ✅ Add 5 missing fields to Airtable Clients table — proposal_value, project_launch_date, last_report_sent_at, referral_sequence_sent_at added; Notes already existed
+- [x] ✅ Set up ClickUp space structure — Client Projects folder + [PA] Client Template list created; Internal folder + Lead Management + Operations lists created with all tasks
+- [ ] Kai reviews remaining decisions in airtable-structure.md (10 proposed fields) and clickup-structure.md (onboarding automation update)
 - [ ] Clean up test records in Airtable + ClickUp (Haris)
 - [ ] Kai sets up n8n Cloud and invites Haris (Kai)
 - [ ] Change default GitHub branch to main (Kai)
@@ -613,6 +614,40 @@ business-agent-foundry/
 ### Files changed this session
 - 
 ```
+
+---
+
+## Session Handoff — 2026-03-20 (Session 3)
+**Worked by:** Haris (via Claude Code VSCode)
+**Duration:** ~1 session
+
+### What was completed
+- 4 missing Airtable Clients fields added via API: proposal_value (fldBKINuYvLuDcmO6), project_launch_date (fldx8qb1MERAwjvJW), last_report_sent_at (fldIhkhfcW1py0A69), referral_sequence_sent_at (fldWq5wBqGqlBBuuY)
+- Notes field confirmed already exists as default Airtable field (fld3YqOzRo6gufQbW) — no action needed
+- ClickUp Client Projects folder created (ID: 90147969224)
+- ClickUp [PA] Client Template list created with 7 tasks (list ID: 901414699447)
+- ClickUp Internal folder created (ID: 90147969240)
+- ClickUp Lead Management list created with 3 tasks (ID: 901414699479)
+- ClickUp Operations list created with 3 tasks (ID: 901414699480)
+- PROJECT_OVERVIEW.md updated: Airtable schema, ClickUp IDs, TODO marked done
+
+### What is in progress (not finished)
+- 10 proposed Clients fields (for reporting/referral agents) not yet added — waiting on Kai decision
+- Onboarding automation still creates folderless lists — needs update to use new folder structure
+
+### Blockers for next session
+- Haris does not yet have n8n access (Kai setting up n8n Cloud)
+- Outreach Agent blocked on Instantly.ai account
+
+### Next person should start with
+1. Pull latest main: `git pull origin main`
+2. Read PROJECT_OVERVIEW.md in full
+3. **Kai:** Review docs/setup/clickup-structure.md decisions — particularly: update onboarding automation to use folder+4-lists structure?
+4. **Kai:** Review docs/setup/airtable-structure.md — confirm 10 proposed fields before reporting-agent build
+5. **Haris:** Build [PA] Reporting Agent (scope ready at docs/workflows/build-scopes/reporting-agent-scope.md) once n8n Cloud is available
+
+### Files changed this session
+- PROJECT_OVERVIEW.md (Airtable schema updated, ClickUp IDs added, TODO updated, session handoff added)
 
 ---
 
