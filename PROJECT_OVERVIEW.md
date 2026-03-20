@@ -156,10 +156,12 @@ phoenix/[task]    ← all new work goes here, PR before merging to main
 ## Haris's Machine
 | Item | Value |
 |------|-------|
-| OS | — (confirm and update) |
-| Node version | 20.x (install via nvm) |
+| OS | Windows |
+| Node version | 20.20.1 |
+| Git version | 2.53.0 |
+| Claude Code version | 2.1.76 |
 | n8n access | ⏳ Pending n8n Cloud setup by Kai |
-| Repo location | `~/Documents/business-agent-foundry` |
+| Repo location | `D:\Projects\business-agent-foundry` |
 
 ## Session Startup Sequence (Kai)
 ```bash
