@@ -1,0 +1,664 @@
+# PROJECT_OVERVIEW.md
+> **Version:** 2.0 — Last updated: 2026-03-20 — Updated by: Kai + Haris
+
+---
+
+> ## AGENT INSTRUCTIONS — READ THIS FIRST
+>
+> **At the start of every session:**
+> 1. Read this entire file before doing anything else
+> 2. Use the API credentials, table IDs, field names, and workflow IDs here as ground truth — do not guess or fetch from external sources unless this file says a value is missing
+> 3. Check Current Status before building anything — do not rebuild what already exists
+> 4. Run the smoke test to confirm your environment is connected
+>
+> **At the end of every session:**
+> 1. Update **Current Status** — what changed
+> 2. Update **Known Issues** — resolve fixed ones, add new ones
+> 3. Update **TODO / Roadmap** — check off completed items
+> 4. Fill in the **Session Handoff** section at the bottom
+> 5. Commit and push:
+> ```bash
+> git add PROJECT_OVERVIEW.md
+> git commit -m "Update PROJECT_OVERVIEW.md — [brief description]"
+> git push origin main
+> ```
+>
+> **Never:**
+> - Delete existing Change Log entries
+> - Overwrite credential values with placeholders
+> - Rebuild a workflow or file that already exists without owner confirmation
+> - Activate any workflow in n8n — activation is always Kai's decision
+> - Commit API keys or .mcp.json to the repo
+
+---
+
+# Project Overview
+
+**Project Name:** Business Agent Foundry — Phoenix Automation (First Live Implementation)
+
+**Purpose:**
+A system that generates fully operational business agents, workflows, SOPs, and operating systems from a structured business blueprint with minimal founder input. Phoenix Automation is the first live test case: an AI automation agency that delivers n8n workflow automation to small business clients.
+
+**Problem It Solves:**
+Building an AI automation agency requires hundreds of hours of manual setup. This system automates the entire operating layer — lead generation, qualification, onboarding, build, QA, reporting — so the founder focuses on sales and delivery quality, not operations.
+
+**Team:**
+| Person | Role | Contact |
+|--------|------|---------|
+| Kai Edwards | Founder — reviews, approves, activates | lightofkai777@gmail.com |
+| Haris | VA — builds and tests under Kai's direction | — |
+
+---
+
+# Ownership & Responsibility
+
+| Task Type | Owner | Notes |
+|-----------|-------|-------|
+| Workflow activation in n8n | Kai only | Never activated by Haris or agents |
+| Proposal sending | Kai only | Agent drafts, Kai sends |
+| API key management | Kai | Shares keys directly — never committed to repo |
+| Agent file creation/editing | Haris (with Kai review) | Always on feature branch, PR before merge |
+| Workflow building in n8n | Haris (via Claude Code) | Uses workflow-builder-agent |
+| QA execution | Haris | Reports results to Kai |
+| Blueprint changes | Kai | Core system definition |
+| Airtable schema changes | Either | Document in Change Log |
+
+---
+
+# Current Status
+
+## Completed ✅
+- Blueprint Agent (Layer 1) — creates and improves structured business blueprints
+- Blueprint Validator — validates blueprint schema
+- Agent Builder (Layer 2) — generates full agent stack from blueprint
+- All 14 agent definition files written and validated
+- 4 correction/spec files (dependency, decision logic, onboarding readiness, QA evidence)
+- 3 coordination docs (handoff-spec, project-status-spec, workflow-sequence)
+- Full local dev stack operational (Node 20, n8n 2.10.4, Claude Code 2.1.77, n8n-MCP)
+- Airtable base structured — Clients + Prospects + automation_logs tables
+- All 6 n8n credentials added (pa-airtable, pa-n8n-api, pa-clickup, pa-smtp, pa-apollo-io, pa-anthropic)
+- **[PA] Onboarding Automation** (Ro9IkQBlNaUxKR6B) — 17 nodes, tested, dual emails working
+- **[PA] Lead Generation** (pUqNr2V9Fp5gLWaD) — 11 nodes, tested, dedup working
+- **[PA] Status Update Agent** (VhqfzN6afzpNDTu1) — 14 nodes, tested, branded emails working
+- client_timezone + last_status_update_sent_at fields added to Clients table
+- PROJECT_OVERVIEW.md added to repo root
+
+## In Progress ⏳
+- n8n Cloud setup — Kai signing up (~$20/mo Starter) to give Haris shared access
+- Default GitHub branch needs switching from `claude/setup-blueprint-agent-YnHBF` to `main` (Kai → Settings → Branches)
+
+## Not Started ❌
+- [PA] Outreach Agent workflow (blocked on Instantly.ai)
+- [PA] Reporting Agent workflow (scope ready)
+- [PA] Referral Trigger Agent workflow (scope ready)
+- [PA] Lead Qualification workflow
+- [PA] Proposal Drafting workflow
+- Error handling workflow (deferred from QA)
+- ClickUp space structure (Client Projects folder + task template)
+- Airtable Clients table missing 5 fields (see schema section)
+- Instantly.ai account + pa-instantly credential
+- Test record cleanup (Status Test Client, Meridian Consulting Group)
+- End-to-end pipeline test with real client
+
+---
+
+# Architecture
+
+## Tech Stack
+| Layer | Tool | Version | Purpose |
+|-------|------|---------|---------|
+| Workflow automation | n8n | 2.10.4 (self-hosted, local) | All automated pipelines |
+| AI agents | Claude Code | 2.1.77 | Agent execution, code generation |
+| Anthropic API | claude-sonnet-4-6 | — | Model for all agent AI calls |
+| Agent-to-n8n bridge | n8n-MCP | czlonkowski (local build) | Claude Code controls n8n via MCP |
+| CRM / data layer | Airtable | — | Lead scoring, client tracking, delivery logs |
+| Project management | ClickUp | — | Client project tracking per engagement |
+| Email | Gmail SMTP | — | Onboarding emails, status updates |
+| Lead sourcing | Apollo.io | — | ICP-matched prospect sourcing |
+| Outreach sequencing | Instantly.ai | — | Cold email sequences — not yet set up |
+| Version control | GitHub | — | All agent files, specs, SOPs, scopes |
+| IDE | VS Code + Claude Code | — | Primary development environment |
+
+## System Design
+
+**Layer 1 — Blueprint Agent:** Converts raw founder input into a structured, validated business blueprint. Already complete — do not rebuild.
+
+**Layer 2 — Agent Builder:** Reads a validated blueprint and generates the full operational stack. Already complete — do not rebuild.
+
+**Delivery Pipeline:**
+```
+Lead Generation → Lead Qualification → Assessment → Process Mapping
+→ Scoping → Proposal → Onboarding → Build → QA → Activation → Live
+```
+
+## Branching Strategy
+```
+main              ← stable, always deployable
+phoenix/[task]    ← all new work goes here, PR before merging to main
+```
+
+---
+
+# Environment Setup
+
+## Kai's Machine
+| Item | Value |
+|------|-------|
+| OS | macOS (Apple Silicon — arm64) |
+| Node version | 20.20.1 (via nvm) |
+| n8n version | 2.10.4 |
+| Claude Code version | 2.1.77 (native install) |
+| n8n-MCP location | `~/Documents/n8n-mcp/dist/index.js` |
+| Repo location | `~/Documents/business-agent-foundry` |
+| n8n URL | `http://localhost:5678` |
+| VPN required | Yes — US server (Atlanta/NordVPN) needed from Vietnam for Anthropic API |
+
+## Haris's Machine
+| Item | Value |
+|------|-------|
+| OS | — (confirm and update) |
+| Node version | 20.x (install via nvm) |
+| n8n access | ⏳ Pending n8n Cloud setup by Kai |
+| Repo location | `~/Documents/business-agent-foundry` |
+
+## Session Startup Sequence (Kai)
+```bash
+# 1. Start n8n in one terminal tab (leave running)
+n8n start
+
+# 2. Open repo in VS Code
+cd ~/Documents/business-agent-foundry
+code .
+
+# 3. Start Claude Code (in VS Code terminal)
+claude
+# → Select option 1 when prompted about MCP server
+
+# 4. IMPORTANT — auth check
+# If you see: "Auth conflict: Using ANTHROPIC_API_KEY instead of Console key"
+# Run: unset ANTHROPIC_API_KEY
+# Then restart: claude
+
+# 5. Smoke test
+# Paste in Claude Code:
+# Please read PROJECT_OVERVIEW.md and confirm you have full project context.
+# Then run: claude mcp list
+# n8n-mcp should show (even if "Failed to connect" — that's a display bug, it works)
+```
+
+## Common Startup Errors
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `Auth conflict: Using ANTHROPIC_API_KEY` | Env var + Console login both active | `unset ANTHROPIC_API_KEY` then restart claude |
+| `Request timed out` | VPN not on (from Vietnam) | Connect VPN to US server first |
+| `n8n-mcp: Failed to connect` | Display bug — server actually works | Ignore, test with an actual MCP call |
+| `zsh: command not found: claude` | PATH not set | `echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc` |
+| n8n won't start | Port 5678 in use | `lsof -i :5678` then kill the PID |
+
+---
+
+# API Credentials & Naming Schema
+
+> All credential names use the `pa-` prefix to keep Phoenix Automation separate from other projects (e.g. FlowPilot) in the same n8n instance.
+
+## n8n Credentials
+
+| Credential Name | Type | Header / Auth | Status |
+|----------------|------|--------------|--------|
+| `pa-airtable` | Airtable Access Token | — | ✅ Active |
+| `pa-n8n-api` | HTTP Header Auth | `X-N8N-API-KEY` | ✅ Active |
+| `pa-clickup` | ClickUp API | — | ✅ Active |
+| `pa-smtp` | SMTP | Gmail, port 465, SSL | ✅ Active |
+| `pa-apollo-io` | HTTP Header Auth | `x-api-key` | ✅ Active |
+| `pa-anthropic` | HTTP Header Auth | `x-api-key` | ✅ Active |
+| `pa-instantly` | HTTP Header Auth | `Authorization: Bearer` | ❌ Not set up |
+
+## Email Addresses
+| Purpose | Address |
+|---------|---------|
+| Owner (Kai) | lightofkai777@gmail.com |
+| Test / staging emails | ashleyedwards305@gmail.com |
+| SMTP sender | lightofkai777@gmail.com (Gmail App Password) |
+
+## Anthropic API
+| Item | Value |
+|------|-------|
+| Model | `claude-sonnet-4-6` |
+| Max tokens | 1000 |
+| Auth header | `x-api-key` |
+| Version header | `anthropic-version: 2023-06-01` |
+| Endpoint | `https://api.anthropic.com/v1/messages` |
+| Console | console.anthropic.com |
+
+## Apollo.io API
+| Item | Value |
+|------|-------|
+| Base URL | `https://api.apollo.io/v1` |
+| Endpoint | `/mixed_people/search` |
+| Auth header | `x-api-key` |
+| ICP filters | job_titles: [owner, founder, director, ceo], num_employees: [5–50], industries: [professional services, trades, health, retail] |
+| Daily run time | 06:45 (before outreach at 07:00) |
+
+## Airtable API
+| Item | Value |
+|------|-------|
+| Base URL | `https://api.airtable.com/v0` |
+| Auth | `Authorization: Bearer YOUR_PAT` |
+| Base ID | `appMLHig3CN7WW0iW` |
+
+## ClickUp API
+| Item | Value |
+|------|-------|
+| Base URL | `https://api.clickup.com/api/v2` |
+| Auth | `Authorization: YOUR_API_KEY` |
+| Team ID | `90141018999` |
+| Space ID | `90144568071` |
+| Test project list ID | `901414583912` |
+
+---
+
+# Airtable Schema
+
+## Base ID: `appMLHig3CN7WW0iW`
+
+### ⚠️ CRITICAL: Always use table ID `tblfvqqyYukRJQYmQ`
+Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors. This has burned time multiple times. Never use the long version.
+
+### Clients Table — `tblfvqqyYukRJQYmQ`
+
+| Field | Type | Set by |
+|-------|------|--------|
+| company_name | singleLineText | Onboarding webhook |
+| email | email | Onboarding webhook |
+| contact_name | singleLineText | Onboarding webhook |
+| client_slug | singleLineText | Derived: company_name slugified |
+| project_status | singleSelect: lead, proposal_sent, onboarding.in_progress, live, churned | Onboarding automation |
+| service_tier | singleSelect: starter-build, growth-package, agency-retainer | Onboarding webhook |
+| industry | singleLineText | Manual / lead qual |
+| lead_score_grade | singleLineText: A, B, C, D | Lead qual agent |
+| scope_of_work | multilineText | Scoping agent |
+| tools_required | multilineText | Scoping agent (comma-separated) |
+| n8n_workspace_id | singleLineText | Onboarding automation |
+| n8n_credentials_template_id | singleLineText | Onboarding automation |
+| clickup_project_id | singleLineText | Onboarding automation |
+| onboarding_started_at | dateTime | Onboarding automation |
+| credentials_checklist | multilineText | Onboarding automation (JSON) |
+| client_timezone | singleLineText | e.g. America/New_York |
+| last_status_update_sent_at | dateTime | Status update agent |
+
+**Fields still to add (Haris — next task):**
+| Field | Type |
+|-------|------|
+| proposal_value | currency |
+| project_launch_date | date |
+| last_report_sent_at | date |
+| referral_sequence_sent_at | date |
+| notes | multilineText |
+
+### Prospects Table — `tbluEsKoQ2p49ktVq`
+
+| Field | Type | Notes |
+|-------|------|-------|
+| prospect_name | singleLineText | Primary |
+| company_name | singleLineText | |
+| industry | singleLineText | |
+| job_title | singleLineText | |
+| team_size | number (integer) | |
+| email | email | |
+| linkedin_url | url | |
+| outreach_status | singleSelect: pending, in_sequence, replied, closed, error | pending = ready for outreach |
+| source | singleLineText | apollo |
+| sourced_at | dateTime | ISO 8601 |
+
+### Automation Logs Table — `tblL7tDAh1KTLtwpt`
+
+| Field | Type |
+|-------|------|
+| workflow | singleLineText |
+| run_at | dateTime |
+| prospects_found | number |
+| prospects_added | number |
+| prospects_skipped | number |
+| status | singleLineText: completed / error |
+
+### Test Records (delete before first real client)
+| Record | Table | ID |
+|--------|-------|----|
+| Status Test Client | Clients | `rec92eToEuIx06mJr` |
+| Meridian Consulting Group | Clients | `rectfzSFPqjRQU4u1` |
+
+---
+
+# n8n Workflow Registry
+
+| Workflow | ID | Nodes | Trigger | Status |
+|---------|-----|-------|---------|--------|
+| [PA] Onboarding Automation | `Ro9IkQBlNaUxKR6B` | 17 | POST /payment-confirmed webhook | ✅ Built, tested, inactive |
+| [PA] Lead Generation | `pUqNr2V9Fp5gLWaD` | 11 | Daily 06:45 + manual | ✅ Built, tested, inactive |
+| [PA] Status Update Agent | `VhqfzN6afzpNDTu1` | 14 | Monday 09:00 + manual | ✅ Built, tested, inactive |
+
+## Workflow Node Summaries
+
+### [PA] Onboarding Automation (Ro9IkQBlNaUxKR6B) — 17 nodes
+```
+1. Payment Confirmed Webhook (POST /payment-confirmed)
+2. Normalize Payload (Code — flattens body.* wrapper)
+3. Validate Payload (IF — checks client_name, client_email, payment_status=paid)
+4. Derive Client Slug (Code — company_name || client_name → slugified)
+5. Airtable — Lookup Client (search by email, base: appMLHig3CN7WW0iW, table: tblfvqqyYukRJQYmQ)
+6. Merge Airtable Context (Code — merges lead_score_grade, industry, airtable_record_id)
+7. Generate Workspace Name (Code — "[PA] " + client_slug)
+8. Extract Workspace ID (Code — validates presence)
+9. Read Scope of Work (Airtable — re-reads client record for tools_required)
+10. Extract Tools Required (Code — parses comma-separated tools list)
+11. Generate Credentials Checklist (Code — {tool: pending_client_setup} per tool)
+12. Extract Template ID (Code — carries credentials_checklist forward)
+13. Create ClickUp Project (ClickUp — creates list in space 90144568071, non-blocking)
+14. Log ClickUp Error — Continue (Code — error branch, pipeline continues)
+15. Update Airtable Record (HTTP PATCH — sets project_status, workspace/template/ClickUp IDs)
+16. Send Onboarding Summary Email (SMTP — HTML to lightofkai777@gmail.com)
+17. Send Client Welcome Email (SMTP — HTML to client email)
+```
+
+### [PA] Lead Generation (pUqNr2V9Fp5gLWaD) — 11 nodes
+```
+1. Schedule Trigger (daily 06:45)
+2. Manual Trigger
+3. Fetch ICP Prospects (HTTP → Apollo.io /mixed_people/search, credential: pa-apollo-io)
+4. Check Empty Results (IF — exits if 0 results)
+5. Split Into Items (Code — normalises Apollo response to array)
+6. Loop Over Items (splitInBatches, batch=1)
+7. Check Prospect Exists (HTTP GET → Airtable Prospects table, filter by email)
+8. Dedup and Prepare (Code — sets write_to_airtable: true/false as string)
+9. Route New vs Existing (IF — checks String($json.write_to_airtable) === "true")
+10. Write New Prospect (HTTP POST → Airtable Prospects table, credential: pa-airtable)
+11. Aggregate Run Stats + Log Run Summary (Code + HTTP POST → automation_logs)
+```
+
+### [PA] Status Update Agent (VhqfzN6afzpNDTu1) — 14 nodes
+```
+1. Schedule Trigger (Monday 09:00)
+2. Manual Trigger
+3. Fetch Active Clients (HTTP GET → Airtable Clients, filter: {project_status}="live")
+4. Check Active Clients (IF — exits if 0)
+5. Exit - No Active Clients (NoOp)
+6. Split Client Records (Code — flattens Airtable records array)
+7. Get ClickUp Tasks (HTTP GET → ClickUp, uses clickup_project_id per client, include_closed=true)
+8. Merge Client and Tasks (Code — combines client fields + tasks array)
+9. Structure Task Data (Code — categorises tasks: completed/in_progress/blocked)
+10. Generate Email via Claude (HTTP POST → Anthropic API, credential: pa-anthropic)
+11. Extract Email Body (Code — parses Claude plain text, builds branded HTML template)
+12. Send Status Email (SMTP → client email, HTML format, credential: pa-smtp)
+13. Update Airtable Record (HTTP PATCH → sets last_status_update_sent_at)
+```
+
+**Workflows with scopes ready to build:**
+| Workflow | Scope file | Blocker |
+|---------|-----------|---------|
+| [PA] Outreach Agent | `docs/workflows/build-scopes/outreach-agent-scope.md` | Needs Instantly.ai account |
+| [PA] Reporting Agent | `docs/workflows/build-scopes/reporting-agent-scope.md` | None — ready |
+| [PA] Referral Trigger | `docs/workflows/build-scopes/referral-trigger-agent-scope.md` | None — ready |
+
+---
+
+# Agent Registry
+
+| Agent File | Purpose | Status |
+|-----------|---------|--------|
+| `.claude/agents/blueprint-agent.md` | Creates/improves business blueprints | ✅ |
+| `.claude/agents/blueprint-validator.md` | Validates blueprint schema | ✅ |
+| `.claude/agents/agent-builder.md` | Generates full agent stack from blueprint | ✅ |
+| `.claude/agents/lead-generation-agent.md` | Sources ICP prospects from Apollo.io | ✅ |
+| `.claude/agents/lead-qualification-agent.md` | Scores inbound leads, routes to Calendly | ✅ |
+| `.claude/agents/process-mapping-agent.md` | Maps client processes from assessment call | ✅ |
+| `.claude/agents/automation-scoping-agent.md` | Produces scope of work + proposal draft | ✅ |
+| `.claude/agents/workflow-builder-agent.md` | Builds n8n workflows from scope files | ✅ |
+| `.claude/agents/qa-agent.md` | 25-item QA checklist before activation | ✅ |
+| `.claude/agents/onboarding-automation.md` | Client workspace + credential setup | ✅ |
+| `.claude/agents/status-update-agent.md` | Weekly client status emails | ✅ |
+| `.claude/agents/proposal-drafting-agent.md` | Converts call notes to proposals | ✅ |
+| `.claude/agents/outreach-agent.md` | Cold outreach + follow-up sequences | ✅ |
+| `.claude/agents/reporting-agent.md` | Monthly performance reports | ✅ |
+| `.claude/agents/referral-trigger-agent.md` | 30-day post-launch referral sequence | ✅ |
+
+---
+
+# File Structure
+
+```
+business-agent-foundry/
+├── PROJECT_OVERVIEW.md          ← this file — read first every session
+├── .gitignore                   ← excludes .mcp.json, .DS_Store
+├── .claude/
+│   ├── agents/                  ← 14 agent definition files
+│   ├── hooks/validate-blueprint.sh
+│   ├── skills/                  ← 4 skill files (audit, create, improve, extract)
+│   └── templates/blueprint-schema.json
+└── docs/
+    ├── agents/agent-build-index.md + manifests/
+    ├── blueprints/
+    │   ├── agent-map.md
+    │   ├── assumptions-and-gaps.md
+    │   ├── build-priority.md
+    │   ├── business-blueprint.json
+    │   └── business-blueprint.md
+    ├── clients/phoenix-automation/
+    │   ├── build-log.md
+    │   ├── qa-report.md
+    │   └── scope-of-work.md
+    ├── sops/                    ← 6 SOP files
+    ├── specs/
+    │   ├── decision-logic-spec.md
+    │   ├── onboarding-readiness-spec.md
+    │   ├── qa-evidence-spec.md
+    │   └── workflow-dependency-spec.md
+    └── workflows/
+        ├── build-scopes/        ← 6 workflow build scope files
+        ├── handoff-spec.md
+        ├── project-status-spec.md
+        └── workflow-sequence.md
+```
+
+---
+
+# End-to-End Data Flow
+
+```
+1. LEAD GENERATION (daily 06:45) ✅ LIVE
+   Apollo.io → ICP filter → dedup → write Prospects (outreach_status: pending) → log
+
+2. OUTREACH (daily 07:00) ❌ NOT BUILT
+   Read pending prospects → Claude generates email → Instantly.ai queue → update status
+
+3. LEAD QUALIFICATION (inbound) ❌ NOT BUILT
+   Typeform/chatbot → score → grade A/B = Calendly → write to Airtable
+
+4. ASSESSMENT + PROCESS MAPPING (owner)
+   Owner call → process-mapping-agent → docs/clients/[slug]/process-map.md
+
+5. SCOPING + PROPOSAL (owner triggers)
+   automation-scoping-agent → pricing tree → scope-of-work.md + proposal-draft.md → owner sends
+
+6. PAYMENT → ONBOARDING ✅ LIVE
+   Stripe webhook → [PA] Onboarding Automation
+   → validate → slug → Airtable lookup → workspace name → credentials checklist
+   → ClickUp project → update Airtable → owner summary email + client welcome email
+
+7. BUILD (owner triggers)
+   workflow-builder-agent + n8n-MCP → builds client's automations in n8n
+
+8. QA (Haris runs)
+   qa-agent 25-item checklist → PASS = owner activation checklist → FAIL = back to builder
+
+9. ACTIVATION (Kai only — manual in n8n)
+
+10. LIVE
+    Status Update Agent → every Monday 09:00 → client email ✅ LIVE
+    Reporting Agent → monthly → client report ❌ NOT BUILT
+    Referral Trigger → day 30 → Instantly.ai sequence ❌ NOT BUILT
+```
+
+---
+
+# Recurring Bugs & Fixes Reference
+
+> These bugs have appeared multiple times. Check here before debugging from scratch.
+
+| Bug | Symptom | Root Cause | Fix |
+|-----|---------|-----------|-----|
+| Airtable 403 Forbidden | `INVALID_PERMISSIONS_OR_MODEL_NOT_FOUND` | Wrong table ID (long version) | Use `tblfvqqyYukRJQYmQ` not the long version |
+| Code node json error | `A 'json' property isn't an object` | Return not wrapped correctly | Always return `[{ json: { ...fields } }]` |
+| IF node type error | `Wrong type: '' is a string but was expecting array` | Array operator on string field | Use Code node to set boolean flag, then IF checks string `"true"/"false"` |
+| Blank emails | Email body renders empty | Claude HTML unpredictable format | Ask Claude for plain text sections, build HTML in Code node |
+| Loop node stale state | Loop stops after first client | splitInBatches retains state | Clear `staticData` to null or replace with direct Code node processing |
+| n8n timeout from Vietnam | `Request timed out` in Claude Code | High latency to Anthropic servers | Connect VPN to US server before starting Claude Code |
+| Auth conflict timeout | `Auth conflict: Using ANTHROPIC_API_KEY` | Env var + Console login both active | `unset ANTHROPIC_API_KEY` then restart claude |
+| Node reference error | `Referenced node doesn't exist` | Node was renamed/removed | Change all `$('Old Node Name')` references to `$json` |
+| ClickUp Folder error | `Error fetching options from ClickUp` | Space has no folders | Toggle `Folderless List` ON in ClickUp node |
+| n8n MCP "Failed to connect" | Health check shows failed | Display bug only | Ignore — test with actual MCP call to confirm it works |
+
+---
+
+# Decisions & Reasoning
+
+| Decision | Rationale |
+|---------|-----------|
+| n8n self-hosted (local) | Free tier, full control, no enterprise features needed |
+| n8n-MCP via local clone | npx download times out (500MB) from SE Asia — must clone and build locally |
+| Hardcoded values, not n8n Variables | Variables is enterprise-only on community edition |
+| n8n Projects stubbed (nodes 7+11) | `/api/v1/projects` returns 403 on community edition — replaced with Code nodes |
+| pa- prefix for all credentials | Separates Phoenix Automation from FlowPilot in same n8n instance |
+| Two email nodes in onboarding | Internal owner summary + client welcome serve different purposes |
+| company_name \|\| client_name for slug | Stripe sends billing contact in client_name — company_name is more reliable for slug |
+| Unset ANTHROPIC_API_KEY for Claude Code | Env var + Console login simultaneously causes request timeouts |
+| VPN (US server) required | Anthropic API latency from Vietnam exceeds Claude Code timeout threshold |
+| Plain text → JS HTML for emails | Claude HTML output is unpredictable; Code node builds guaranteed structure |
+| Folderless List for ClickUp node | Phoenix Automation space has no folders — lists are at space level directly |
+| String comparison for IF dedup | n8n v2 IF node array operators are unreliable — string "true"/"false" is bulletproof |
+| n8n Cloud for team access | n8n Projects requires enterprise on self-hosted; Cloud Starter (~$20/mo) supports 2 users |
+| filterByFormula uses double quotes | Airtable rejects single quotes in formula strings — always use `{field}="value"` |
+
+---
+
+# Known Issues
+
+| Issue | Severity | Status | Owner |
+|-------|---------|--------|-------|
+| Test records in Airtable/ClickUp need cleanup | Low | ⏳ Before first real client | Kai/Haris |
+| Error handling workflow not connected | Medium | Deferred | Haris |
+| Instantly.ai not set up | Blocks outreach | ⏳ Needs account | Kai |
+| Default GitHub branch is wrong | Low | ⏳ Change to main in Settings | Kai |
+| Airtable Clients table missing 5 fields | Low | ⏳ Next session | Haris |
+| ClickUp space structure not set up | Medium | ⏳ Next session | Haris |
+| n8n access for Haris | Blocker for collaboration | ⏳ Kai setting up n8n Cloud | Kai |
+
+---
+
+# TODO / Roadmap
+
+## Immediate
+- [ ] Add 5 missing fields to Airtable Clients table (Haris)
+- [ ] Set up ClickUp space structure — Client Projects folder + task template (Haris)
+- [ ] Clean up test records in Airtable + ClickUp (Haris)
+- [ ] Kai sets up n8n Cloud and invites Haris (Kai)
+- [ ] Change default GitHub branch to main (Kai)
+
+## Short-term
+- [ ] Build [PA] Reporting Agent (Haris — scope ready)
+- [ ] Set up Instantly.ai + pa-instantly credential (Kai)
+- [ ] Build [PA] Outreach Agent (Haris — after Instantly.ai)
+- [ ] Build error handling workflow (Haris)
+- [ ] Full pipeline test with real payment webhook (Kai)
+
+## Medium-term
+- [ ] Build remaining workflows (Referral Trigger, Lead Qual, Proposal Drafting)
+- [ ] Activate all 3 live workflows on their schedules (Kai)
+- [ ] First real client onboarded end-to-end
+
+## Long-term
+- [ ] Apollo.io paid plan for higher volume
+- [ ] Generalize Agent Foundry for second business type
+
+---
+
+# Session Handoff Template
+
+> Fill this in at the end of every session before committing.
+
+```
+## Session Handoff — [DATE]
+**Worked by:** [Kai / Haris]
+**Duration:** [approx]
+
+### What was completed
+- 
+
+### What is in progress (not finished)
+- 
+
+### Blockers for next session
+- 
+
+### Next person should start with
+1. 
+
+### Files changed this session
+- 
+```
+
+---
+
+## Session Handoff — 2026-03-20
+**Worked by:** Kai + Haris
+**Duration:** ~2 days of sessions
+
+### What was completed
+- [PA] Lead Generation dedup bug fixed and confirmed working (execution 180)
+- [PA] Status Update Agent built, all bugs fixed, branded emails working
+- pa-anthropic credential added to n8n
+- client_timezone + last_status_update_sent_at fields added to Airtable Clients table
+- PROJECT_OVERVIEW.md v2 created with full context
+
+### What is in progress
+- Kai setting up n8n Cloud for Haris access
+
+### Blockers for next session
+- Haris cannot work in n8n until Kai completes Cloud setup
+- Outreach Agent blocked until Instantly.ai account is created
+
+### Next person should start with
+1. Pull latest main: `git pull origin main`
+2. Read PROJECT_OVERVIEW.md in full
+3. Run smoke test in Claude Code
+4. Haris: Add 5 missing Airtable fields + set up ClickUp structure
+5. Kai: Complete n8n Cloud setup and invite Haris
+
+### Files changed this session
+- PROJECT_OVERVIEW.md (this file)
+- Airtable Clients table (2 new fields via API)
+- n8n workflows: VhqfzN6afzpNDTu1 (multiple node fixes)
+
+---
+
+# Change Log
+
+- **[2026-03-20]** — PROJECT_OVERVIEW.md v2: added node summaries, recurring bugs reference, session handoff template, environment setup details, email addresses, common startup errors
+- **[2026-03-20]** — [PA] Status Update Agent built and tested (14 nodes, ID: VhqfzN6afzpNDTu1); branded HTML emails; ClickUp integration; pa-anthropic added; client_timezone + last_status_update_sent_at added to Clients table
+- **[2026-03-20]** — [PA] Lead Generation dedup fully resolved; execution 180: 3 processed, 1 skipped, 2 written
+- **[2026-03-20]** — n8n Cloud decision: ~$20/mo Starter plan for shared team access
+- **[2026-03-19]** — PROJECT_OVERVIEW.md v1 created
+- **[2026-03-19]** — [PA] Lead Generation built (11 nodes, ID: pUqNr2V9Fp5gLWaD); Prospects + automation_logs tables created; lead gen agent files validated
+- **[2026-03-19]** — Haris joined; setup complete; lead gen branch merged to main
+- **[2026-03-17]** — Client slug bug fixed; execution 160 confirmed
+- **[2026-03-17]** — Dual email redesign; execution 159 17/17 pass
+- **[2026-03-17]** — Nodes 7+11 redesigned for community edition; execution 158 17/17 pass
+- **[2026-03-17]** — E2E test (Meridian Consulting Group); credentials_checklist field added
+- **[2026-03-17]** — QA conditional pass on [PA] Onboarding Automation; SMTP fixed
+- **[2026-03-17]** — [PA] Onboarding Automation variables hardcoded
+- **[2026-03-16]** — n8n-MCP connected via local build; auth conflict resolved
+- **[2026-03-16]** — [PA] Onboarding Automation built (17 nodes, ID: Ro9IkQBlNaUxKR6B)
+- **[2026-03-16]** — Agent builder run: 6 definitions, 6 SOPs, 5 scopes
+- **[2026-03-16]** — Airtable Clients table structured; 4 credentials added; local dev stack operational
+- **[2026-03-15]** — Simulation 2 (Northgate Legal): 7/11 issues CLOSED; Agent Builder designed
+- **[2026-03-14]** — Correction/spec layer + coordination layer + 5 delivery agents
+- **[2026-03-14]** — Blueprint Agent (Layer 1) complete; Phoenix Automation blueprint validated
