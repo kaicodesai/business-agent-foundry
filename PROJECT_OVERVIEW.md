@@ -87,6 +87,10 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - n8n Cloud setup — Kai signing up (~$20/mo Starter) to give Haris shared access
 - Default GitHub branch needs switching from `claude/setup-blueprint-agent-YnHBF` to `main` (Kai → Settings → Branches)
 
+## In Progress ⏳ (continued)
+- Airtable Clients table — 5 fields missing, 10 proposed fields to add (see docs/setup/airtable-structure.md)
+- ClickUp space structure — blueprint defined, manual setup + automation update pending (see docs/setup/clickup-structure.md)
+
 ## Not Started ❌
 - [PA] Outreach Agent workflow (blocked on Instantly.ai)
 - [PA] Reporting Agent workflow (scope ready)
@@ -94,8 +98,6 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - [PA] Lead Qualification workflow
 - [PA] Proposal Drafting workflow
 - Error handling workflow (deferred from QA)
-- ClickUp space structure (Client Projects folder + task template)
-- Airtable Clients table missing 5 fields (see schema section)
 - Instantly.ai account + pa-instantly credential
 - Test record cleanup (Status Test Client, Meridian Consulting Group)
 - End-to-end pipeline test with real client
@@ -454,6 +456,9 @@ business-agent-foundry/
     │   ├── onboarding-readiness-spec.md
     │   ├── qa-evidence-spec.md
     │   └── workflow-dependency-spec.md
+    ├── setup/
+    │   ├── airtable-structure.md  ← canonical Airtable schema (all tables, all fields)
+    │   └── clickup-structure.md   ← ClickUp space blueprint (folders, lists, tasks)
     └── workflows/
         ├── build-scopes/        ← 6 workflow build scope files
         ├── handoff-spec.md
@@ -559,8 +564,9 @@ business-agent-foundry/
 # TODO / Roadmap
 
 ## Immediate
-- [ ] Add 5 missing fields to Airtable Clients table (Haris)
-- [ ] Set up ClickUp space structure — Client Projects folder + task template (Haris)
+- [~] Add 5 missing fields to Airtable Clients table (Haris) — blueprint in docs/setup/airtable-structure.md, needs actual implementation
+- [~] Set up ClickUp space structure — blueprint in docs/setup/clickup-structure.md — Internal folder + lists: manual setup by Kai; client folder structure: requires onboarding automation update
+- [ ] Kai reviews airtable-structure.md and clickup-structure.md decisions before implementing
 - [ ] Clean up test records in Airtable + ClickUp (Haris)
 - [ ] Kai sets up n8n Cloud and invites Haris (Kai)
 - [ ] Change default GitHub branch to main (Kai)
@@ -607,6 +613,39 @@ business-agent-foundry/
 ### Files changed this session
 - 
 ```
+
+---
+
+## Session Handoff — 2026-03-20 (Session 2)
+**Worked by:** Haris (via Claude Code VSCode)
+**Duration:** ~1 session
+
+### What was completed
+- Airtable structure blueprint written: docs/setup/airtable-structure.md (all 3 tables, 52 total fields when complete, 5 missing + 10 proposed fields identified, decisions flagged)
+- ClickUp structure blueprint written: docs/setup/clickup-structure.md (full folder/list/task definition, onboarding automation change spec, decisions flagged)
+- Haris's machine details updated in PROJECT_OVERVIEW.md (OS, Node, Git, Claude Code versions)
+- PROJECT_OVERVIEW.md updated: setup files referenced in file structure, TODO updated, new session handoff added
+
+### What is in progress (not finished)
+- Airtable: blueprint exists but fields not yet added to Airtable (needs credentials to call API)
+- ClickUp: blueprint exists but folders/lists not yet created (needs ClickUp API key)
+
+### Blockers for next session
+- Haris needs Kai's Airtable PAT and ClickUp API key to add the 5 missing fields and create the Internal folder/lists
+- Haris does not yet have n8n access (Kai setting up n8n Cloud)
+
+### Next person should start with
+1. Pull latest main: `git pull origin main`
+2. Read PROJECT_OVERVIEW.md in full
+3. **Kai:** Review docs/setup/airtable-structure.md — confirm all 6 decisions, then share Airtable PAT so Haris can add fields
+4. **Kai:** Review docs/setup/clickup-structure.md — confirm 5 decisions, then share ClickUp API key so Haris can create Internal folder and lists
+5. **Kai:** Confirm whether to update onboarding automation to use folder+4-lists structure before first client
+6. **Haris (after API keys):** Add 5 missing Airtable fields, then create ClickUp Internal folder and lists
+
+### Files changed this session
+- docs/setup/airtable-structure.md (new)
+- docs/setup/clickup-structure.md (new)
+- PROJECT_OVERVIEW.md (updated: file structure, TODO, session handoff, Haris machine details)
 
 ---
 
