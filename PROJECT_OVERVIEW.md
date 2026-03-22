@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 2.0 — Last updated: 2026-03-20 — Updated by: Kai + Haris
+> **Version:** 2.1 — Last updated: 2026-03-22 — Updated by: Kai + Haris
 
 ---
 
@@ -571,7 +571,7 @@ business-agent-foundry/
 
 | Issue | Severity | Status | Owner |
 |-------|---------|--------|-------|
-| Test records in Airtable/ClickUp need cleanup | Low | ⏳ Before first real client | Kai/Haris |
+| Test records in Airtable/ClickUp need cleanup | Low | ✅ Partially done 2026-03-22 — test ClickUp folder deleted, Status Test Client reset | Kai/Haris |
 | Error handling workflow not connected | Medium | Deferred | Haris |
 | Instantly.ai not set up | Blocks outreach | ⏳ Needs account | Kai |
 | Default GitHub branch is wrong | Low | ⏳ Change to main in Settings | Kai |
@@ -594,7 +594,9 @@ business-agent-foundry/
 - [x] ✅ Update onboarding automation to folder+4-lists ClickUp structure (2026-03-22)
 - [x] ✅ Rename clickup_project_id → clickup_folder_id in Airtable + all workflows (2026-03-22)
 - [x] ✅ Update Status Update Agent to read tasks from all folder lists (2026-03-22)
-- [ ] Clean up test records in Airtable + ClickUp (Haris)
+- [x] ✅ End-to-end test [PA] Onboarding Automation — PASS 2026-03-22 (execution 209, all 4 confirmation points met)
+- [x] ✅ Clean up test records — test ClickUp folder deleted, Status Test Client reset to test-complete
+- [ ] Meridian Consulting Group test record still has stale n8n workspace/credentials IDs — clean up before first real client (Kai)
 - [ ] Kai sets up n8n Cloud and invites Haris (Kai)
 - [ ] Change default GitHub branch to main (Kai)
 
@@ -645,15 +647,48 @@ business-agent-foundry/
 
 ---
 
+## Session Handoff — 2026-03-22 (Session 5)
+**Worked by:** Kai + Haris (via Claude Code)
+
+### What was completed
+- [PA] Onboarding Automation end-to-end test: **PASS** (execution 209)
+  - ClickUp folder + 4 lists (Onboarding/Build/QA/Live) confirmed created
+  - `clickup_folder_id` written to Airtable, both emails sent
+- Bugs found and fixed during testing:
+  1. ClickUp API v2 doesn't support nested folders — changed to `POST /api/v2/space/90144568071/folder` (space level)
+  2. HTTP list creation nodes: wrong `jsonBody` expression format — fixed to plain JSON strings
+  3. Airtable `filterByFormula` single-quote bug — fixed to double quotes
+  4. `Extract Tools Required` hard error on empty tools — changed to graceful warn + 3-level fallback
+- Discovered stable n8n API key: "FlowPilot OS" (no expiry). "phoenix-local" key has `exp` claim and is unreliable.
+- Confirmed ClickUp API key: `pk_198267967_P2B3ZQTSNOTEJO5BVZ83PQBU3V0M3R2B` (from decrypted pa-clickup credential)
+- Cleaned up test ClickUp folder (90147998711 deleted), Status Test Client Airtable record reset to test-complete
+- Workflow deactivated after testing (as per project rules)
+
+### Blockers for next session
+- Haris does not have n8n access yet (Kai setting up n8n Cloud)
+- Outreach Agent blocked on Instantly.ai
+- Meridian test record has stale n8n workspace/credentials IDs — clean before first real client
+
+### Next person should start with
+1. `git pull origin main` then read PROJECT_OVERVIEW.md
+2. **Kai:** Plan client n8n model session — onboarding flow needs updating before first real client
+3. **Haris:** Build [PA] Reporting Agent once n8n Cloud access is ready
+
+### Files changed this session
+- `docs/clients/phoenix-automation/build-log.md` — updated [PA] Onboarding Automation status, node list, test results, bugs fixed
+- `docs/setup/clickup-structure.md` — updated structure to reflect space-level folders (ClickUp API constraint)
+- `PROJECT_OVERVIEW.md` — version 2.1, Known Issues updated, TODO updated, Session 5 handoff added
+
+---
+
 ## Session Handoff — 2026-03-22 (Session 4)
 **Worked by:** Kai + Haris (via Claude Code)
 
 ### What was completed
 - 10 Airtable Clients fields added (n8n_workflow_ids, hours_saved_per/week/year, last_month_executions/errors, total_executions, referral_source, referral_sequence_sent, lead_score_total, pre_call_brief)
 - `clickup_project_id` renamed to `clickup_folder_id` in Airtable + both workflows
-- [PA] Onboarding Automation updated: replaces folderless list with folder + 4 lists (Onboarding, Build, QA, Live) inside Client Projects (90147969224). Now 24 nodes.
+- [PA] Onboarding Automation updated: replaces folderless list with folder + 4 lists (Onboarding, Build, QA, Live). Now 24 nodes.
 - [PA] Status Update Agent updated: reads all tasks from folder via team API (`folder_id[]` param). Now 15 nodes.
-- Decisions made by Kai: folder+4-lists ClickUp structure ✅, 10 proposed fields ✅, client n8n model (each client gets own account — needs dedicated session before first client)
 
 ### Blockers for next session
 - Haris does not have n8n access yet (Kai setting up n8n Cloud)
@@ -661,9 +696,9 @@ business-agent-foundry/
 
 ### Next person should start with
 1. `git pull origin main` then read PROJECT_OVERVIEW.md
-2. **Kai:** Test onboarding automation end-to-end — trigger test webhook, verify ClickUp folder + 4 lists created, `clickup_folder_id` written to Airtable
-3. **Kai:** Plan client n8n model session — onboarding flow needs updating before first real client
-4. **Haris:** Build [PA] Reporting Agent once n8n Cloud access is ready
+2. Test onboarding automation end-to-end (completed in Session 5)
+
+### Files changed this session
 - Airtable Clients table: 10 new fields added, `clickup_project_id` renamed to `clickup_folder_id`
 - n8n workflow Ro9IkQBlNaUxKR6B: 24 nodes (replaced ClickUp folderless node with folder+4-lists structure)
 - n8n workflow VhqfzN6afzpNDTu1: 15 nodes (updated to read folder tasks, renamed clickup field references)

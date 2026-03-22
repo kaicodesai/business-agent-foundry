@@ -1,14 +1,13 @@
 # ClickUp Structure — Phoenix Automation
-**Version:** 1.1
+**Version:** 1.2
 **Last updated:** 2026-03-22
 **Team ID:** `90141018999`
 **Space ID:** `90144568071`
 **Space Name:** Phoenix Automation
-**Status:** ✅ Implemented — onboarding automation updated 2026-03-22 to create folder+4-lists structure
+**Status:** ✅ Implemented and end-to-end tested — onboarding automation creates folder+4-lists at space level
 
-> This document defines the target ClickUp structure for Phoenix Automation.
-> It replaces the current folderless list approach.
-> **Before implementing:** Kai must decide on the folder migration plan (see Decision section).
+> This document defines the ClickUp structure for Phoenix Automation.
+> Client folders are created at **space level** (not nested inside [PA] Client Projects) due to ClickUp API v2 not supporting nested folders.
 
 ---
 
@@ -17,34 +16,36 @@
 ```
 Space: Phoenix Automation (90144568071)
 │
-├── Folder: [PA] Client Projects
-│   │
-│   └── Folder: [client-slug]           ← one created per client by onboarding automation
-│       ├── List: Onboarding
-│       ├── List: Build
-│       ├── List: QA
-│       └── List: Live
+├── Folder: [PA] Client Projects     ← manually managed reference folder (not used by automation)
+├── Folder: Internal
+│   ├── List: Lead Management
+│   └── List: Operations
 │
-└── Folder: Internal
-    ├── List: Lead Management
-    └── List: Operations
+└── Folder: [client-slug]            ← one created per client by onboarding automation (space level)
+    ├── List: Onboarding
+    ├── List: Build
+    ├── List: QA
+    └── List: Live
 ```
+
+> **Note:** The original design placed client folders inside `[PA] Client Projects`, but ClickUp API v2 does not support nested folders (`POST /api/v2/folder/{folder_id}/folder` returns 404). Client folders are created at space level instead using `POST /api/v2/space/90144568071/folder`.
 
 ---
 
-## Section 1 — [PA] Client Projects
+## Section 1 — Client Folders
 
 ### Per-Client Folder
 
 **Format:** `[client-slug]` (e.g. `meridian-consulting-group`)
 **Created by:** [PA] Onboarding Automation — n8n workflow `Ro9IkQBlNaUxKR6B`
 **Created when:** Payment webhook fires and payload validates
+**API endpoint:** `POST /api/v2/space/90144568071/folder`
 
-**Current vs. target behaviour:**
-- **Current:** Onboarding automation creates a **folderless list** at space level named `[PA] [company_name]`
-- **Target:** Onboarding automation creates a **folder** named `[client-slug]` inside `[PA] Client Projects`, then creates 4 lists inside it
-
-> ⚠️ **Decision for Kai:** Switching from folderless lists to nested folders requires updating the onboarding automation (node 13 — Create ClickUp Project). This is a one-node change. The ClickUp API call changes from `POST /list` (space-level) to `POST /folder` then `POST /list` (folder-level). Recommend doing this update before the first real client.
+**As-built behaviour:**
+- Onboarding automation creates a **folder** named `[client-slug]` at space level
+- Creates **4 lists** inside that folder: `Onboarding`, `Build`, `QA`, `Live`
+- Stores the **folder ID** in Airtable `clickup_folder_id`
+- End-to-end tested 2026-03-22 — folder and 4 lists confirmed created in ClickUp
 
 ---
 
