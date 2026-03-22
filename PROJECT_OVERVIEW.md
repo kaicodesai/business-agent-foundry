@@ -12,7 +12,7 @@
 > 4. Run the smoke test to confirm your environment is connected
 >
 > **At the end of every session:**
-> 1. Update **Current Status** — what changed
+> 1. Update this file ONCE at the end of the session — not after every task
 > 2. Update **Known Issues** — resolve fixed ones, add new ones
 > 3. Update **TODO / Roadmap** — check off completed items
 > 4. Fill in the **Session Handoff** section at the bottom
@@ -614,6 +614,8 @@ business-agent-foundry/
 - [ ] Apollo.io paid plan for higher volume
 - [ ] Generalize Agent Foundry for second business type
 
+> **Note — Client n8n model:** Each client to have their own n8n account. Onboarding flow needs updating to reflect this. Dedicate a session to this before first real client.
+
 ---
 
 # Session Handoff Template
@@ -644,53 +646,24 @@ business-agent-foundry/
 ---
 
 ## Session Handoff — 2026-03-22 (Session 4)
-**Worked by:** Haris (via Claude Code)
-**Duration:** ~1 session
+**Worked by:** Kai + Haris (via Claude Code)
 
 ### What was completed
-- **TASK 1 — 10 Airtable fields added to Clients table:**
-  - `n8n_workflow_ids` (multilineText) → `fld0faAZi4TmwpP9J`
-  - `hours_saved_per_week` (number, 2dp) → `fldiGcSZWVWTxv5xH`
-  - `hours_saved_per_year` (number, 2dp) → `fldpCRJ523c1WaRh0`
-  - `last_month_executions` (number, integer) → `fldM0lDU75YrGSldA`
-  - `last_month_errors` (number, integer) → `fldSezJjtgJdbTaFL`
-  - `total_executions` (number, integer) → `fldF0VI87ANX2HMlR`
-  - `referral_source` (singleLineText) → `fld3EJ6umiwft6Sh0`
-  - `referral_sequence_sent` (checkbox) → `fld5AJCnq1Qd9BYmy`
-  - `lead_score_total` (number, integer) → `fld2rpfsXSFipmqi6`
-  - `pre_call_brief` (multilineText) → `fldCd8333z772ATsU`
-- **TASK 2 — Onboarding Automation ClickUp overhaul (Ro9IkQBlNaUxKR6B):**
-  - Removed: Create ClickUp Project (old folderless list node)
-  - Added: Create Client ClickUp Folder (HTTP POST → /api/v2/folder/90147969224/folder)
-  - Added: Extract Folder ID (Code — validates folder.id, merges priorData)
-  - Added: Create List — Onboarding, Build, QA, Live (4 HTTP POST nodes)
-  - Modified: Merge ClickUp Folder ID (was "Merge ClickUp ID — Success")
-  - Modified: Log ClickUp Error — Continue (updated to use clickup_folder_id)
-  - Modified: Update Airtable Record (writes `clickup_folder_id` not `clickup_project_id`)
-  - Workflow now has 24 nodes (was 17)
-- **Airtable field rename:** `clickup_project_id` → `clickup_folder_id` (field ID: fld9PdwZetXwjENmb)
-- **[PA] Status Update Agent update (VhqfzN6afzpNDTu1):**
-  - Split Client Records: now outputs `clickup_folder_id` (reads renamed field)
-  - Get ClickUp Tasks → Get All Tasks From Folder: URL changed to `/api/v2/team/90141018999/task?folder_id[]={clickup_folder_id}&include_closed=true` — fetches tasks from all 4 lists at once
-  - Structure Task Data: now passes `clickup_folder_id` (not `clickup_project_id`)
-  - Workflow now has 15 nodes (was 14)
-- PROJECT_OVERVIEW.md updated: schema, workflow node summaries, Known Issues, TODO
-
-### What is in progress (not finished)
-- End-to-end test of updated onboarding automation — needs real ClickUp API call to verify folder creation works
+- 10 Airtable Clients fields added (n8n_workflow_ids, hours_saved_per/week/year, last_month_executions/errors, total_executions, referral_source, referral_sequence_sent, lead_score_total, pre_call_brief)
+- `clickup_project_id` renamed to `clickup_folder_id` in Airtable + both workflows
+- [PA] Onboarding Automation updated: replaces folderless list with folder + 4 lists (Onboarding, Build, QA, Live) inside Client Projects (90147969224). Now 24 nodes.
+- [PA] Status Update Agent updated: reads all tasks from folder via team API (`folder_id[]` param). Now 15 nodes.
+- Decisions made by Kai: folder+4-lists ClickUp structure ✅, 10 proposed fields ✅, client n8n model (each client gets own account — needs dedicated session before first client)
 
 ### Blockers for next session
-- Haris does not yet have n8n access (Kai setting up n8n Cloud)
-- Outreach Agent blocked on Instantly.ai account
+- Haris does not have n8n access yet (Kai setting up n8n Cloud)
+- Outreach Agent blocked on Instantly.ai
 
 ### Next person should start with
-1. Pull latest main: `git pull origin main`
-2. Read PROJECT_OVERVIEW.md in full
-3. **Kai:** Test updated onboarding automation — trigger a test webhook payload and verify: folder created in ClickUp Client Projects, 4 lists created inside, `clickup_folder_id` written to Airtable
-4. **Haris:** Build [PA] Reporting Agent (scope ready at docs/workflows/build-scopes/reporting-agent-scope.md) once n8n Cloud is available
-
-### Files changed this session
-- PROJECT_OVERVIEW.md (schema updated, workflow summaries updated, Known Issues resolved, TODO checked, session handoff added)
+1. `git pull origin main` then read PROJECT_OVERVIEW.md
+2. **Kai:** Test onboarding automation end-to-end — trigger test webhook, verify ClickUp folder + 4 lists created, `clickup_folder_id` written to Airtable
+3. **Kai:** Plan client n8n model session — onboarding flow needs updating before first real client
+4. **Haris:** Build [PA] Reporting Agent once n8n Cloud access is ready
 - Airtable Clients table: 10 new fields added, `clickup_project_id` renamed to `clickup_folder_id`
 - n8n workflow Ro9IkQBlNaUxKR6B: 24 nodes (replaced ClickUp folderless node with folder+4-lists structure)
 - n8n workflow VhqfzN6afzpNDTu1: 15 nodes (updated to read folder tasks, renamed clickup field references)
