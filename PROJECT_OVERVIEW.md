@@ -289,7 +289,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | tools_required | multilineText | Scoping agent (comma-separated) |
 | n8n_workspace_id | singleLineText | Onboarding automation |
 | n8n_credentials_template_id | singleLineText | Onboarding automation |
-| clickup_project_id | singleLineText | Onboarding automation |
+| clickup_folder_id | singleLineText | Onboarding automation — stores ClickUp folder ID (not list ID) — field ID: `fld9PdwZetXwjENmb` |
 | onboarding_started_at | dateTime | Onboarding automation |
 | credentials_checklist | multilineText | Onboarding automation (JSON) |
 | client_timezone | singleLineText | e.g. America/New_York |
@@ -299,6 +299,16 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | last_report_sent_at | date | reporting-agent — field ID: `fldIhkhfcW1py0A69` |
 | referral_sequence_sent_at | date | referral-trigger-agent — field ID: `fldWq5wBqGqlBBuuY` |
 | Notes | multilineText | Already existed as default Airtable field — field ID: `fld3YqOzRo6gufQbW` |
+| n8n_workflow_ids | multilineText | reporting-agent reads to fetch execution logs — field ID: `fld0faAZi4TmwpP9J` |
+| hours_saved_per_week | number (2dp) | reporting-agent — field ID: `fldiGcSZWVWTxv5xH` |
+| hours_saved_per_year | number (2dp) | reporting-agent — field ID: `fldpCRJ523c1WaRh0` |
+| last_month_executions | number (integer) | reporting-agent — field ID: `fldM0lDU75YrGSldA` |
+| last_month_errors | number (integer) | reporting-agent — field ID: `fldSezJjtgJdbTaFL` |
+| total_executions | number (integer) | reporting-agent (cumulative) — field ID: `fldF0VI87ANX2HMlR` |
+| referral_source | singleLineText | Owner (manual — which client referred this lead) — field ID: `fld3EJ6umiwft6Sh0` |
+| referral_sequence_sent | checkbox | referral-trigger-agent gate — prevents duplicate sequences — field ID: `fld5AJCnq1Qd9BYmy` |
+| lead_score_total | number (integer) | lead-qualification-agent — 0–8 Typeform score — field ID: `fld2rpfsXSFipmqi6` |
+| pre_call_brief | multilineText | lead-qualification-agent — Claude-written owner brief — field ID: `fldCd8333z772ATsU` |
 
 ### Prospects Table — `tbluEsKoQ2p49ktVq`
 
@@ -338,31 +348,38 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 
 | Workflow | ID | Nodes | Trigger | Status |
 |---------|-----|-------|---------|--------|
-| [PA] Onboarding Automation | `Ro9IkQBlNaUxKR6B` | 17 | POST /payment-confirmed webhook | ✅ Built, tested, inactive |
+| [PA] Onboarding Automation | `Ro9IkQBlNaUxKR6B` | 24 | POST /payment-confirmed webhook | ✅ Updated (folder+4-lists), inactive |
 | [PA] Lead Generation | `pUqNr2V9Fp5gLWaD` | 11 | Daily 06:45 + manual | ✅ Built, tested, inactive |
-| [PA] Status Update Agent | `VhqfzN6afzpNDTu1` | 14 | Monday 09:00 + manual | ✅ Built, tested, inactive |
+| [PA] Status Update Agent | `VhqfzN6afzpNDTu1` | 15 | Monday 09:00 + manual | ✅ Updated (reads folder tasks), inactive |
 
 ## Workflow Node Summaries
 
-### [PA] Onboarding Automation (Ro9IkQBlNaUxKR6B) — 17 nodes
+### [PA] Onboarding Automation (Ro9IkQBlNaUxKR6B) — 24 nodes
 ```
-1. Payment Confirmed Webhook (POST /payment-confirmed)
-2. Normalize Payload (Code — flattens body.* wrapper)
-3. Validate Payload (IF — checks client_name, client_email, payment_status=paid)
-4. Derive Client Slug (Code — company_name || client_name → slugified)
-5. Airtable — Lookup Client (search by email, base: appMLHig3CN7WW0iW, table: tblfvqqyYukRJQYmQ)
-6. Merge Airtable Context (Code — merges lead_score_grade, industry, airtable_record_id)
-7. Generate Workspace Name (Code — "[PA] " + client_slug)
-8. Extract Workspace ID (Code — validates presence)
-9. Read Scope of Work (Airtable — re-reads client record for tools_required)
+1.  Payment Confirmed Webhook (POST /payment-confirmed)
+2.  Normalize Payload (Code — flattens body.* wrapper)
+3.  Validate Payload (IF — checks client_name, client_email, payment_status=paid)
+4.  Derive Client Slug (Code — company_name || client_name → slugified)
+5.  Airtable — Lookup Client (search by email, base: appMLHig3CN7WW0iW, table: tblfvqqyYukRJQYmQ)
+6.  Merge Airtable Context (Code — merges lead_score_grade, industry, airtable_record_id)
+7.  Create n8n Workspace (Code — stubbed for community edition)
+8.  Extract Workspace ID (Code — validates presence)
+9.  Read Scope of Work (Airtable — re-reads client record for tools_required)
 10. Extract Tools Required (Code — parses comma-separated tools list)
-11. Generate Credentials Checklist (Code — {tool: pending_client_setup} per tool)
+11. Create Credentials Template (Code — {tool: pending_client_setup} per tool)
 12. Extract Template ID (Code — carries credentials_checklist forward)
-13. Create ClickUp Project (ClickUp — creates list in space 90144568071, non-blocking)
-14. Log ClickUp Error — Continue (Code — error branch, pipeline continues)
-15. Update Airtable Record (HTTP PATCH — sets project_status, workspace/template/ClickUp IDs)
-16. Send Onboarding Summary Email (SMTP — HTML to lightofkai777@gmail.com)
-17. Send Client Welcome Email (SMTP — HTML to client email)
+13. Create Client ClickUp Folder (HTTP POST /api/v2/folder/90147969224/folder — creates [client-slug] folder, non-blocking)
+14. Extract Folder ID (Code — validates folder.id, merges with priorData)
+15. Create List — Onboarding (HTTP POST /api/v2/folder/{folder_id}/list)
+16. Create List — Build (HTTP POST /api/v2/folder/{folder_id}/list)
+17. Create List — QA (HTTP POST /api/v2/folder/{folder_id}/list)
+18. Create List — Live (HTTP POST /api/v2/folder/{folder_id}/list)
+19. Merge ClickUp Folder ID (Code — extracts clickup_folder_id, merges with priorData)
+20. Log ClickUp Error — Continue (Code — error branch, sets clickup_folder_id: null, pipeline continues)
+21. Update Airtable Record (HTTP PATCH — sets project_status, workspace/template/clickup_folder_id)
+22. Send Onboarding Summary Email (SMTP — HTML to lightofkai777@gmail.com)
+23. Send Client Welcome Email (SMTP — HTML to client email)
+24. Stop — Invalid Payload (stopAndError — false branch of Validate Payload)
 ```
 
 ### [PA] Lead Generation (pUqNr2V9Fp5gLWaD) — 11 nodes
@@ -380,21 +397,23 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 11. Aggregate Run Stats + Log Run Summary (Code + HTTP POST → automation_logs)
 ```
 
-### [PA] Status Update Agent (VhqfzN6afzpNDTu1) — 14 nodes
+### [PA] Status Update Agent (VhqfzN6afzpNDTu1) — 15 nodes
 ```
-1. Schedule Trigger (Monday 09:00)
-2. Manual Trigger
-3. Fetch Active Clients (HTTP GET → Airtable Clients, filter: {project_status}="live")
-4. Check Active Clients (IF — exits if 0)
-5. Exit - No Active Clients (NoOp)
-6. Split Client Records (Code — flattens Airtable records array)
-7. Get ClickUp Tasks (HTTP GET → ClickUp, uses clickup_project_id per client, include_closed=true)
-8. Merge Client and Tasks (Code — combines client fields + tasks array)
-9. Structure Task Data (Code — categorises tasks: completed/in_progress/blocked)
-10. Generate Email via Claude (HTTP POST → Anthropic API, credential: pa-anthropic)
-11. Extract Email Body (Code — parses Claude plain text, builds branded HTML template)
-12. Send Status Email (SMTP → client email, HTML format, credential: pa-smtp)
-13. Update Airtable Record (HTTP PATCH → sets last_status_update_sent_at)
+1.  Schedule Trigger (Monday 09:00)
+2.  Manual Trigger
+3.  Fetch Active Clients (HTTP GET → Airtable Clients, filter: {project_status}="live")
+4.  Check Active Clients (IF — exits if 0)
+5.  Exit - No Active Clients (NoOp)
+6.  Split Client Records (Code — flattens records, outputs clickup_folder_id per client)
+7.  Get All Tasks From Folder (HTTP GET → ClickUp team tasks API: /api/v2/team/90141018999/task?folder_id[]={clickup_folder_id}&include_closed=true — reads all 4 lists at once)
+8.  Error Skip (Code — non-blocking on ClickUp error)
+9.  Merge Client and Tasks (Code — index-aligns ClickUp response with client records)
+10. Structure Task Data (Code — categorises tasks: completed/in_progress/blocked, outputs clickup_folder_id)
+11. Build Claude Payload (Code — constructs Anthropic API request body)
+12. Generate Email via Claude (HTTP POST → Anthropic API, credential: pa-anthropic)
+13. Extract Email Body (Code — parses Claude plain text, builds branded HTML template)
+14. Send Status Email (SMTP → client email, HTML format, credential: pa-smtp)
+15. Update Airtable Record (HTTP PATCH → sets last_status_update_sent_at)
 ```
 
 **Workflows with scopes ready to build:**
@@ -556,8 +575,12 @@ business-agent-foundry/
 | Error handling workflow not connected | Medium | Deferred | Haris |
 | Instantly.ai not set up | Blocks outreach | ⏳ Needs account | Kai |
 | Default GitHub branch is wrong | Low | ⏳ Change to main in Settings | Kai |
-| Airtable Clients table missing 5 fields | Low | ⏳ Next session | Haris |
-| ClickUp space structure not set up | Medium | ⏳ Next session | Haris |
+| Airtable Clients table missing 5 fields | Low | ✅ RESOLVED 2026-03-20 | Haris |
+| Airtable — 10 proposed fields for reporting/referral agents | Low | ✅ RESOLVED 2026-03-22 — all 10 added | Haris |
+| ClickUp space structure not set up | Medium | ✅ RESOLVED 2026-03-20 (folders/lists created) | Haris |
+| Onboarding automation creates folderless lists | Medium | ✅ RESOLVED 2026-03-22 — now creates folder + 4 lists | Haris |
+| clickup_project_id stores list ID instead of folder ID | Medium | ✅ RESOLVED 2026-03-22 — renamed to clickup_folder_id, stores folder ID | Haris |
+| Status Update Agent reads single list only | Medium | ✅ RESOLVED 2026-03-22 — now reads all tasks from folder | Haris |
 | n8n access for Haris | Blocker for collaboration | ⏳ Kai setting up n8n Cloud | Kai |
 
 ---
@@ -567,7 +590,10 @@ business-agent-foundry/
 ## Immediate
 - [x] ✅ Add 5 missing fields to Airtable Clients table — proposal_value, project_launch_date, last_report_sent_at, referral_sequence_sent_at added; Notes already existed
 - [x] ✅ Set up ClickUp space structure — Client Projects folder + [PA] Client Template list created; Internal folder + Lead Management + Operations lists created with all tasks
-- [ ] Kai reviews remaining decisions in airtable-structure.md (10 proposed fields) and clickup-structure.md (onboarding automation update)
+- [x] ✅ Add 10 proposed Airtable Clients fields — n8n_workflow_ids, hours_saved_per_week, hours_saved_per_year, last_month_executions, last_month_errors, total_executions, referral_source, referral_sequence_sent, lead_score_total, pre_call_brief (2026-03-22)
+- [x] ✅ Update onboarding automation to folder+4-lists ClickUp structure (2026-03-22)
+- [x] ✅ Rename clickup_project_id → clickup_folder_id in Airtable + all workflows (2026-03-22)
+- [x] ✅ Update Status Update Agent to read tasks from all folder lists (2026-03-22)
 - [ ] Clean up test records in Airtable + ClickUp (Haris)
 - [ ] Kai sets up n8n Cloud and invites Haris (Kai)
 - [ ] Change default GitHub branch to main (Kai)
@@ -614,6 +640,60 @@ business-agent-foundry/
 ### Files changed this session
 - 
 ```
+
+---
+
+## Session Handoff — 2026-03-22 (Session 4)
+**Worked by:** Haris (via Claude Code)
+**Duration:** ~1 session
+
+### What was completed
+- **TASK 1 — 10 Airtable fields added to Clients table:**
+  - `n8n_workflow_ids` (multilineText) → `fld0faAZi4TmwpP9J`
+  - `hours_saved_per_week` (number, 2dp) → `fldiGcSZWVWTxv5xH`
+  - `hours_saved_per_year` (number, 2dp) → `fldpCRJ523c1WaRh0`
+  - `last_month_executions` (number, integer) → `fldM0lDU75YrGSldA`
+  - `last_month_errors` (number, integer) → `fldSezJjtgJdbTaFL`
+  - `total_executions` (number, integer) → `fldF0VI87ANX2HMlR`
+  - `referral_source` (singleLineText) → `fld3EJ6umiwft6Sh0`
+  - `referral_sequence_sent` (checkbox) → `fld5AJCnq1Qd9BYmy`
+  - `lead_score_total` (number, integer) → `fld2rpfsXSFipmqi6`
+  - `pre_call_brief` (multilineText) → `fldCd8333z772ATsU`
+- **TASK 2 — Onboarding Automation ClickUp overhaul (Ro9IkQBlNaUxKR6B):**
+  - Removed: Create ClickUp Project (old folderless list node)
+  - Added: Create Client ClickUp Folder (HTTP POST → /api/v2/folder/90147969224/folder)
+  - Added: Extract Folder ID (Code — validates folder.id, merges priorData)
+  - Added: Create List — Onboarding, Build, QA, Live (4 HTTP POST nodes)
+  - Modified: Merge ClickUp Folder ID (was "Merge ClickUp ID — Success")
+  - Modified: Log ClickUp Error — Continue (updated to use clickup_folder_id)
+  - Modified: Update Airtable Record (writes `clickup_folder_id` not `clickup_project_id`)
+  - Workflow now has 24 nodes (was 17)
+- **Airtable field rename:** `clickup_project_id` → `clickup_folder_id` (field ID: fld9PdwZetXwjENmb)
+- **[PA] Status Update Agent update (VhqfzN6afzpNDTu1):**
+  - Split Client Records: now outputs `clickup_folder_id` (reads renamed field)
+  - Get ClickUp Tasks → Get All Tasks From Folder: URL changed to `/api/v2/team/90141018999/task?folder_id[]={clickup_folder_id}&include_closed=true` — fetches tasks from all 4 lists at once
+  - Structure Task Data: now passes `clickup_folder_id` (not `clickup_project_id`)
+  - Workflow now has 15 nodes (was 14)
+- PROJECT_OVERVIEW.md updated: schema, workflow node summaries, Known Issues, TODO
+
+### What is in progress (not finished)
+- End-to-end test of updated onboarding automation — needs real ClickUp API call to verify folder creation works
+
+### Blockers for next session
+- Haris does not yet have n8n access (Kai setting up n8n Cloud)
+- Outreach Agent blocked on Instantly.ai account
+
+### Next person should start with
+1. Pull latest main: `git pull origin main`
+2. Read PROJECT_OVERVIEW.md in full
+3. **Kai:** Test updated onboarding automation — trigger a test webhook payload and verify: folder created in ClickUp Client Projects, 4 lists created inside, `clickup_folder_id` written to Airtable
+4. **Haris:** Build [PA] Reporting Agent (scope ready at docs/workflows/build-scopes/reporting-agent-scope.md) once n8n Cloud is available
+
+### Files changed this session
+- PROJECT_OVERVIEW.md (schema updated, workflow summaries updated, Known Issues resolved, TODO checked, session handoff added)
+- Airtable Clients table: 10 new fields added, `clickup_project_id` renamed to `clickup_folder_id`
+- n8n workflow Ro9IkQBlNaUxKR6B: 24 nodes (replaced ClickUp folderless node with folder+4-lists structure)
+- n8n workflow VhqfzN6afzpNDTu1: 15 nodes (updated to read folder tasks, renamed clickup field references)
 
 ---
 
@@ -718,6 +798,7 @@ business-agent-foundry/
 
 # Change Log
 
+- **[2026-03-22]** — 10 Airtable Clients fields added (reporting/referral agents); `clickup_project_id` renamed to `clickup_folder_id`; [PA] Onboarding Automation updated to create ClickUp folder+4-lists (24 nodes); [PA] Status Update Agent updated to read all folder tasks (15 nodes)
 - **[2026-03-20]** — PROJECT_OVERVIEW.md v2: added node summaries, recurring bugs reference, session handoff template, environment setup details, email addresses, common startup errors
 - **[2026-03-20]** — [PA] Status Update Agent built and tested (14 nodes, ID: VhqfzN6afzpNDTu1); branded HTML emails; ClickUp integration; pa-anthropic added; client_timezone + last_status_update_sent_at added to Clients table
 - **[2026-03-20]** — [PA] Lead Generation dedup fully resolved; execution 180: 3 processed, 1 skipped, 2 written

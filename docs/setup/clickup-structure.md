@@ -1,10 +1,10 @@
 # ClickUp Structure — Phoenix Automation
-**Version:** 1.0
-**Last updated:** 2026-03-20
+**Version:** 1.1
+**Last updated:** 2026-03-22
 **Team ID:** `90141018999`
 **Space ID:** `90144568071`
 **Space Name:** Phoenix Automation
-**Status:** Blueprint — not yet implemented (current onboarding automation creates folderless lists)
+**Status:** ✅ Implemented — onboarding automation updated 2026-03-22 to create folder+4-lists structure
 
 > This document defines the target ClickUp structure for Phoenix Automation.
 > It replaces the current folderless list approach.
@@ -210,12 +210,12 @@ The status-update-agent (workflow ID: `VhqfzN6afzpNDTu1`) currently:
 
 ---
 
-## Decisions Summary for Kai
+## Decisions Summary
 
-| # | Decision | Recommendation |
-|---|---------|---------------|
-| 1 | Switch onboarding automation from folderless lists to folder+4-lists structure? | **Yes — before first real client** |
-| 2 | Update status-update-agent to read from folder (not single list ID)? | **Yes — at the same time as decision 1** |
-| 3 | Store folder ID or Onboarding list ID in Airtable `clickup_project_id`? | **Folder ID** — more flexible for multi-list reading |
+| # | Decision | Resolution |
+|---|---------|-----------|
+| 1 | Switch onboarding automation from folderless lists to folder+4-lists structure? | ✅ **DONE 2026-03-22** — Ro9IkQBlNaUxKR6B updated to 24 nodes |
+| 2 | Update status-update-agent to read from folder (not single list ID)? | ✅ **DONE 2026-03-22** — VhqfzN6afzpNDTu1 updated, reads all folder tasks via team API |
+| 3 | Store folder ID or Onboarding list ID in Airtable `clickup_project_id`? | ✅ **Folder ID stored** — field renamed to `clickup_folder_id` (fld9PdwZetXwjENmb) |
 | 4 | Pre-populate Build, QA, and Live lists with template tasks at onboarding time? | **No (for now)** — only Onboarding tasks pre-populated. Build/QA/Live tasks added by Haris during those phases |
-| 5 | Create Internal folder and lists now (manually) before onboarding automation is updated? | **Yes — do manually now**, no automation needed |
+| 5 | Create Internal folder and lists now (manually) before onboarding automation is updated? | ✅ **DONE 2026-03-20** — Internal folder (90147969240), Lead Management (901414699479), Operations (901414699480) created |

@@ -1,8 +1,8 @@
 # Airtable Structure — Phoenix Automation
-**Version:** 1.0
-**Last updated:** 2026-03-20
+**Version:** 1.1
+**Last updated:** 2026-03-22
 **Base ID:** `appMLHig3CN7WW0iW`
-**Status:** Blueprint — not yet fully implemented (5 fields missing from Clients, additional fields proposed)
+**Status:** Fully implemented — all fields added as of 2026-03-22
 
 > This document is the canonical definition of the Airtable schema for Phoenix Automation.
 > Every field is defined with its type, which agent/workflow writes it, which reads it, and whether it is required.
@@ -71,7 +71,7 @@
 | `n8n_workspace_id` | singleLineText | onboarding-automation | workflow-builder-agent | Optional | e.g. `[PA] meridian-consulting-group` |
 | `n8n_credentials_template_id` | singleLineText | onboarding-automation | workflow-builder-agent | Optional | e.g. `creds-checklist-meridian-consulting-group` |
 | `n8n_workflow_ids` | multilineText | Manual (owner adds after build) | reporting-agent (reads to fetch execution logs) | Optional | ⚠️ PROPOSED — not yet added. Comma-separated list of n8n workflow IDs for this client. Required for reporting-agent to function |
-| `clickup_project_id` | singleLineText | onboarding-automation | status-update-agent (reads to fetch ClickUp tasks) | Optional | ClickUp list ID for this client's project |
+| `clickup_folder_id` | singleLineText | onboarding-automation | status-update-agent (reads to fetch ClickUp folder tasks) | Optional | ClickUp folder ID for this client's project (field ID: `fld9PdwZetXwjENmb`) |
 | `credentials_checklist` | multilineText | onboarding-automation | Owner (Checkpoint 2 review) | Optional | JSON: `{tool: status}` per tool in scope |
 
 ### Retention & Reporting Fields
@@ -115,21 +115,21 @@
 | `referral_sequence_sent_at` | date | High — referral-trigger-agent writes this |
 | `notes` | multilineText | Low |
 
-**Proposed new fields (add before building reporting/referral agents):**
-| Field | Type | Needed By |
-|-------|------|----------|
-| `n8n_workflow_ids` | multilineText | reporting-agent |
-| `hours_saved_per_run` | number | reporting-agent |
-| `report_count` | number | reporting-agent |
-| `last_month_executions` | number | reporting-agent |
-| `last_month_uptime_pct` | number | reporting-agent |
-| `last_month_time_saved_hrs` | number | reporting-agent + referral-trigger-agent |
-| `automations_delivered` | multilineText | referral-trigger-agent |
-| `referral_sequence_sent` | checkbox | referral-trigger-agent |
-| `instantly_referral_campaign_id` | singleLineText | referral-trigger-agent |
-| `referral_source` | singleLineText | Owner tracking |
+**10 proposed fields — ✅ ADDED 2026-03-22:**
+| Field | Type | Added | Field ID |
+|-------|------|-------|---------|
+| `n8n_workflow_ids` | multilineText | ✅ | `fld0faAZi4TmwpP9J` |
+| `hours_saved_per_week` | number (2dp) | ✅ | `fldiGcSZWVWTxv5xH` |
+| `hours_saved_per_year` | number (2dp) | ✅ | `fldpCRJ523c1WaRh0` |
+| `last_month_executions` | number (integer) | ✅ | `fldM0lDU75YrGSldA` |
+| `last_month_errors` | number (integer) | ✅ | `fldSezJjtgJdbTaFL` |
+| `total_executions` | number (integer) | ✅ | `fldF0VI87ANX2HMlR` |
+| `referral_source` | singleLineText | ✅ | `fld3EJ6umiwft6Sh0` |
+| `referral_sequence_sent` | checkbox | ✅ | `fld5AJCnq1Qd9BYmy` |
+| `lead_score_total` | number (integer) | ✅ | `fld2rpfsXSFipmqi6` |
+| `pre_call_brief` | multilineText | ✅ | `fldCd8333z772ATsU` |
 
-**Decision for Kai:** Add all 5 missing fields now. Add the 10 proposed fields before building the reporting-agent (next after outreach-agent). Recommend adding them all at once in one Airtable session to avoid disruption.
+> **Note:** Field names differ slightly from original spec where user confirmed actual names during session (e.g. `hours_saved_per_week` / `hours_saved_per_year` instead of `hours_saved_per_run` / `last_month_time_saved_hrs`; `last_month_errors` and `total_executions` added as new tracking fields).
 
 ---
 
