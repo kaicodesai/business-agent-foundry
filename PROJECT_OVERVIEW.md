@@ -353,6 +353,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | [PA] Onboarding Automation | `7RsRJIqBHFpWZoWM` | 24 | POST /payment-confirmed webhook | ✅ Updated (folder+4-lists), inactive |
 | [PA] Lead Generation | `YO3f5CL9bYbLTBgw` | 11 | Daily 06:45 + manual | ✅ Built, tested, inactive |
 | [PA] Status Update Agent | `94DpGwRPWGRPqCVU` | 15 | Monday 09:00 + manual | ✅ Updated (reads folder tasks), inactive |
+| [PA] Referral Trigger Agent | `ka6GesSfWVo2FZtU` | 13 | Daily 08:00 + manual | ⏳ Built, Instantly stubbed, needs test |
 
 ## Workflow Node Summaries
 
