@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 2.2 — Last updated: 2026-03-24 — Updated by: Kai + Claude
+> **Version:** 2.3 — Last updated: 2026-03-24 — Updated by: Haris + Claude
 
 ---
 
@@ -80,6 +80,7 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - **[PA] Onboarding Automation** (7RsRJIqBHFpWZoWM) — 24 nodes, tested, dual emails working
 - **[PA] Lead Generation** (YO3f5CL9bYbLTBgw) — 13 nodes, tested, dedup working
 - **[PA] Status Update Agent** (94DpGwRPWGRPqCVU) — 15 nodes, tested, branded emails working
+- **[PA] Referral Trigger Agent** (ka6GesSfWVo2FZtU) — 13 nodes, built, Instantly stubbed (logs INSTANTLY_NOT_CONFIGURED)
 - client_timezone + last_status_update_sent_at fields added to Clients table
 - PROJECT_OVERVIEW.md added to repo root
 - **n8n Cloud** — all 3 PA workflows imported to kaiashley.app.n8n.cloud (Business Foundry project)
@@ -96,7 +97,7 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 ## Not Started ❌
 - [PA] Outreach Agent workflow (blocked on Instantly.ai)
 - [PA] Reporting Agent workflow (scope ready)
-- [PA] Referral Trigger Agent workflow (scope ready)
+- ~~[PA] Referral Trigger Agent workflow~~ ✅ Built 2026-03-24
 - [PA] Lead Qualification workflow
 - [PA] Proposal Drafting workflow
 - Error handling workflow (deferred from QA)
@@ -585,6 +586,8 @@ business-agent-foundry/
 | clickup_project_id stores list ID instead of folder ID | Medium | ✅ RESOLVED 2026-03-22 — renamed to clickup_folder_id, stores folder ID | Haris |
 | Status Update Agent reads single list only | Medium | ✅ RESOLVED 2026-03-22 — now reads all tasks from folder | Haris |
 | n8n access for Haris | Blocker for collaboration | ⏳ Cloud up — Kai to invite Haris | Kai |
+| Calendly URL hardcoded in Referral Trigger Agent | Low | ⏳ Update before first test — node: Build Claude Payload, workflow: ka6GesSfWVo2FZtU | Kai |
+| `automations_delivered` field missing from Airtable | Low | ⏳ Referral Trigger uses `scope_of_work` as fallback — add dedicated field for cleaner output | Kai decision |
 
 ---
 
@@ -612,7 +615,8 @@ business-agent-foundry/
 - [ ] Full pipeline test with real payment webhook (Kai)
 
 ## Medium-term
-- [ ] Build remaining workflows (Referral Trigger, Lead Qual, Proposal Drafting)
+- [ ] Build remaining workflows (Lead Qual, Proposal Drafting)
+- [x] ✅ Build [PA] Referral Trigger Agent (2026-03-24)
 - [ ] Activate all 3 live workflows on their schedules (Kai)
 - [ ] First real client onboarded end-to-end
 
@@ -648,6 +652,39 @@ business-agent-foundry/
 ### Files changed this session
 - 
 ```
+
+---
+
+## Session Handoff — 2026-03-24 (Session 7)
+**Worked by:** Haris + Claude (Claude Code VSCode)
+
+### What was completed
+- **[PA] Referral Trigger Agent** built via n8n API — ID: `ka6GesSfWVo2FZtU`, 13 nodes
+  - Schedule trigger daily 08:00 + manual trigger
+  - Fetches clients: `project_status=live`, `referral_sequence_sent_at=BLANK`, day 30 post-launch
+  - Generates 2-touch referral email sequence via Claude (`claude-sonnet-4-20250514`)
+  - Instantly.ai stubbed: logs `INSTANTLY_NOT_CONFIGURED` to `automation_logs` table
+  - Sets `referral_sequence_sent_at` on completion (prevents re-firing)
+  - False branch (no scope_of_work): also sets flag to prevent infinite daily re-check
+- PROJECT_OVERVIEW.md updated: workflow registry, TODO, Known Issues, session handoff
+
+### What is in progress (not finished)
+- [PA] Referral Trigger Agent not yet tested — Instantly.ai stub in place, Calendly URL needs updating before test
+
+### Blockers for next session
+- Haris not yet invited to n8n Cloud (Kai action required)
+- Outreach Agent blocked on Instantly.ai account + pa-instantly credential
+
+### Next person should start with
+1. `git pull origin main` then read PROJECT_OVERVIEW.md
+2. **Kai:** Invite Haris to n8n Cloud workspace
+3. **Kai:** Update Calendly URL in [PA] Referral Trigger Agent — open workflow `ka6GesSfWVo2FZtU`, edit node "Build Claude Payload", replace `https://calendly.com/phoenixautomation/assessment` with real URL
+4. **Kai:** Decide whether to add `automations_delivered` field to Airtable Clients table (currently uses `scope_of_work` as fallback)
+5. **Kai:** Set up Instantly.ai account + domain — needed before Outreach Agent and Referral Trigger go live
+6. **Haris (after n8n access):** QA all workflows visually in n8n Cloud editor, then build [PA] Reporting Agent
+
+### Files changed this session
+- `PROJECT_OVERVIEW.md` — version 2.3, Referral Trigger added to registry, TODO/Known Issues updated, Session 7 handoff
 
 ---
 
