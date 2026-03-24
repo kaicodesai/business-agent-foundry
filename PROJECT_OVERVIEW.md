@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 2.1 — Last updated: 2026-03-22 — Updated by: Kai + Haris
+> **Version:** 2.2 — Last updated: 2026-03-24 — Updated by: Kai + Claude
 
 ---
 
@@ -77,15 +77,17 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - Full local dev stack operational (Node 20, n8n 2.10.4, Claude Code 2.1.77, n8n-MCP)
 - Airtable base structured — Clients + Prospects + automation_logs tables
 - All 6 n8n credentials added (pa-airtable, pa-n8n-api, pa-clickup, pa-smtp, pa-apollo-io, pa-anthropic)
-- **[PA] Onboarding Automation** (Ro9IkQBlNaUxKR6B) — 17 nodes, tested, dual emails working
-- **[PA] Lead Generation** (pUqNr2V9Fp5gLWaD) — 11 nodes, tested, dedup working
-- **[PA] Status Update Agent** (VhqfzN6afzpNDTu1) — 14 nodes, tested, branded emails working
+- **[PA] Onboarding Automation** (7RsRJIqBHFpWZoWM) — 24 nodes, tested, dual emails working
+- **[PA] Lead Generation** (YO3f5CL9bYbLTBgw) — 13 nodes, tested, dedup working
+- **[PA] Status Update Agent** (94DpGwRPWGRPqCVU) — 15 nodes, tested, branded emails working
 - client_timezone + last_status_update_sent_at fields added to Clients table
 - PROJECT_OVERVIEW.md added to repo root
+- **n8n Cloud** — all 3 PA workflows imported to kaiashley.app.n8n.cloud (Business Foundry project)
+- All workflow IDs updated to cloud IDs; broken connections and hardcoded PAT fixed post-import
 
 ## In Progress ⏳
-- n8n Cloud setup — Kai signing up (~$20/mo Starter) to give Haris shared access
 - Default GitHub branch needs switching from `claude/setup-blueprint-agent-YnHBF` to `main` (Kai → Settings → Branches)
+- Haris needs n8n Cloud access (Kai to invite)
 
 ## In Progress ⏳ (continued)
 - Airtable Clients table — 5 fields missing, 10 proposed fields to add (see docs/setup/airtable-structure.md)
@@ -109,7 +111,7 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 ## Tech Stack
 | Layer | Tool | Version | Purpose |
 |-------|------|---------|---------|
-| Workflow automation | n8n | 2.10.4 (self-hosted, local) | All automated pipelines |
+| Workflow automation | n8n | 2.37.1 (Cloud — kaiashley.app.n8n.cloud) | All automated pipelines |
 | AI agents | Claude Code | 2.1.77 | Agent execution, code generation |
 | Anthropic API | claude-sonnet-4-6 | — | Model for all agent AI calls |
 | Agent-to-n8n bridge | n8n-MCP | czlonkowski (local build) | Claude Code controls n8n via MCP |
@@ -148,11 +150,11 @@ phoenix/[task]    ← all new work goes here, PR before merging to main
 |------|-------|
 | OS | macOS (Apple Silicon — arm64) |
 | Node version | 20.20.1 (via nvm) |
-| n8n version | 2.10.4 |
+| n8n version | 2.37.1 (Cloud — kaiashley.app.n8n.cloud) |
 | Claude Code version | 2.1.77 (native install) |
-| n8n-MCP location | `~/Documents/n8n-mcp/dist/index.js` |
+| n8n-MCP location | `~/Documents/n8n-mcp/dist/mcp/index.js` |
 | Repo location | `~/Documents/business-agent-foundry` |
-| n8n URL | `http://localhost:5678` |
+| n8n URL | `https://kaiashley.app.n8n.cloud` |
 | VPN required | Yes — US server (Atlanta/NordVPN) needed from Vietnam for Anthropic API |
 
 ## Haris's Machine
@@ -348,13 +350,13 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 
 | Workflow | ID | Nodes | Trigger | Status |
 |---------|-----|-------|---------|--------|
-| [PA] Onboarding Automation | `Ro9IkQBlNaUxKR6B` | 24 | POST /payment-confirmed webhook | ✅ Updated (folder+4-lists), inactive |
-| [PA] Lead Generation | `pUqNr2V9Fp5gLWaD` | 11 | Daily 06:45 + manual | ✅ Built, tested, inactive |
-| [PA] Status Update Agent | `VhqfzN6afzpNDTu1` | 15 | Monday 09:00 + manual | ✅ Updated (reads folder tasks), inactive |
+| [PA] Onboarding Automation | `7RsRJIqBHFpWZoWM` | 24 | POST /payment-confirmed webhook | ✅ Updated (folder+4-lists), inactive |
+| [PA] Lead Generation | `YO3f5CL9bYbLTBgw` | 11 | Daily 06:45 + manual | ✅ Built, tested, inactive |
+| [PA] Status Update Agent | `94DpGwRPWGRPqCVU` | 15 | Monday 09:00 + manual | ✅ Updated (reads folder tasks), inactive |
 
 ## Workflow Node Summaries
 
-### [PA] Onboarding Automation (Ro9IkQBlNaUxKR6B) — 24 nodes
+### [PA] Onboarding Automation (7RsRJIqBHFpWZoWM) — 24 nodes
 ```
 1.  Payment Confirmed Webhook (POST /payment-confirmed)
 2.  Normalize Payload (Code — flattens body.* wrapper)
@@ -382,7 +384,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 24. Stop — Invalid Payload (stopAndError — false branch of Validate Payload)
 ```
 
-### [PA] Lead Generation (pUqNr2V9Fp5gLWaD) — 11 nodes
+### [PA] Lead Generation (YO3f5CL9bYbLTBgw) — 11 nodes
 ```
 1. Schedule Trigger (daily 06:45)
 2. Manual Trigger
@@ -397,7 +399,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 11. Aggregate Run Stats + Log Run Summary (Code + HTTP POST → automation_logs)
 ```
 
-### [PA] Status Update Agent (VhqfzN6afzpNDTu1) — 15 nodes
+### [PA] Status Update Agent (94DpGwRPWGRPqCVU) — 15 nodes
 ```
 1.  Schedule Trigger (Monday 09:00)
 2.  Manual Trigger
@@ -581,7 +583,7 @@ business-agent-foundry/
 | Onboarding automation creates folderless lists | Medium | ✅ RESOLVED 2026-03-22 — now creates folder + 4 lists | Haris |
 | clickup_project_id stores list ID instead of folder ID | Medium | ✅ RESOLVED 2026-03-22 — renamed to clickup_folder_id, stores folder ID | Haris |
 | Status Update Agent reads single list only | Medium | ✅ RESOLVED 2026-03-22 — now reads all tasks from folder | Haris |
-| n8n access for Haris | Blocker for collaboration | ⏳ Kai setting up n8n Cloud | Kai |
+| n8n access for Haris | Blocker for collaboration | ⏳ Cloud up — Kai to invite Haris | Kai |
 
 ---
 
@@ -597,7 +599,8 @@ business-agent-foundry/
 - [x] ✅ End-to-end test [PA] Onboarding Automation — PASS 2026-03-22 (execution 209, all 4 confirmation points met)
 - [x] ✅ Clean up test records — test ClickUp folder deleted, Status Test Client reset to test-complete
 - [ ] Meridian Consulting Group test record still has stale n8n workspace/credentials IDs — clean up before first real client (Kai)
-- [ ] Kai sets up n8n Cloud and invites Haris (Kai)
+- [x] ✅ Kai sets up n8n Cloud — kaiashley.app.n8n.cloud (Business Foundry project, 2026-03-24)
+- [ ] Kai invites Haris to n8n Cloud
 - [ ] Change default GitHub branch to main (Kai)
 
 ## Short-term
@@ -644,6 +647,39 @@ business-agent-foundry/
 ### Files changed this session
 - 
 ```
+
+---
+
+## Session Handoff — 2026-03-24 (Session 6)
+**Worked by:** Kai + Claude (Claude Code)
+
+### What was completed
+- n8n Cloud instance set up at kaiashley.app.n8n.cloud (Business Foundry project)
+- All 3 PA workflows imported to cloud:
+  - [PA] Onboarding Automation → `7RsRJIqBHFpWZoWM`
+  - [PA] Status Update Agent → `94DpGwRPWGRPqCVU`
+  - [PA] Lead Generation → `YO3f5CL9bYbLTBgw`
+- Post-import audit completed — found and fixed:
+  1. Status Update Agent: 2 broken connections (Split Client Records → Get All Tasks From Folder; Get All Tasks From Folder → Merge/Error Skip)
+  2. Onboarding Automation: hardcoded Airtable PAT in Update Airtable Record replaced with `predefinedCredentialType: airtableTokenApi`
+- All credential bindings confirmed auto-linked on import (pa-airtable, pa-clickup, pa-smtp, pa-anthropic all resolved)
+- No localhost URLs found in any workflow — all clean
+- PROJECT_OVERVIEW.md updated: cloud IDs, n8n URL, MCP path, version bump
+
+### What is in progress (not finished)
+- [PA] Status Update Agent not yet test-executed (n8n Cloud API has no direct execute endpoint for non-webhook workflows — test via editor)
+
+### Blockers for next session
+- Haris not yet invited to n8n Cloud (Kai action)
+- Outreach Agent blocked on Instantly.ai account
+
+### Next person should start with
+1. `git pull origin main` then read PROJECT_OVERVIEW.md
+2. Open n8n Cloud editor and run manual test of [PA] Status Update Agent (ensure Status Test Client has `project_status=live` and `clickup_folder_id=90147969224` first)
+3. Invite Haris to n8n Cloud workspace
+
+### Files changed this session
+- `PROJECT_OVERVIEW.md` — version 2.2, cloud IDs, n8n URL, MCP path, Session 6 handoff
 
 ---
 
@@ -700,8 +736,8 @@ business-agent-foundry/
 
 ### Files changed this session
 - Airtable Clients table: 10 new fields added, `clickup_project_id` renamed to `clickup_folder_id`
-- n8n workflow Ro9IkQBlNaUxKR6B: 24 nodes (replaced ClickUp folderless node with folder+4-lists structure)
-- n8n workflow VhqfzN6afzpNDTu1: 15 nodes (updated to read folder tasks, renamed clickup field references)
+- n8n workflow 7RsRJIqBHFpWZoWM: 24 nodes (replaced ClickUp folderless node with folder+4-lists structure)
+- n8n workflow 94DpGwRPWGRPqCVU: 15 nodes (updated to read folder tasks, renamed clickup field references)
 
 ---
 
@@ -800,7 +836,7 @@ business-agent-foundry/
 ### Files changed this session
 - PROJECT_OVERVIEW.md (this file)
 - Airtable Clients table (2 new fields via API)
-- n8n workflows: VhqfzN6afzpNDTu1 (multiple node fixes)
+- n8n workflows: 94DpGwRPWGRPqCVU (multiple node fixes)
 
 ---
 
@@ -808,11 +844,11 @@ business-agent-foundry/
 
 - **[2026-03-22]** — 10 Airtable Clients fields added (reporting/referral agents); `clickup_project_id` renamed to `clickup_folder_id`; [PA] Onboarding Automation updated to create ClickUp folder+4-lists (24 nodes); [PA] Status Update Agent updated to read all folder tasks (15 nodes)
 - **[2026-03-20]** — PROJECT_OVERVIEW.md v2: added node summaries, recurring bugs reference, session handoff template, environment setup details, email addresses, common startup errors
-- **[2026-03-20]** — [PA] Status Update Agent built and tested (14 nodes, ID: VhqfzN6afzpNDTu1); branded HTML emails; ClickUp integration; pa-anthropic added; client_timezone + last_status_update_sent_at added to Clients table
+- **[2026-03-20]** — [PA] Status Update Agent built and tested (14 nodes, ID: 94DpGwRPWGRPqCVU); branded HTML emails; ClickUp integration; pa-anthropic added; client_timezone + last_status_update_sent_at added to Clients table
 - **[2026-03-20]** — [PA] Lead Generation dedup fully resolved; execution 180: 3 processed, 1 skipped, 2 written
 - **[2026-03-20]** — n8n Cloud decision: ~$20/mo Starter plan for shared team access
 - **[2026-03-19]** — PROJECT_OVERVIEW.md v1 created
-- **[2026-03-19]** — [PA] Lead Generation built (11 nodes, ID: pUqNr2V9Fp5gLWaD); Prospects + automation_logs tables created; lead gen agent files validated
+- **[2026-03-19]** — [PA] Lead Generation built (11 nodes, ID: YO3f5CL9bYbLTBgw); Prospects + automation_logs tables created; lead gen agent files validated
 - **[2026-03-19]** — Haris joined; setup complete; lead gen branch merged to main
 - **[2026-03-17]** — Client slug bug fixed; execution 160 confirmed
 - **[2026-03-17]** — Dual email redesign; execution 159 17/17 pass
@@ -821,7 +857,7 @@ business-agent-foundry/
 - **[2026-03-17]** — QA conditional pass on [PA] Onboarding Automation; SMTP fixed
 - **[2026-03-17]** — [PA] Onboarding Automation variables hardcoded
 - **[2026-03-16]** — n8n-MCP connected via local build; auth conflict resolved
-- **[2026-03-16]** — [PA] Onboarding Automation built (17 nodes, ID: Ro9IkQBlNaUxKR6B)
+- **[2026-03-16]** — [PA] Onboarding Automation built (17 nodes, ID: 7RsRJIqBHFpWZoWM)
 - **[2026-03-16]** — Agent builder run: 6 definitions, 6 SOPs, 5 scopes
 - **[2026-03-16]** — Airtable Clients table structured; 4 credentials added; local dev stack operational
 - **[2026-03-15]** — Simulation 2 (Northgate Legal): 7/11 issues CLOSED; Agent Builder designed
