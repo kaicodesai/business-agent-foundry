@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 2.4 — Last updated: 2026-03-25 — Updated by: Haris + Claude
+> **Version:** 2.5 — Last updated: 2026-03-25 — Updated by: Haris + Claude
 
 ---
 
@@ -589,18 +589,26 @@ business-agent-foundry/
 | Calendly URL hardcoded in Referral Trigger Agent | Low | ⏳ Update before first test — node: Build Claude Payload, workflow: ka6GesSfWVo2FZtU | Kai |
 | `automations_delivered` field missing from Airtable | Low | ⏳ Referral Trigger uses `scope_of_work` as fallback — add dedicated field for cleaner output | Kai decision |
 | `onboarding_started_at` not written by Onboarding Automation | Low | ⏳ Add `onboarding_started_at: $now.toISO()` to Node 21 (Update Airtable Record) | Haris |
-| Brightline test records still live in Airtable (Clients + Prospects) | Low | ⏳ Clean up after manual Steps 5+6 confirmed — see e2e-test-report.md | Kai/Haris |
+| Brightline test records still live in Airtable (Clients + Prospects) | Low | ⏳ Clean up after Steps 5+6 confirmed — see e2e-test-report.md | Kai/Haris |
 | Status Update Agent + Referral Trigger Agent not API-executable | Low | Known — schedule-only workflows must be run from n8n editor | — |
+| Meridian Consulting still `project_status=live` in Airtable — causes Status Update Agent to mix PA internal tasks into client emails | High | ⏳ Set Meridian to `test-complete` immediately — confirmed as root cause of polluted email in Session 8 test | Kai |
+| Welcome email says "I'll send exact instructions shortly" — credential follow-up is NOT automated | High | ⏳ Manual process gap before first real client — needs automated credential collection workflow | Haris |
+| Client n8n account model not decided | High — blocks Workflow Builder Agent | ⏳ Two options: (A) separate n8n account per client, (B) all in Kai's account. Onboarding currently stubs only. Decide before first real client | Kai |
 
 ---
 
 # TODO / Roadmap
 
-## Immediate
-- [x] ✅ E2E systems test — Steps 1–4 complete (PASS). Steps 5–6 need manual execution in n8n editor (see docs/clients/brightline-property-management/e2e-test-report.md)
-- [ ] Kai: manually run [PA] Status Update Agent from n8n editor (brightline test client ready, `project_status=live`)
-- [ ] Kai: manually run [PA] Referral Trigger Agent from n8n editor (brightline test client ready, `project_launch_date=2026-02-23`)
-- [ ] Kai/Haris: clean up Brightline test records after manual steps confirmed (see cleanup section in test report)
+## Immediate (Kai actions — must happen before first real client)
+- [x] ✅ E2E systems test — Steps 1–4 complete (PASS). Steps 5–6 ready for manual execution in n8n editor
+- [ ] **KAI URGENT:** Set Meridian Consulting `project_status = "test-complete"` in Airtable — causes Status Update email pollution
+- [ ] Kai: run [PA] Status Update Agent from n8n editor → verify clean email (only Brightline tasks shown)
+- [ ] Kai: run [PA] Referral Trigger Agent from n8n editor → verify `referral_sequence_sent=true` + automation_logs entry
+- [ ] Kai/Haris: clean up Brightline test records after above confirmed (see e2e-test-report.md)
+- [ ] **KAI DECISION:** Choose client n8n account model — Option A (each client owns their account) or Option B (all in Kai's account). Unblocks Workflow Builder Agent scoping.
+- [ ] Kai: update Calendly URL in Referral Trigger Agent (node: Build Claude Payload, workflow: `ka6GesSfWVo2FZtU`)
+- [ ] Kai: invite Haris to n8n Cloud
+- [ ] Haris: build automated credential follow-up email (triggered after `credentials_checklist` written to Airtable)
 - [x] ✅ Add 5 missing fields to Airtable Clients table — proposal_value, project_launch_date, last_report_sent_at, referral_sequence_sent_at added; Notes already existed
 - [x] ✅ Set up ClickUp space structure — Client Projects folder + [PA] Client Template list created; Internal folder + Lead Management + Operations lists created with all tasks
 - [x] ✅ Add 10 proposed Airtable Clients fields — n8n_workflow_ids, hours_saved_per_week, hours_saved_per_year, last_month_executions, last_month_errors, total_executions, referral_source, referral_sequence_sent, lead_score_total, pre_call_brief (2026-03-22)
@@ -616,6 +624,7 @@ business-agent-foundry/
 
 ## Short-term
 - [ ] Build [PA] Reporting Agent (Haris — scope ready)
+- [ ] Build automated credential collection follow-up email workflow (Haris — after client n8n model decided)
 - [ ] Set up Instantly.ai + pa-instantly credential (Kai)
 - [ ] Build [PA] Outreach Agent (Haris — after Instantly.ai)
 - [ ] Build error handling workflow (Haris)
@@ -631,7 +640,7 @@ business-agent-foundry/
 - [ ] Apollo.io paid plan for higher volume
 - [ ] Generalize Agent Foundry for second business type
 
-> **Note — Client n8n model:** Each client to have their own n8n account. Onboarding flow needs updating to reflect this. Dedicate a session to this before first real client.
+> **Note — Client n8n model:** Each client to have their own n8n account OR all workflows in Kai's account. **Decision required from Kai before Workflow Builder Agent can be scoped.** Two options: (A) Kai sets up a separate n8n account per client and transfers workflows — more isolated, more admin. (B) All client workflows live in Kai's n8n account — simpler, less isolated. Onboarding currently creates a label stub only, works for either model.
 
 ---
 
@@ -662,7 +671,7 @@ business-agent-foundry/
 
 ---
 
-## Session Handoff — 2026-03-25 (Session 8)
+## Session Handoff — 2026-03-25 (Session 8 — continued)
 **Worked by:** Haris + Claude (Claude Code VSCode)
 
 ### What was completed
@@ -693,6 +702,41 @@ business-agent-foundry/
 ### Files changed this session
 - `PROJECT_OVERVIEW.md` — version 2.4, service_tier options corrected, Known Issues + TODO updated, Session 8 handoff
 - `docs/clients/brightline-property-management/e2e-test-report.md` — created (new)
+
+---
+
+## Session Handoff — 2026-03-25 (Session 8 — Q&A + findings)
+**Worked by:** Haris + Claude (Claude Code VSCode)
+
+### What was completed
+- [PA] Status Update Agent manually triggered by Haris from n8n editor — email received ✅
+- Root cause identified for polluted Status Update email: Meridian Consulting still has `project_status=live` in Airtable — its ClickUp folder points to PA internal tasks, causing them to appear in client emails
+- Three architectural gaps identified and documented:
+  1. **Meridian Consulting pollution** — must set to `test-complete` immediately
+  2. **Credential follow-up not automated** — "I'll send exact instructions shortly" in welcome email is placeholder text only; no follow-up workflow exists
+  3. **Client n8n account model undecided** — Onboarding creates a stub label but doesn't provision a real n8n workspace for the client; decision needed before Workflow Builder Agent can be properly scoped
+- Known Issues, TODO, and client n8n model note all updated in PROJECT_OVERVIEW.md
+
+### What is in progress (not finished)
+- [PA] Referral Trigger Agent manual test not yet done (Haris ran Status Update only this session)
+- Brightline test records still live in Airtable — cleanup pending
+
+### Blockers for next session
+- Meridian Consulting `project_status` must be set to `test-complete` (Kai) before running any more Status Update tests
+- Client n8n account model decision (Kai) blocks Workflow Builder Agent scoping and credential follow-up design
+- Haris still not invited to n8n Cloud (Kai)
+
+### Next person should start with
+1. `git pull origin main` then read PROJECT_OVERVIEW.md
+2. **Kai — do these first:**
+   - Set Meridian Consulting `project_status = "test-complete"` in Airtable
+   - Run [PA] Referral Trigger Agent from n8n editor → verify `referral_sequence_sent=true` on Brightline record + entry in `automation_logs`
+   - Decide client n8n model: Option A (each client owns account) or Option B (all in Kai's account)
+   - Update Calendly URL in workflow `ka6GesSfWVo2FZtU` node "Build Claude Payload"
+3. **Haris (after Kai completes above):** Build automated credential follow-up email workflow, then [PA] Reporting Agent
+
+### Files changed this session
+- `PROJECT_OVERVIEW.md` — version 2.5, 3 new Known Issues (Meridian pollution, credential gap, n8n model), TODO restructured with Kai urgency markers, client n8n note updated
 
 ---
 
