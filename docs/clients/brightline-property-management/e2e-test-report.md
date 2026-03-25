@@ -11,13 +11,13 @@
 | Step | What was tested | Result |
 |------|----------------|--------|
 | 1 | Lead Gen — Create prospect record in Airtable | ✅ PASS |
-| 2 | Pre-seed client record (Airtable Clients table) | ✅ PASS (bug found: wrong service_tier option in docs) |
+| 2 | Pre-seed client record (Airtable Clients table) | ✅ PASS (bug found: wrong service_tier option in docs — fixed) |
 | 3 | Onboarding Automation — webhook trigger + all outputs | ✅ PASS |
 | 4 | ClickUp folder + 4 lists creation | ⚠️ PARTIAL (folder ID confirmed, list count unverifiable — ClickUp key expired) |
-| 5 | Status Update Agent — email send to live client | ⚠️ MANUAL REQUIRED |
-| 6 | Referral Trigger Agent — 30-day referral sequence | ⚠️ MANUAL REQUIRED |
+| 5 | Status Update Agent — email send to live client | ✅ PASS with bug (email sent, but PA internal tasks polluting output — root cause: Meridian Consulting still `project_status=live`) |
+| 6 | Referral Trigger Agent — 30-day referral sequence | ⚠️ PENDING — Kai to run from n8n editor |
 
-**Overall verdict: CONDITIONAL PASS** — core pipeline (Lead Gen → Onboarding) fully verified. Steps 5 and 6 require manual execution from the n8n editor (n8n Cloud API does not expose an execute endpoint for schedule-triggered workflows).
+**Overall verdict: CONDITIONAL PASS** — core pipeline fully verified. Step 5 passed with a data-pollution bug (Meridian Consulting fix required). Step 6 pending manual execution. Three architectural gaps identified that must be resolved before first real client.
 
 ---
 
@@ -97,64 +97,86 @@ Created Brightline client record in Clients table.
 
 ---
 
-### Step 5 — Status Update Agent ⚠️ MANUAL REQUIRED
+### Step 5 — Status Update Agent ✅ PASS (with bug)
 
-**Cannot trigger via API:** n8n Cloud API has no execute endpoint for schedule + manual trigger workflows.
+**Executed by:** Haris manually from n8n editor.
 
-**Test data is ready:**
-- Brightline record updated to `project_status = "live"` ✅
-- `clickup_folder_id = 90148085794` set ✅
+**Result:** Email received at `muneebfiaz201@gmail.com` — subject: *Brightline Property Management — Project Update March 25, 2026*. Email structure correct (header, Completed/In Progress/Coming Up sections, Phoenix Automation branding).
 
-**Manual test instructions for Kai:**
-1. Open [PA] Status Update Agent in n8n editor (`94DpGwRPWGRPqCVU`)
-2. Click "Execute workflow"
-3. Verify: email sent to `muneebfiaz201@gmail.com` with ClickUp task list
-4. Verify: `last_status_update_sent_at` updated on Brightline Airtable record
+**Bug found — task list pollution:**
+
+The "In Progress" section showed a mix of tasks:
+- Client delivery tasks (Build — Workflow 1, Build — Workflow 2, Onboarding — Collect credentials, QA — Review and test) — correct ✅
+- Phoenix Automation internal tasks (Check QA queue, Confirm reporting agent ran, Review Apollo prospects weekly, etc.) — should NOT appear in a client email ❌
+
+**Root cause:** Meridian Consulting test record in Airtable still has `project_status = "live"`. The Status Update Agent picked up both Brightline AND Meridian as active clients. Meridian's `clickup_folder_id` points to the PA internal operations lists, causing those tasks to appear in the email.
+
+**Fix:** Set Meridian Consulting `project_status = "test-complete"` in Airtable immediately. Once fixed, re-run Status Update Agent — email should show only Brightline's client folder tasks.
+
+**Secondary finding — architectural gap:**
+The welcome email sent during onboarding contains the line *"I'll send exact instructions shortly"* for credentials (Buildium, QuickBooks, Gmail). This follow-up is NOT automated. Kai must manually send credential setup instructions to each new client. A credential collection follow-up workflow needs to be built before first real client.
 
 ---
 
-### Step 6 — Referral Trigger Agent ⚠️ MANUAL REQUIRED
+### Step 6 — Referral Trigger Agent ⚠️ PENDING
 
-**Cannot trigger via API:** Same constraint as Step 5.
+**Status:** Not yet run. Test data confirmed ready in Airtable.
 
-**Test data is ready:**
+**Test data verified:**
 - `project_status = live` ✅
 - `referral_sequence_sent = false` ✅
 - `project_launch_date = 2026-02-23` (exactly 30 days before test date 2026-03-25) ✅
 - `scope_of_work = "Buildium-to-QuickBooks rent sync, Maintenance request triage chatbot"` ✅
 
-**Manual test instructions for Kai:**
-1. Open [PA] Referral Trigger Agent in n8n editor (`ka6GesSfWVo2FZtU`)
-2. Click "Execute workflow"
-3. Expected behaviour: Claude generates 2-touch referral emails referencing Buildium-to-QuickBooks sync. Instantly.ai is **stubbed** — will log `INSTANTLY_NOT_CONFIGURED` to `automation_logs` table (not send emails)
-4. Verify: `referral_sequence_sent = true` on Brightline Airtable record
-5. Verify: entry in `automation_logs` table with `workflow = "[PA] Referral Trigger Agent"`
+**Instructions for Kai:**
+1. First fix Meridian Consulting (`project_status = "test-complete"`) to avoid multi-client pollution
+2. Open [PA] Referral Trigger Agent in n8n editor (`ka6GesSfWVo2FZtU`)
+3. Click "Execute workflow"
+4. Expected: Claude generates 2-touch referral emails referencing Buildium-to-QuickBooks sync. Instantly.ai is stubbed — will log `INSTANTLY_NOT_CONFIGURED` to `automation_logs` instead of sending
+5. Verify: `referral_sequence_sent = true` on Brightline Airtable record (`recNr32G2QJd5bbkw`)
+6. Verify: entry in `automation_logs` table with `workflow = "[PA] Referral Trigger Agent"`
 
 ---
 
 ## Bugs Found
 
-| # | Description | Severity | Fix |
-|---|-------------|----------|-----|
-| 1 | PROJECT_OVERVIEW.md lists `growth-package` as service_tier option — doesn't exist | Medium | Update docs: `growth-package` → `growth-build` |
-| 2 | `onboarding_started_at` not written to Airtable by Onboarding Automation | Low | Add `onboarding_started_at: $now.toISO()` to Airtable update node (Node 21) |
-| 3 | ClickUp API key not re-providable across sessions (expires per session) | Low | Document that ClickUp key must be re-shared per session |
+| # | Description | Severity | Status | Fix |
+|---|-------------|----------|--------|-----|
+| 1 | PROJECT_OVERVIEW.md lists `growth-package` as service_tier option — doesn't exist | Medium | ✅ Fixed | Updated docs: full option list now correct |
+| 2 | Meridian Consulting `project_status=live` causes Status Update Agent to include PA internal tasks in client emails | High | ⏳ Pending | Kai: set Meridian to `test-complete` in Airtable |
+| 3 | Welcome email says "I'll send exact instructions shortly" — credential follow-up not automated | High | ⏳ Pending | Build credential follow-up workflow (Haris) |
+| 4 | Client n8n account model — Onboarding creates label stub only, no real workspace provisioned | High | ⏳ Decision needed | Kai to decide Option A (per-client account) vs Option B (all in Kai's account) |
+| 5 | `onboarding_started_at` not written to Airtable by Onboarding Automation | Low | ⏳ Pending | Add `onboarding_started_at: $now.toISO()` to Node 21 (Haris) |
+| 6 | ClickUp API key expires per session — can't verify list count without re-sharing | Low | Known | Re-share key per session or verify manually in ClickUp UI |
 
 ---
 
 ## Cleanup Actions
 
-After Kai completes manual Steps 5 and 6:
+After Kai confirms Step 6 (Referral Trigger Agent) passes:
 
-1. **Airtable Clients table:** Update Brightline record — set `project_status = "test-complete"` or delete the record
-2. **Airtable Prospects table:** Update record `recd7jqEXed0v3oBe` — set `outreach_status = "test-complete"` or delete
-3. **ClickUp:** Delete the `brightline-property-management` folder created under Phoenix Automation space
-4. **n8n execution log:** No cleanup needed — execution ID 70 is safe to leave
+1. **Airtable Clients table:** Set Brightline record `recNr32G2QJd5bbkw` → `project_status = "test-complete"`
+2. **Airtable Prospects table:** Set record `recd7jqEXed0v3oBe` → `outreach_status = "test-complete"`
+3. **Airtable Clients table:** Set Meridian Consulting → `project_status = "test-complete"` (do this first — unblocks clean testing)
+4. **ClickUp:** Delete the `brightline-property-management` folder (`90148085794`) under Phoenix Automation space
+5. **n8n execution log:** No cleanup needed — execution ID 70 is safe to leave
+
+---
+
+## Architectural Gaps Identified (Not Workflow Bugs)
+
+These are design-level gaps that must be resolved before first real client. They are not bugs in the code — they are missing pieces of the system.
+
+| Gap | Impact | Owner | Decision/Action needed |
+|-----|--------|-------|----------------------|
+| Credential follow-up not automated | Client receives welcome email but no follow-up with setup instructions — Kai must send manually | Haris to build | After client n8n model is decided |
+| Client n8n account model undecided | Onboarding creates a label stub only. Real client workflows need a home. | Kai to decide | Option A: each client has own n8n account. Option B: all in Kai's account |
+| Workflows not chained — by design | Each workflow runs on its own schedule; Airtable is the connector. Manual triggers are test-only. | — | Understood — no action needed |
 
 ---
 
 ## Known Limitations (Not Bugs)
 
-- **Instantly.ai not configured:** Referral Trigger Agent cannot send emails until `pa-instantly` credential is set up and the stub code is replaced with live Instantly.ai API calls.
-- **Calendly URL placeholder:** Referral Trigger Agent uses `[CALENDLY_LINK]` as placeholder. Must be replaced with Kai's actual Calendly URL before production use.
-- **Status Update Agent ClickUp reads:** If the ClickUp folder has no tasks, the email will include an empty task list. Not a bug — expected until real client tasks are added.
+- **Instantly.ai not configured:** Referral Trigger Agent stubs to `automation_logs` until `pa-instantly` credential is set up.
+- **Calendly URL placeholder:** Referral Trigger Agent uses `[CALENDLY_LINK]`. Kai must update node "Build Claude Payload" in workflow `ka6GesSfWVo2FZtU` before production use.
+- **Status Update Agent — empty task list:** If a client's ClickUp folder has no tasks, the email task list will be blank. Expected until real client tasks are populated post-onboarding.
