@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 2.3 — Last updated: 2026-03-24 — Updated by: Haris + Claude
+> **Version:** 2.4 — Last updated: 2026-03-25 — Updated by: Haris + Claude
 
 ---
 
@@ -285,7 +285,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | contact_name | singleLineText | Onboarding webhook |
 | client_slug | singleLineText | Derived: company_name slugified |
 | project_status | singleSelect: lead, proposal_sent, onboarding.in_progress, live, churned | Onboarding automation |
-| service_tier | singleSelect: starter-build, growth-package, agency-retainer | Onboarding webhook |
+| service_tier | singleSelect: starter-build, growth-build, scale-build, retainer, agency-retainer | Onboarding webhook |
 | industry | singleLineText | Manual / lead qual |
 | lead_score_grade | singleLineText: A, B, C, D | Lead qual agent |
 | scope_of_work | multilineText | Scoping agent |
@@ -588,12 +588,19 @@ business-agent-foundry/
 | n8n access for Haris | Blocker for collaboration | ⏳ Cloud up — Kai to invite Haris | Kai |
 | Calendly URL hardcoded in Referral Trigger Agent | Low | ⏳ Update before first test — node: Build Claude Payload, workflow: ka6GesSfWVo2FZtU | Kai |
 | `automations_delivered` field missing from Airtable | Low | ⏳ Referral Trigger uses `scope_of_work` as fallback — add dedicated field for cleaner output | Kai decision |
+| `onboarding_started_at` not written by Onboarding Automation | Low | ⏳ Add `onboarding_started_at: $now.toISO()` to Node 21 (Update Airtable Record) | Haris |
+| Brightline test records still live in Airtable (Clients + Prospects) | Low | ⏳ Clean up after manual Steps 5+6 confirmed — see e2e-test-report.md | Kai/Haris |
+| Status Update Agent + Referral Trigger Agent not API-executable | Low | Known — schedule-only workflows must be run from n8n editor | — |
 
 ---
 
 # TODO / Roadmap
 
 ## Immediate
+- [x] ✅ E2E systems test — Steps 1–4 complete (PASS). Steps 5–6 need manual execution in n8n editor (see docs/clients/brightline-property-management/e2e-test-report.md)
+- [ ] Kai: manually run [PA] Status Update Agent from n8n editor (brightline test client ready, `project_status=live`)
+- [ ] Kai: manually run [PA] Referral Trigger Agent from n8n editor (brightline test client ready, `project_launch_date=2026-02-23`)
+- [ ] Kai/Haris: clean up Brightline test records after manual steps confirmed (see cleanup section in test report)
 - [x] ✅ Add 5 missing fields to Airtable Clients table — proposal_value, project_launch_date, last_report_sent_at, referral_sequence_sent_at added; Notes already existed
 - [x] ✅ Set up ClickUp space structure — Client Projects folder + [PA] Client Template list created; Internal folder + Lead Management + Operations lists created with all tasks
 - [x] ✅ Add 10 proposed Airtable Clients fields — n8n_workflow_ids, hours_saved_per_week, hours_saved_per_year, last_month_executions, last_month_errors, total_executions, referral_source, referral_sequence_sent, lead_score_total, pre_call_brief (2026-03-22)
@@ -652,6 +659,40 @@ business-agent-foundry/
 ### Files changed this session
 - 
 ```
+
+---
+
+## Session Handoff — 2026-03-25 (Session 8)
+**Worked by:** Haris + Claude (Claude Code VSCode)
+
+### What was completed
+- **End-to-end systems test** — Steps 1–4 executed and verified:
+  - Step 1: Prospect record `recd7jqEXed0v3oBe` created (Prospects table, `outreach_status=pending`)
+  - Step 2: Client record `recNr32G2QJd5bbkw` created (Brightline Property Management / Sarah Chen)
+  - Step 3: Onboarding Automation webhook triggered → execution 70 → **PASS** (all 6 Airtable fields written, ClickUp folder `90148085794` created)
+  - Step 4: ClickUp folder ID confirmed in Airtable; list count unverifiable (ClickUp key expired mid-session)
+- **Bug fix:** Corrected `service_tier` options in PROJECT_OVERVIEW.md — `growth-package` → `growth-build` (plus added full option list)
+- **QA report written:** `docs/clients/brightline-property-management/e2e-test-report.md`
+- **PROJECT_OVERVIEW.md updated:** version bump, Known Issues, TODO, session handoff
+
+### What is in progress (not finished)
+- Steps 5 and 6 of E2E test (Status Update Agent + Referral Trigger Agent) — test data is ready, waiting on manual execution from n8n editor
+
+### Blockers for next session
+- Haris not yet invited to n8n Cloud (Kai action required)
+- Status Update Agent and Referral Trigger Agent cannot be triggered via API — must be run from n8n editor
+- Instantly.ai not configured — Referral Trigger Agent will log stub, not send emails
+
+### Next person should start with
+1. `git pull origin main` then read PROJECT_OVERVIEW.md
+2. **Kai:** Open n8n editor → run [PA] Status Update Agent manually → verify email sent to `muneebfiaz201@gmail.com`
+3. **Kai:** Open n8n editor → run [PA] Referral Trigger Agent manually → verify `referral_sequence_sent=true` in Airtable + entry in `automation_logs`
+4. **Kai/Haris:** Clean up Brightline test records (instructions in `docs/clients/brightline-property-management/e2e-test-report.md`)
+5. **Haris (after n8n access):** Fix `onboarding_started_at` — add field to Node 21 of Onboarding Automation
+
+### Files changed this session
+- `PROJECT_OVERVIEW.md` — version 2.4, service_tier options corrected, Known Issues + TODO updated, Session 8 handoff
+- `docs/clients/brightline-property-management/e2e-test-report.md` — created (new)
 
 ---
 
