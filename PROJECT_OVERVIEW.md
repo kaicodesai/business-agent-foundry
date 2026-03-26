@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 2.5 — Last updated: 2026-03-25 — Updated by: Haris + Claude
+> **Version:** 2.6 — Last updated: 2026-03-26 — Updated by: Haris + Claude
 
 ---
 
@@ -588,38 +588,39 @@ business-agent-foundry/
 | n8n access for Haris | Blocker for collaboration | ⏳ Cloud up — Kai to invite Haris | Kai |
 | Calendly URL hardcoded in Referral Trigger Agent | Low | ⏳ Update before first test — node: Build Claude Payload, workflow: ka6GesSfWVo2FZtU | Kai |
 | `automations_delivered` field missing from Airtable | Low | ⏳ Referral Trigger uses `scope_of_work` as fallback — add dedicated field for cleaner output | Kai decision |
-| `onboarding_started_at` not written by Onboarding Automation | Low | ⏳ Add `onboarding_started_at: $now.toISO()` to Node 21 (Update Airtable Record) | Haris |
-| Brightline test records still live in Airtable (Clients + Prospects) | Low | ⏳ Clean up after Steps 5+6 confirmed — see e2e-test-report.md | Kai/Haris |
+| `onboarding_started_at` not written by Onboarding Automation | Low | ✅ RESOLVED 2026-03-26 — added to Node 21 (Update Airtable Record) jsonBody | Haris |
+| Brightline test records still live in Airtable (Clients + Prospects) | Low | ⏳ Clean up after Step 6 confirmed — see e2e-test-report.md | Kai/Haris |
 | Status Update Agent + Referral Trigger Agent not API-executable | Low | Known — schedule-only workflows must be run from n8n editor | — |
-| Meridian Consulting still `project_status=live` in Airtable — causes Status Update Agent to mix PA internal tasks into client emails | High | ⏳ Set Meridian to `test-complete` immediately — confirmed as root cause of polluted email in Session 8 test | Kai |
-| Welcome email says "I'll send exact instructions shortly" — credential follow-up is NOT automated | High | ⏳ Manual process gap before first real client — needs automated credential collection workflow | Haris |
+| Meridian Consulting `project_status=live` pollutes Status Update Agent emails | High | ✅ RESOLVED 2026-03-26 — Status Test Client set to test-complete; Meridian folder created (90148117751) with 4 lists; Airtable folder ID corrected | Haris |
+| Welcome email says "I'll send exact instructions shortly" — credential follow-up is NOT automated | High | ✅ RESOLVED 2026-03-26 — tool-specific step-by-step instructions now inline in welcome email; subject updated | Haris |
+| Status Update Agent could mix tasks from clients with wrong/null clickup_folder_id | High | ✅ RESOLVED 2026-03-26 — Split Client Records filters out clients with no folder ID; Get All Tasks endpoint changed to folder-specific URL | Haris |
 | Client n8n account model not decided | High — blocks Workflow Builder Agent | ⏳ Two options: (A) separate n8n account per client, (B) all in Kai's account. Onboarding currently stubs only. Decide before first real client | Kai |
 
 ---
 
 # TODO / Roadmap
 
-## Immediate (Kai actions — must happen before first real client)
-- [x] ✅ E2E systems test — Steps 1–4 complete (PASS). Steps 5–6 ready for manual execution in n8n editor
-- [ ] **KAI URGENT:** Set Meridian Consulting `project_status = "test-complete"` in Airtable — causes Status Update email pollution
-- [ ] Kai: run [PA] Status Update Agent from n8n editor → verify clean email (only Brightline tasks shown)
-- [ ] Kai: run [PA] Referral Trigger Agent from n8n editor → verify `referral_sequence_sent=true` + automation_logs entry
-- [ ] Kai/Haris: clean up Brightline test records after above confirmed (see e2e-test-report.md)
-- [ ] **KAI DECISION:** Choose client n8n account model — Option A (each client owns their account) or Option B (all in Kai's account). Unblocks Workflow Builder Agent scoping.
-- [ ] Kai: update Calendly URL in Referral Trigger Agent (node: Build Claude Payload, workflow: `ka6GesSfWVo2FZtU`)
-- [ ] Kai: invite Haris to n8n Cloud
-- [ ] Haris: build automated credential follow-up email (triggered after `credentials_checklist` written to Airtable)
-- [x] ✅ Add 5 missing fields to Airtable Clients table — proposal_value, project_launch_date, last_report_sent_at, referral_sequence_sent_at added; Notes already existed
-- [x] ✅ Set up ClickUp space structure — Client Projects folder + [PA] Client Template list created; Internal folder + Lead Management + Operations lists created with all tasks
-- [x] ✅ Add 10 proposed Airtable Clients fields — n8n_workflow_ids, hours_saved_per_week, hours_saved_per_year, last_month_executions, last_month_errors, total_executions, referral_source, referral_sequence_sent, lead_score_total, pre_call_brief (2026-03-22)
+## Immediate (before first real client)
+- [x] ✅ E2E systems test Steps 1–5 complete. Step 6 (Referral Trigger) ready for manual execution
+- [x] ✅ Status Test Client set to `test-complete` — pollution fix (2026-03-26)
+- [x] ✅ Meridian Consulting ClickUp folder created (90148117751) + 4 lists + Airtable record corrected (2026-03-26)
+- [x] ✅ Status Update Agent fixed — client filter + folder-specific task URL (2026-03-26)
+- [x] ✅ Welcome email updated — tool-specific credential instructions now inline (2026-03-26)
+- [x] ✅ `onboarding_started_at` added to Onboarding Automation Airtable update (2026-03-26)
+- [ ] **KAI:** Run [PA] Referral Trigger Agent from n8n editor → verify `referral_sequence_sent=true` + automation_logs entry (Brightline test data still ready)
+- [ ] **KAI:** Re-run [PA] Status Update Agent to verify clean email after pollution fixes
+- [ ] **KAI/Haris:** Clean up Brightline test records after Step 6 confirmed (see e2e-test-report.md)
+- [ ] **KAI DECISION:** Choose client n8n account model — Option A (each client owns account) or Option B (all in Kai's account). Unblocks Workflow Builder Agent scoping.
+- [ ] **KAI:** Update Calendly URL in Referral Trigger Agent (node: Build Claude Payload, workflow: `ka6GesSfWVo2FZtU`)
+- [ ] **KAI:** Invite Haris to n8n Cloud
+- [x] ✅ Add 5 missing fields to Airtable Clients table (2026-03-20)
+- [x] ✅ Set up ClickUp space structure (2026-03-20)
+- [x] ✅ Add 10 proposed Airtable Clients fields (2026-03-22)
 - [x] ✅ Update onboarding automation to folder+4-lists ClickUp structure (2026-03-22)
 - [x] ✅ Rename clickup_project_id → clickup_folder_id in Airtable + all workflows (2026-03-22)
 - [x] ✅ Update Status Update Agent to read tasks from all folder lists (2026-03-22)
-- [x] ✅ End-to-end test [PA] Onboarding Automation — PASS 2026-03-22 (execution 209, all 4 confirmation points met)
-- [x] ✅ Clean up test records — test ClickUp folder deleted, Status Test Client reset to test-complete
-- [ ] Meridian Consulting Group test record still has stale n8n workspace/credentials IDs — clean up before first real client (Kai)
-- [x] ✅ Kai sets up n8n Cloud — kaiashley.app.n8n.cloud (Business Foundry project, 2026-03-24)
-- [ ] Kai invites Haris to n8n Cloud
+- [x] ✅ End-to-end test Onboarding Automation — PASS 2026-03-22 (execution 209)
+- [x] ✅ Kai sets up n8n Cloud — kaiashley.app.n8n.cloud (2026-03-24)
 - [ ] Change default GitHub branch to main (Kai)
 
 ## Short-term
@@ -702,6 +703,41 @@ business-agent-foundry/
 ### Files changed this session
 - `PROJECT_OVERVIEW.md` — version 2.4, service_tier options corrected, Known Issues + TODO updated, Session 8 handoff
 - `docs/clients/brightline-property-management/e2e-test-report.md` — created (new)
+
+---
+
+## Session Handoff — 2026-03-26 (Session 9)
+**Worked by:** Haris + Claude (Claude Code VSCode)
+
+### What was completed
+- **FIX 1 — Meridian Consulting:** Status Test Client set to `test-complete`. Meridian ClickUp folder created (ID: `90148117751`) with 4 lists (Onboarding, Build, QA, Live). Airtable record updated with correct folder ID.
+- **FIX 2 — Status Update Agent (94DpGwRPWGRPqCVU):** `Split Client Records` node now filters out clients with null/empty `clickup_folder_id`. `Get All Tasks From Folder` URL changed from team-level (`/team/{id}/task?folder_id[]=`) to folder-specific (`/folder/{id}/task`) — eliminates cross-team task bleed.
+- **FIX 3 — Onboarding welcome email (7RsRJIqBHFpWZoWM):** "I'll send exact instructions shortly" placeholder replaced with per-tool step-by-step instructions for: Airtable, Gmail, Calendly, QuickBooks, Buildium, Zapier, Typeform. Subject updated to "Action required: Set up your automation credentials". 5-business-day deadline added.
+- **FIX 4 — `onboarding_started_at` (7RsRJIqBHFpWZoWM):** Added to Node 21 (Update Airtable Record) jsonBody — now written as `new Date().toISOString()` on every onboarding run.
+- **Root cause confirmed for email pollution:** Not Meridian (`project_status=lead`) — was `Status Test Client` with `project_status=live` and `clickup_folder_id=90147969224` (Client Projects parent folder, not a client folder). Fixed.
+- **PROJECT_OVERVIEW.md updated:** Known Issues resolved, TODO restructured, Session 9 handoff added.
+
+### What is in progress (not finished)
+- Step 6 of E2E test (Referral Trigger Agent) — Brightline test data still live and ready
+
+### Blockers for next session
+- Kai must run Referral Trigger Agent manually from n8n editor to complete Step 6
+- Client n8n account model decision (Kai) — blocks Workflow Builder Agent scoping
+- Haris not yet invited to n8n Cloud
+
+### Next person should start with
+1. `git pull origin main` then read PROJECT_OVERVIEW.md
+2. **Kai:** Run [PA] Referral Trigger Agent from n8n editor — verify `referral_sequence_sent=true` on Brightline record (`recNr32G2QJd5bbkw`) + entry in `automation_logs`
+3. **Kai:** Re-run [PA] Status Update Agent — verify clean email (only Brightline tasks, no PA internal tasks)
+4. **Kai/Haris:** Clean up Brightline test records after Step 6 confirmed
+5. **Kai:** Decide client n8n account model (Option A vs B) — reply to Haris so Workflow Builder Agent scope can be written
+
+### Files changed this session
+- `PROJECT_OVERVIEW.md` — version 2.6, 4 Known Issues resolved, TODO restructured, Session 9 handoff
+- `docs/clients/brightline-property-management/e2e-test-report.md` — updated Step 5 result + root cause, Step 6 instructions, bugs table expanded
+- **n8n workflows updated (via API — no local file changes):**
+  - `[PA] Status Update Agent` (94DpGwRPWGRPqCVU) — folder filter + endpoint fix
+  - `[PA] Onboarding Automation` (7RsRJIqBHFpWZoWM) — welcome email + onboarding_started_at
 
 ---
 
