@@ -594,7 +594,7 @@ business-agent-foundry/
 | Meridian Consulting `project_status=live` pollutes Status Update Agent emails | High | ✅ RESOLVED 2026-03-26 — Status Test Client set to test-complete; Meridian folder created (90148117751) with 4 lists; Airtable folder ID corrected | Haris |
 | Welcome email says "I'll send exact instructions shortly" — credential follow-up is NOT automated | High | ✅ RESOLVED 2026-03-26 — tool-specific step-by-step instructions now inline in welcome email; subject updated | Haris |
 | Status Update Agent could mix tasks from clients with wrong/null clickup_folder_id | High | ✅ RESOLVED 2026-03-26 — Split Client Records filters out clients with no folder ID; Get All Tasks endpoint changed to folder-specific URL | Haris |
-| Client n8n account model not decided | High — blocks Workflow Builder Agent | ⏳ Two options: (A) separate n8n account per client, (B) all in Kai's account. Onboarding currently stubs only. Decide before first real client | Kai |
+| Client n8n account model not decided | High — blocks Workflow Builder Agent | ✅ RESOLVED 2026-03-26 — **Option A chosen: each client has their own n8n account.** Kai sets up client's n8n, shares credentials, Workflow Builder deploys into client workspace. Onboarding stub remains valid — update scope to provision per-client account. | Kai |
 
 ---
 
@@ -610,7 +610,7 @@ business-agent-foundry/
 - [ ] **KAI:** Run [PA] Referral Trigger Agent from n8n editor → verify `referral_sequence_sent=true` + automation_logs entry (Brightline test data still ready)
 - [ ] **KAI:** Re-run [PA] Status Update Agent to verify clean email after pollution fixes
 - [ ] **KAI/Haris:** Clean up Brightline test records after Step 6 confirmed (see e2e-test-report.md)
-- [ ] **KAI DECISION:** Choose client n8n account model — Option A (each client owns account) or Option B (all in Kai's account). Unblocks Workflow Builder Agent scoping.
+- [x] ✅ **KAI DECISION:** Client n8n model decided — **Option A: each client has their own n8n account** (2026-03-26)
 - [ ] **KAI:** Update Calendly URL in Referral Trigger Agent (node: Build Claude Payload, workflow: `ka6GesSfWVo2FZtU`)
 - [ ] **KAI:** Invite Haris to n8n Cloud
 - [x] ✅ Add 5 missing fields to Airtable Clients table (2026-03-20)
@@ -625,7 +625,8 @@ business-agent-foundry/
 
 ## Short-term
 - [ ] Build [PA] Reporting Agent (Haris — scope ready)
-- [ ] Build automated credential collection follow-up email workflow (Haris — after client n8n model decided)
+- [ ] Build automated credential collection follow-up email workflow (Haris — unblocked: Option A decided)
+- [ ] Update Workflow Builder Agent scope to reflect Option A — client n8n account setup as prerequisite step (Haris)
 - [ ] Set up Instantly.ai + pa-instantly credential (Kai)
 - [ ] Build [PA] Outreach Agent (Haris — after Instantly.ai)
 - [ ] Build error handling workflow (Haris)
@@ -641,7 +642,7 @@ business-agent-foundry/
 - [ ] Apollo.io paid plan for higher volume
 - [ ] Generalize Agent Foundry for second business type
 
-> **Note — Client n8n model:** Each client to have their own n8n account OR all workflows in Kai's account. **Decision required from Kai before Workflow Builder Agent can be scoped.** Two options: (A) Kai sets up a separate n8n account per client and transfers workflows — more isolated, more admin. (B) All client workflows live in Kai's n8n account — simpler, less isolated. Onboarding currently creates a label stub only, works for either model.
+> **Client n8n model — DECIDED (2026-03-26):** Each client has their own n8n account (Option A). Kai sets up a new n8n account for each client, shares the API key with Haris, and all automations built for that client are deployed into their workspace. The `n8n_workspace_id` field in Airtable will store the client's n8n instance URL. Onboarding Automation currently writes a label stub — this needs updating to capture the client's real n8n URL once Kai sets it up post-credential collection. Workflow Builder Agent scope should treat "client n8n API key received" as a prerequisite before any build starts.
 
 ---
 
