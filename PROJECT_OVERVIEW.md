@@ -626,8 +626,8 @@ business-agent-foundry/
 ## Short-term
 - [ ] Build [PA] Reporting Agent (Haris — scope ready)
 - [ ] Build automated credential collection follow-up email workflow (Haris — unblocked: Option A decided)
-- [ ] Add n8n account setup to welcome email credential instructions — client creates their own account, shares API key + instance URL (Haris — update Onboarding Automation node 23)
-- [ ] Update Workflow Builder Agent scope — "client n8n API key in Airtable" is a hard prerequisite before build starts (Haris)
+- [ ] Add n8n to welcome email credential instructions — client signs up at n8n.io, creates API key, shares key + instance URL (Haris — update Onboarding Automation node 23, workflow `7RsRJIqBHFpWZoWM`)
+- [ ] Update Workflow Builder Agent scope — prerequisite: client n8n API key + instance URL present in Airtable `n8n_workspace_id` before agent runs (Haris)
 - [ ] Set up Instantly.ai + pa-instantly credential (Kai)
 - [ ] Build [PA] Outreach Agent (Haris — after Instantly.ai)
 - [ ] Build error handling workflow (Haris)
@@ -643,7 +643,7 @@ business-agent-foundry/
 - [ ] Apollo.io paid plan for higher volume
 - [ ] Generalize Agent Foundry for second business type
 
-> **Client n8n model — DECIDED (2026-03-26):** Each client creates and owns their own n8n account. During onboarding, the client is asked to share their n8n API key and instance URL alongside their other tool credentials (Buildium, Gmail, etc.). Haris then uses that key to build and deploy automations directly into the client's workspace. The `n8n_workspace_id` field in Airtable stores the client's n8n instance URL. The welcome email credential instructions should include n8n account setup as a required step. Workflow Builder Agent scope must treat "client n8n API key received in Airtable" as a hard prerequisite before any build starts.
+> **Client n8n model — DECIDED (2026-03-26):** Each client creates and owns their own n8n account. During credential collection (onboarding), the client shares their n8n API key and instance URL alongside their other tool credentials. The **Workflow Builder Agent** (automated — runs via n8n-MCP) then uses that API key to connect to the client's n8n instance and build their custom automations there automatically. This is Step 7 of the delivery pipeline. The `n8n_workspace_id` field in Airtable stores the client's n8n instance URL. The welcome email must include n8n account setup as a required credential step. "Client n8n API key in Airtable" is a hard prerequisite before the Workflow Builder Agent can run.
 
 ---
 
