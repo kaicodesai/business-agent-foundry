@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 2.8 — Last updated: 2026-03-27 — Updated by: Haris + Claude
+> **Version:** 2.9 — Last updated: 2026-03-27 — Updated by: Haris + Claude
 
 ---
 
@@ -267,7 +267,7 @@ claude
 | Team ID | `90141018999` |
 | Space ID | `90144568071` |
 | Space Name | `Phoenix Automation` (color: `#1B2A4A`) |
-| Test project list ID | `901414583912` |
+| ClickUp list template ID | `t-901414909247` (template does NOT auto-seed tasks — verified 2026-03-27) |
 | Folder: Client Projects | `90147969224` |
 | List: [PA] Client Template | `901414699447` |
 | Folder: Internal | `90147969240` |
@@ -452,7 +452,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 4.  Check Active Clients (IF — exits if 0)
 5.  Exit - No Active Clients (NoOp)
 6.  Split Client Records (Code — flattens records, outputs clickup_folder_id per client)
-7.  Get All Tasks From Folder (HTTP GET → ClickUp team tasks API: /api/v2/team/90141018999/task?folder_id[]={clickup_folder_id}&include_closed=true — reads all 4 lists at once)
+7.  Get All Tasks From Folder (HTTP GET → ClickUp team tasks API: /api/v2/team/90141018999/task?folder_ids[]={clickup_folder_id}&include_closed=true&limit=100 — reads all 4 lists at once)
 8.  Error Skip (Code — non-blocking on ClickUp error)
 9.  Merge Client and Tasks (Code — index-aligns ClickUp response with client records)
 10. Structure Task Data (Code — categorises tasks: completed/in_progress/blocked, outputs clickup_folder_id)
@@ -1146,6 +1146,10 @@ business-agent-foundry/
 - **Full ClickUp audit completed:** space structure, workflow node audit, Airtable field audit, edge case analysis — all documented
 - **Calendly clarified:** API key not needed for current scope — webhook-only integration sufficient
 - **Instantly.ai API key received** (MWFiM2VjZjMtYWEwYy00YWQ1LWEzYTMtNWNkOWMwYzc5MmViOmFVSkNIYlFSbGNlbQ==) — pa-instantly credential ready to set up
+- **Session 11 continuation (same date):**
+  - Tested ClickUp list template `t-901414909247` — confirmed template does NOT auto-seed tasks (both test lists created via `template_id` param had `task_count: 0`). Decision: keep 31-node workflow with individual task seeding as-is.
+  - Deleted 4 lists: 2 template test lists (901414909658, 901414909660) + 2 stale space-root lists (meridian-consulting-group 901414583912, ashley-edwards 901414584147)
+  - Status Update Agent TASK URL verified: `folder_ids[]` (with 's') — correct. Fixed typo in PROJECT_OVERVIEW.md description (was `folder_id[]`).
 
 ### What is in progress (not finished)
 - Referral Trigger Agent E2E Step 6 still pending — Brightline is test-complete so filter returns empty. Kai needs to temporarily set to `live`, run the agent, then revert.
@@ -1164,4 +1168,4 @@ business-agent-foundry/
 6. **Haris:** Build automated credential collection follow-up email workflow (unblocked)
 
 ### Files changed this session
-- `PROJECT_OVERVIEW.md` — version 2.8, ClickUp hierarchy, 4 new Airtable fields, Onboarding node summary updated (31 nodes), new Recurring Bug, 6 Known Issues resolved, Session 11 handoff
+- `PROJECT_OVERVIEW.md` — version 2.9, template test conclusion, 4 stale lists deleted, Status Update Agent URL typo fixed, Session 11 continuation handoff
