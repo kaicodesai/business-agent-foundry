@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 3.0 — Last updated: 2026-03-27 — Updated by: Haris + Claude
+> **Version:** 3.1 — Last updated: 2026-03-27 — Updated by: Haris + Claude
 
 ---
 
@@ -322,7 +322,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | email | email | Onboarding webhook |
 | contact_name | singleLineText | Onboarding webhook |
 | client_slug | singleLineText | Derived: company_name slugified |
-| project_status | singleSelect: lead, proposal_sent, onboarding.in_progress, live, test-complete + 11 more pending (see Known Issues) — field ID: `fldnAaIuv4VSGcxuB` — ⚠️ **KAI: add new values manually in Airtable UI** | Onboarding automation / manual |
+| project_status | singleSelect: lead, proposal_sent, onboarding.in_progress, onboarding.stalled, build.ready, build.in_progress, build.blocked, build.complete, qa.in_progress, qa.pass, qa.fail, activation.pending, live, closed.no_deal, closed.post_delivery, test-complete — field ID: `fldnAaIuv4VSGcxuB` | Onboarding automation / manual |
 | service_tier | singleSelect: starter-build, growth-build, scale-build, retainer, agency-retainer | Onboarding webhook |
 | industry | singleLineText | Manual / lead qual |
 | lead_score_grade | singleLineText: A, B, C, D | Lead qual agent |
@@ -715,7 +715,7 @@ business-agent-foundry/
 | `automations_delivered` field missing from Airtable | Low | ⏳ Referral Trigger uses `scope_of_work` as fallback — add dedicated field for cleaner output | Kai decision |
 | `onboarding_started_at` not written by Onboarding Automation | Low | ✅ RESOLVED 2026-03-26 — added to Node 21 (Update Airtable Record) jsonBody | Haris |
 | Brightline test records still live in Airtable (Clients + Prospects) | Low | ⏳ Clean up after Step 6 confirmed — see e2e-test-report.md | Kai/Haris |
-| project_status singleSelect missing 11 new values | Medium — ClickUp Sync won't email/sync for new statuses until added | ⏳ **KAI: add manually in Airtable UI** — field ID `fldnAaIuv4VSGcxuB` → add: build.ready, build.in_progress, build.blocked, build.complete, qa.in_progress, qa.pass, qa.fail, activation.pending, onboarding.stalled, closed.no_deal, closed.post_delivery | Kai |
+| project_status singleSelect missing 11 new values | Medium — ClickUp Sync won't email/sync for new statuses until added | ✅ RESOLVED 2026-03-27 — all 11 values added via Airtable Records API typecast:true | Haris |
 | Brightline + Meridian clickup_task_* fields are empty | Low — test records; won't affect real clients | ⏳ Expected: Onboarding was run before task ID fields existed. Real clients onboarded now will have all fields populated automatically. | — |
 | Status Update Agent + Referral Trigger Agent not API-executable | Low | Known — schedule-only workflows must be run from n8n editor | — |
 | Meridian Consulting `project_status=live` pollutes Status Update Agent emails | High | ✅ RESOLVED 2026-03-26 — Status Test Client set to test-complete; Meridian folder created (90148117751) with 4 lists; Airtable folder ID corrected | Haris |
@@ -1261,7 +1261,7 @@ business-agent-foundry/
 - **Part 1 — Airtable Schema:**
   - 21 new `clickup_task_*` singleLineText fields added (all task IDs across Onboarding/Build/QA/Live lists)
   - 7 new supporting fields added: `workflows_built`, `qa_verdict`, `overdue_flagged_at`, `build_started_at`, `build_completed_at`, `qa_started_at`, `qa_completed_at`
-  - ⚠️ `project_status` singleSelect: Airtable Meta API cannot update existing field options — 11 new values need manual addition by Kai in Airtable UI (see Known Issues)
+  - ✅ `project_status` singleSelect: all 11 new values added via Records API typecast:true — no manual step required
 
 - **Part 2 — Onboarding Automation (7RsRJIqBHFpWZoWM) updated: 31 → 51 nodes:**
   - Replaced 7 wrong-name seed tasks with 23 properly named tasks (9 onboarding + 4 build + 5 QA + 7 live matching clickup-structure.md exactly)
@@ -1296,19 +1296,17 @@ business-agent-foundry/
   - Brightline restored to test-complete ✅
 
 ### What is in progress (not finished)
-- project_status singleSelect: 11 new values need manual addition by Kai in Airtable UI
+- project_status singleSelect: ✅ RESOLVED — all 11 new values added via typecast:true
 - [PA] ClickUp Sync: built and verified but not activated — Kai's decision
 - Reporting Agent: scope ready but not built
 
 ### Blockers for next session
-- **KAI ACTION REQUIRED:** Add 11 new project_status values in Airtable UI before ClickUp Sync is activated
 - Instantly.ai not set up — blocks Outreach Agent and Referral Trigger live sends
 
 ### Next person should start with
 1. `git pull origin main` then read PROJECT_OVERVIEW.md
-2. **KAI:** Open Airtable → Clients table → `project_status` field → Edit field → add all 11 new values: `build.ready`, `build.in_progress`, `build.blocked`, `build.complete`, `qa.in_progress`, `qa.pass`, `qa.fail`, `activation.pending`, `onboarding.stalled`, `closed.no_deal`, `closed.post_delivery`
-3. **KAI:** After adding values, activate [PA] ClickUp Sync (ID: `uiTwYIUk6nIFwLtX`) in n8n
-4. **KAI:** Set up pa-instantly credential in n8n
+2. **KAI:** Activate [PA] ClickUp Sync (ID: `uiTwYIUk6nIFwLtX`) in n8n — all project_status values now exist in Airtable
+3. **KAI:** Set up pa-instantly credential in n8n
 5. **Haris:** Build [PA] Reporting Agent (scope ready in docs/workflows/build-scopes/)
 
 ### Files changed this session
