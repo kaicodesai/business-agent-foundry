@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 2.6 — Last updated: 2026-03-26 — Updated by: Haris + Claude
+> **Version:** 2.7 — Last updated: 2026-03-27 — Updated by: Kai + Claude
 
 ---
 
@@ -80,7 +80,13 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - **[PA] Onboarding Automation** (7RsRJIqBHFpWZoWM) — 24 nodes, tested, dual emails working
 - **[PA] Lead Generation** (YO3f5CL9bYbLTBgw) — 13 nodes, tested, dedup working
 - **[PA] Status Update Agent** (94DpGwRPWGRPqCVU) — 15 nodes, tested, branded emails working
-- **[PA] Referral Trigger Agent** (ka6GesSfWVo2FZtU) — 13 nodes, built, Instantly stubbed (logs INSTANTLY_NOT_CONFIGURED)
+- **[PA] Referral Trigger Agent** (ka6GesSfWVo2FZtU) — 13 nodes, built, E2E tested PASS 2026-03-27, Instantly stubbed (logs INSTANTLY_NOT_CONFIGURED)
+- **pa-smtp** updated to kai@phoenixautomation.ai (Google Workspace, App Password) — 2026-03-27
+- Haris has full n8n Cloud access (kaiashley.app.n8n.cloud) — confirmed 2026-03-27
+- Google Workspace confirmed active — kai@phoenixautomation.ai and howard@phoenixautomation.ai
+- Business registered in Florida; EIN pending document numbers
+- Partnership Agreement drafted and sent to Howard Littel
+- Client n8n model confirmed: Option A — each client owns their own n8n account
 - client_timezone + last_status_update_sent_at fields added to Clients table
 - PROJECT_OVERVIEW.md added to repo root
 - **n8n Cloud** — all 3 PA workflows imported to kaiashley.app.n8n.cloud (Business Foundry project)
@@ -225,7 +231,7 @@ claude
 |---------|---------|
 | Owner (Kai) | lightofkai777@gmail.com |
 | Test / staging emails | ashleyedwards305@gmail.com |
-| SMTP sender | lightofkai777@gmail.com (Gmail App Password) |
+| SMTP sender | kai@phoenixautomation.ai (Google Workspace, App Password) |
 
 ## Anthropic API
 | Item | Value |
@@ -547,6 +553,10 @@ business-agent-foundry/
 | Node reference error | `Referenced node doesn't exist` | Node was renamed/removed | Change all `$('Old Node Name')` references to `$json` |
 | ClickUp Folder error | `Error fetching options from ClickUp` | Space has no folders | Toggle `Folderless List` ON in ClickUp node |
 | n8n MCP "Failed to connect" | Health check shows failed | Display bug only | Ignore — test with actual MCP call to confirm it works |
+| n8n repeated fields[] params not sent | Airtable returns only last field; all others empty | n8n HTTP Request node doesn't reliably send repeated query params with same key | Remove all fields[] restrictions — let Airtable return all fields; Code nodes read only what they need |
+| record_id undefined after HTTP node | PATCH URL resolves to `/undefined`; flag node fails silently | HTTP Request node output = API response body, not input data — record_id is lost | Use `$('NodeName').item.json.record_id` to reach back to last Code node that had the field |
+| ClickUp /folder/{id}/task 404 | `Route not found` from ClickUp API | `/folder/{id}/task` endpoint does not exist in ClickUp v2 | Use `/team/{team_id}/task?folder_ids[]={folder_id}` — PA team ID: `90141018999` |
+| Airtable checkbox formula invalid | `INVALID_FILTER_BY_FORMULA` | `{field}=FALSE()` is not valid Airtable formula syntax | Use `NOT({field})` for unchecked checkbox filter |
 
 ---
 
@@ -705,6 +715,47 @@ business-agent-foundry/
 ### Files changed this session
 - `PROJECT_OVERVIEW.md` — version 2.4, service_tier options corrected, Known Issues + TODO updated, Session 8 handoff
 - `docs/clients/brightline-property-management/e2e-test-report.md` — created (new)
+
+---
+
+## Session Handoff — 2026-03-27 (Session 10)
+**Worked by:** Kai
+
+### What was completed
+- **[PA] Referral Trigger Agent E2E test — PASS** (all 6 steps complete)
+  - Brightline record picked up by filter, Claude emails generated, Airtable flags written correctly
+- **Referral Trigger Agent bugs fixed (5 bugs this session):**
+  1. `{referral_sequence_sent}=FALSE()` → `NOT({referral_sequence_sent})` (invalid Airtable formula)
+  2. `fields[]` query params removed from Fetch node — n8n doesn't reliably send repeated same-key params
+  3. `record_id` lost after HTTP nodes — fixed with `$('Extract Referral Emails').item.json.record_id`
+  4. `Split Client Records` had `|| ,` (missing fallback string) — fixed to `|| ''`
+  5. `referral_sequence_sent_at` sent as ISO timestamp to date field — fixed with `.split('T')[0]`
+- **Status Update Agent bugs fixed (3 bugs this session):**
+  1. `Split Client Records` missing node name: `$().first()` → `$('Fetch Active Clients').first()`
+  2. `Get All Tasks From Folder` URL: `/folder/{id}/task` (doesn't exist) → `/team/90141018999/task?folder_ids[]={id}`
+  3. `Error Skip` rewritten to pass through client data + `tasks: []` so workflow continues on ClickUp error
+- **pa-smtp** updated to kai@phoenixautomation.ai (Google Workspace, App Password)
+- **Business updates:** Florida registration confirmed, EIN pending, Partnership Agreement sent to Howard
+- **Client n8n model confirmed:** Option A — clients own their own n8n accounts
+- Airtable test records cleaned up (Brightline + Prospects both set to test-complete)
+
+### What is in progress (not finished)
+- Reporting Agent: Fetch Executions node still has pa-anthropic credential (needs manual switch in editor)
+- EIN application pending (document numbers required)
+- Partnership Agreement awaiting Howard's signature
+
+### Blockers for next session
+- Outreach Agent blocked on Instantly.ai — needs PA domain first
+- Onboarding flow needs updating for Option A client n8n model before first real client
+
+### Next person should start with
+1. `git pull origin main` then read PROJECT_OVERVIEW.md
+2. **Kai:** Open Reporting Agent → Fetch Executions node → switch credential to pa-n8n-api → re-run test
+3. **Kai:** Secure Phoenix Automation domain → set up Instantly.ai → then Haris builds Outreach Agent
+4. **Before first real client:** Update Onboarding Automation for Option A (client self-serves n8n account)
+
+### Files changed this session
+- `PROJECT_OVERVIEW.md` — version 2.7, E2E PASS, pa-smtp updated, 4 new recurring bugs, Session 10 handoff
 
 ---
 
