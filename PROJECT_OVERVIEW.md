@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 2.7 — Last updated: 2026-03-27 — Updated by: Kai + Claude
+> **Version:** 2.8 — Last updated: 2026-03-27 — Updated by: Haris + Claude
 
 ---
 
@@ -266,12 +266,38 @@ claude
 | Auth | `Authorization: YOUR_API_KEY` |
 | Team ID | `90141018999` |
 | Space ID | `90144568071` |
+| Space Name | `Phoenix Automation` (color: `#1B2A4A`) |
 | Test project list ID | `901414583912` |
 | Folder: Client Projects | `90147969224` |
 | List: [PA] Client Template | `901414699447` |
 | Folder: Internal | `90147969240` |
 | List: Internal / Lead Management | `901414699479` |
 | List: Internal / Operations | `901414699480` |
+
+### ClickUp Space Hierarchy (2026-03-27)
+```
+SPACE 90144568071 — Phoenix Automation
+├── [FOLDER] Client Projects           90147969224
+│   └── [LIST] [PA] Client Template    901414699447  (7 template tasks — manual reference only, not auto-seeded)
+│
+├── [FOLDER] Internal                  90147969240
+│   ├── [LIST] Lead Management         901414699479
+│   └── [LIST] Operations              901414699480
+│
+├── [FOLDER] brightline-property-management   90148144284  ← TEST (test-complete)
+│   ├── [LIST] Onboarding   901414908093
+│   ├── [LIST] Build        901414908094
+│   ├── [LIST] QA           901414908096
+│   └── [LIST] Live         901414908097
+│
+└── [FOLDER] meridian-consulting-group  90148144286  ← TEST (lead)
+    ├── [LIST] Onboarding   901414908100
+    ├── [LIST] Build        901414908103
+    ├── [LIST] QA           901414908104
+    └── [LIST] Live         901414908105
+```
+
+> ⚠️ **ClickUp API constraint (permanent):** The ClickUp v2 API does not support `POST /folder/{id}/folder`. Client folders CANNOT be nested inside Client Projects via API — they are always created at space root with `POST /space/{space_id}/folder`. The Client Projects folder (90147969224) is a manual organizational container only. Do not attempt to use `/folder/{id}/folder` — it returns 404.
 
 ---
 
@@ -299,6 +325,10 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | n8n_workspace_id | singleLineText | Onboarding automation |
 | n8n_credentials_template_id | singleLineText | Onboarding automation |
 | clickup_folder_id | singleLineText | Onboarding automation — stores ClickUp folder ID (not list ID) — field ID: `fld9PdwZetXwjENmb` |
+| clickup_list_onboarding | singleLineText | Onboarding automation — Onboarding list ID — field ID: `fld2J6E0GV9joIL7r` |
+| clickup_list_build | singleLineText | Onboarding automation — Build list ID — field ID: `fldRv30powHF8QPAn` |
+| clickup_list_qa | singleLineText | Onboarding automation — QA list ID — field ID: `flddH0HJlUMdUXIpj` |
+| clickup_list_live | singleLineText | Onboarding automation — Live list ID — field ID: `fldxeGj8sbr56QcyP` |
 | onboarding_started_at | dateTime | Onboarding automation |
 | credentials_checklist | multilineText | Onboarding automation (JSON) |
 | client_timezone | singleLineText | e.g. America/New_York |
@@ -357,7 +387,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 
 | Workflow | ID | Nodes | Trigger | Status |
 |---------|-----|-------|---------|--------|
-| [PA] Onboarding Automation | `7RsRJIqBHFpWZoWM` | 24 | POST /payment-confirmed webhook | ✅ Updated (folder+4-lists), inactive |
+| [PA] Onboarding Automation | `7RsRJIqBHFpWZoWM` | 31 | POST /payment-confirmed webhook | ✅ Updated (folder+4-lists+task seeding+list IDs to Airtable), inactive |
 | [PA] Lead Generation | `YO3f5CL9bYbLTBgw` | 11 | Daily 06:45 + manual | ✅ Built, tested, inactive |
 | [PA] Status Update Agent | `94DpGwRPWGRPqCVU` | 15 | Monday 09:00 + manual | ✅ Updated (reads folder tasks), inactive |
 | [PA] Referral Trigger Agent | `ka6GesSfWVo2FZtU` | 13 | Daily 08:00 + manual | ⏳ Built, Instantly stubbed, needs test |
@@ -378,18 +408,25 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 10. Extract Tools Required (Code — parses comma-separated tools list)
 11. Create Credentials Template (Code — {tool: pending_client_setup} per tool)
 12. Extract Template ID (Code — carries credentials_checklist forward)
-13. Create Client ClickUp Folder (HTTP POST /api/v2/folder/90147969224/folder — creates [client-slug] folder, non-blocking)
+13. Create Client ClickUp Folder (HTTP POST /api/v2/space/90144568071/folder — ⚠️ space root only, ClickUp v2 API does not support nested folder creation)
 14. Extract Folder ID (Code — validates folder.id, merges with priorData)
 15. Create List — Onboarding (HTTP POST /api/v2/folder/{folder_id}/list)
 16. Create List — Build (HTTP POST /api/v2/folder/{folder_id}/list)
 17. Create List — QA (HTTP POST /api/v2/folder/{folder_id}/list)
 18. Create List — Live (HTTP POST /api/v2/folder/{folder_id}/list)
-19. Merge ClickUp Folder ID (Code — extracts clickup_folder_id, merges with priorData)
-20. Log ClickUp Error — Continue (Code — error branch, sets clickup_folder_id: null, pipeline continues)
-21. Update Airtable Record (HTTP PATCH — sets project_status, workspace/template/clickup_folder_id)
-22. Send Onboarding Summary Email (SMTP — HTML to lightofkai777@gmail.com)
-23. Send Client Welcome Email (SMTP — HTML to client email)
-24. Stop — Invalid Payload (stopAndError — false branch of Validate Payload)
+19. Seed Task: Onboarding — Credentials (HTTP POST → onboarding list: "Collect client credentials")
+20. Seed Task: Build — Workflow 1 (HTTP POST → build list)
+21. Seed Task: Build — Workflow 2 (HTTP POST → build list)
+22. Seed Task: QA — Review and test (HTTP POST → qa list)
+23. Seed Task: QA — Client review (HTTP POST → qa list)
+24. Seed Task: Live — Activation (HTTP POST → live list)
+25. Seed Task: Live — Handoff (HTTP POST → live list: "Live — handoff complete")
+26. Merge ClickUp Folder ID (Code — captures folder_id + all 4 list IDs, merges with priorData)
+27. Log ClickUp Error — Continue (Code — error branch, sets folder_id + all list IDs to null, pipeline continues)
+28. Update Airtable Record (HTTP PATCH — sets project_status, workspace/template/clickup_folder_id + 4 list IDs + onboarding_started_at)
+29. Send Onboarding Summary Email (SMTP — HTML to lightofkai777@gmail.com)
+30. Send Client Welcome Email (SMTP — HTML to client email)
+31. Stop — Invalid Payload (stopAndError — false branch of Validate Payload)
 ```
 
 ### [PA] Lead Generation (YO3f5CL9bYbLTBgw) — 11 nodes
@@ -557,6 +594,7 @@ business-agent-foundry/
 | record_id undefined after HTTP node | PATCH URL resolves to `/undefined`; flag node fails silently | HTTP Request node output = API response body, not input data — record_id is lost | Use `$('NodeName').item.json.record_id` to reach back to last Code node that had the field |
 | ClickUp /folder/{id}/task 404 | `Route not found` from ClickUp API | `/folder/{id}/task` endpoint does not exist in ClickUp v2 | Use `/team/{team_id}/task?folder_ids[]={folder_id}` — PA team ID: `90141018999` |
 | Airtable checkbox formula invalid | `INVALID_FILTER_BY_FORMULA` | `{field}=FALSE()` is not valid Airtable formula syntax | Use `NOT({field})` for unchecked checkbox filter |
+| ClickUp nested folder creation fails | `Cannot POST /api/v2/folder/{id}/folder` | ClickUp v2 API does not support sub-folder creation — folders can only be created at space root | Always use `POST /api/v2/space/{space_id}/folder` — the Client Projects folder (90147969224) is a manual UI container only, not a parent via API |
 
 ---
 
@@ -585,14 +623,18 @@ business-agent-foundry/
 
 | Issue | Severity | Status | Owner |
 |-------|---------|--------|-------|
-| Test records in Airtable/ClickUp need cleanup | Low | ✅ Partially done 2026-03-22 — test ClickUp folder deleted, Status Test Client reset | Kai/Haris |
+| Test records in Airtable/ClickUp need cleanup | Low | ✅ RESOLVED 2026-03-27 — 3 blank junk rows deleted; Status Test Client slug fixed; both test client ClickUp folders recreated with seeded tasks | Haris |
 | Error handling workflow not connected | Medium | Deferred | Haris |
 | Instantly.ai not set up | Blocks outreach | ⏳ Needs account | Kai |
 | Default GitHub branch is wrong | Low | ⏳ Change to main in Settings | Kai |
 | Airtable Clients table missing 5 fields | Low | ✅ RESOLVED 2026-03-20 | Haris |
 | Airtable — 10 proposed fields for reporting/referral agents | Low | ✅ RESOLVED 2026-03-22 — all 10 added | Haris |
 | ClickUp space structure not set up | Medium | ✅ RESOLVED 2026-03-20 (folders/lists created) | Haris |
+| ClickUp space unnamed / no branding | Low | ✅ RESOLVED 2026-03-27 — renamed to "Phoenix Automation", color #1B2A4A | Haris |
 | Onboarding automation creates folderless lists | Medium | ✅ RESOLVED 2026-03-22 — now creates folder + 4 lists | Haris |
+| Onboarding automation doesn't seed tasks into lists | Medium | ✅ RESOLVED 2026-03-27 — 7 task seeding nodes added (nodes 19–25); tasks auto-created in all 4 lists on onboarding | Haris |
+| Onboarding automation doesn't store list IDs in Airtable | Medium | ✅ RESOLVED 2026-03-27 — 4 new Airtable fields added (clickup_list_onboarding/build/qa/live); Merge ClickUp Folder ID + Update Airtable Record updated | Haris |
+| Client folders created at space root instead of under Client Projects | Low | ✅ DOCUMENTED 2026-03-27 — ClickUp v2 API does not support nested folder creation. Folders must be at space root. Client Projects folder is a manual UI container only. See Recurring Bugs. | Haris |
 | clickup_project_id stores list ID instead of folder ID | Medium | ✅ RESOLVED 2026-03-22 — renamed to clickup_folder_id, stores folder ID | Haris |
 | Status Update Agent reads single list only | Medium | ✅ RESOLVED 2026-03-22 — now reads all tasks from folder | Haris |
 | n8n access for Haris | Blocker for collaboration | ⏳ Cloud up — Kai to invite Haris | Kai |
@@ -619,6 +661,11 @@ business-agent-foundry/
 - [x] ✅ `onboarding_started_at` added to Onboarding Automation Airtable update (2026-03-26)
 - [ ] **KAI:** Run [PA] Referral Trigger Agent from n8n editor → verify `referral_sequence_sent=true` + automation_logs entry (Brightline test data still ready)
 - [ ] **KAI:** Re-run [PA] Status Update Agent to verify clean email after pollution fixes
+- [x] ✅ **Haris:** Renamed ClickUp space to "Phoenix Automation" (color #1B2A4A) — 2026-03-27
+- [x] ✅ **Haris:** Recreated client ClickUp folders with seeded tasks — Brightline (90148144284) + Meridian (90148144286) — 2026-03-27
+- [x] ✅ **Haris:** Added 4 Airtable list ID fields (clickup_list_onboarding/build/qa/live) — 2026-03-27
+- [x] ✅ **Haris:** Updated Onboarding Automation (31 nodes) — task seeding + list IDs written to Airtable — 2026-03-27
+- [x] ✅ **Haris:** Deleted 3 blank junk Airtable rows; fixed Status Test Client slug — 2026-03-27
 - [ ] **KAI/Haris:** Clean up Brightline test records after Step 6 confirmed (see e2e-test-report.md)
 - [x] ✅ **KAI DECISION:** Client n8n model decided — **Option A: each client has their own n8n account** (2026-03-26)
 - [ ] **KAI:** Update Calendly URL in Referral Trigger Agent (node: Build Claude Payload, workflow: `ka6GesSfWVo2FZtU`)
@@ -1075,3 +1122,46 @@ business-agent-foundry/
 - **[2026-03-15]** — Simulation 2 (Northgate Legal): 7/11 issues CLOSED; Agent Builder designed
 - **[2026-03-14]** — Correction/spec layer + coordination layer + 5 delivery agents
 - **[2026-03-14]** — Blueprint Agent (Layer 1) complete; Phoenix Automation blueprint validated
+
+## Session Handoff — 2026-03-27 (Session 11)
+**Worked by:** Haris + Claude (Claude Code VSCode)
+
+### What was completed
+- **FIX 1 — ClickUp space renamed** to "Phoenix Automation" (color #1B2A4A) — space 90144568071
+- **FIX 2 — Client folders recreated with full task seeding:**
+  - Deleted stale root-level folders (old BPM 90148085794, old MCG 90148117751)
+  - Created brightline-property-management (90148144284) + 4 lists + 7 tasks seeded
+  - Created meridian-consulting-group (90148144286) + 4 lists + 7 tasks seeded
+  - ⚠️ ClickUp v2 API limitation confirmed: `POST /folder/{id}/folder` returns 404 — folders must be created at space root, not nested under Client Projects. Documented in Recurring Bugs.
+- **FIX 3 — Airtable: 4 new fields added** (clickup_list_onboarding/build/qa/live) and Brightline + Meridian records updated with all new IDs
+- **FIX 4 — Onboarding Automation updated** (24 → 31 nodes):
+  - Nodes 19–25: 7 task seeding HTTP POST nodes (auto-seeds tasks into all 4 lists)
+  - Node 26 (Merge ClickUp Folder ID): now captures all 4 list IDs alongside folder ID
+  - Node 27 (Log ClickUp Error): now sets all 4 list IDs to null on error path
+  - Node 28 (Update Airtable Record): now writes clickup_list_onboarding/build/qa/live + onboarding_started_at
+- **FIX 5 — Airtable cleanup:**
+  - Deleted 3 blank/junk rows (rec7XfoO4a8sjZFTW, recWakBWZEMEu2wG2, reczHE2U5O52aB6Sd)
+  - Status Test Client: slug fixed to "status-test-client", clickup_folder_id cleared
+- **Welcome email fix** (from Session 10 continuation): removed "reply with credentials" CTA, added security notice, welcome + follow-up framing
+- **Full ClickUp audit completed:** space structure, workflow node audit, Airtable field audit, edge case analysis — all documented
+- **Calendly clarified:** API key not needed for current scope — webhook-only integration sufficient
+- **Instantly.ai API key received** (MWFiM2VjZjMtYWEwYy00YWQ1LWEzYTMtNWNkOWMwYzc5MmViOmFVSkNIYlFSbGNlbQ==) — pa-instantly credential ready to set up
+
+### What is in progress (not finished)
+- Referral Trigger Agent E2E Step 6 still pending — Brightline is test-complete so filter returns empty. Kai needs to temporarily set to `live`, run the agent, then revert.
+- Reporting Agent: Fetch Executions node credential needs switching to pa-n8n-api
+
+### Blockers for next session
+- Brightline referral test: must temporarily set `project_status=live` to test
+- Instantly.ai credential: set up pa-instantly in n8n before Outreach/Referral agents can send live emails
+
+### Next person should start with
+1. `git pull origin main` then read PROJECT_OVERVIEW.md
+2. **Kai:** Set up pa-instantly credential in n8n using key MWFiM2VjZjMtYWEwYy00YWQ1LWEzYTMtNWNkOWMwYzc5MmViOmFVSkNIYlFSbGNlbQ==
+3. **Kai:** Set Brightline `project_status=live` → run Referral Trigger Agent → verify → revert to test-complete
+4. **Kai:** Set up Calendly webhook → paste n8n webhook URL in Calendly → Integrations → Webhooks (no API key needed)
+5. **Haris:** Build [PA] Reporting Agent (scope ready in docs/workflows/build-scopes/)
+6. **Haris:** Build automated credential collection follow-up email workflow (unblocked)
+
+### Files changed this session
+- `PROJECT_OVERVIEW.md` — version 2.8, ClickUp hierarchy, 4 new Airtable fields, Onboarding node summary updated (31 nodes), new Recurring Bug, 6 Known Issues resolved, Session 11 handoff
