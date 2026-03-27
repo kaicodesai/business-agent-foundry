@@ -319,6 +319,77 @@ tests before the owner activates for production.
 
 ---
 
+## Airtable Status Updates
+
+Update the client's Airtable record (Base: `appMLHig3CN7WW0iW`, Table: `tblfvqqyYukRJQYmQ`)
+at each stage of QA. Use `client_slug` to locate the record first.
+
+**Step 1 — When starting a QA session:**
+Read the client record:
+```
+GET https://api.airtable.com/v0/appMLHig3CN7WW0iW/tblfvqqyYukRJQYmQ
+  ?filterByFormula={client_slug}="[client-slug]"
+```
+PATCH:
+```json
+{
+  "project_status": "qa.in_progress",
+  "qa_started_at": "[current ISO timestamp]"
+}
+```
+
+**Step 2 — When QA verdict is issued (PASS or CONDITIONAL PASS):**
+PATCH:
+```json
+{
+  "project_status": "qa.pass",
+  "qa_verdict": "PASS",
+  "qa_completed_at": "[current ISO timestamp]"
+}
+```
+Use `"qa_verdict": "CONDITIONAL PASS"` if applicable.
+
+**Step 3 — When QA verdict is FAIL:**
+PATCH:
+```json
+{
+  "project_status": "qa.fail",
+  "qa_verdict": "FAIL",
+  "qa_completed_at": "[current ISO timestamp]"
+}
+```
+
+Auth: Use the `pa-airtable` credential. All updates are non-blocking —
+a failed Airtable write does not cancel the QA session.
+
+---
+
+## ClickUp Task Rules
+
+**Rule 1: Never directly update ClickUp task statuses.**
+All ClickUp task status syncing is handled by `[PA] ClickUp Sync`, which reads
+Airtable project_status and updates ClickUp automatically every 2 hours.
+The qa-agent only updates Airtable — ClickUp follows automatically.
+
+**Rule 2: Exception — add a verdict comment to ClickUp.**
+After writing `qa_verdict` to Airtable, add a comment to `clickup_task_qa_verdict`
+so the owner sees the outcome directly in ClickUp:
+
+1. Read `clickup_task_qa_verdict` from the client's Airtable record
+2. If not empty, POST:
+```
+POST https://api.clickup.com/api/v2/task/{clickup_task_qa_verdict}/comment
+Authorization: [pa-clickup credential value]
+Content-Type: application/json
+Body: {
+  "comment_text": "QA Verdict: [PASS/CONDITIONAL PASS/FAIL] — [date]. See qa-report.md for full details."
+}
+```
+3. If the field is empty or POST fails, log and continue.
+Use the `pa-clickup` credential. This is non-blocking.
+
+---
+
 ## Handoff
 
 **On QA PASS or QA CONDITIONAL PASS:**

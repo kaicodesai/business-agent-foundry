@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 2.9 — Last updated: 2026-03-27 — Updated by: Haris + Claude
+> **Version:** 3.0 — Last updated: 2026-03-27 — Updated by: Haris + Claude
 
 ---
 
@@ -81,6 +81,12 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - **[PA] Lead Generation** (YO3f5CL9bYbLTBgw) — 13 nodes, tested, dedup working
 - **[PA] Status Update Agent** (94DpGwRPWGRPqCVU) — 15 nodes, tested, branded emails working
 - **[PA] Referral Trigger Agent** (ka6GesSfWVo2FZtU) — 13 nodes, built, E2E tested PASS 2026-03-27, Instantly stubbed (logs INSTANTLY_NOT_CONFIGURED)
+- **[PA] ClickUp Sync** (uiTwYIUk6nIFwLtX) — 18 nodes, built 2026-03-27, reads Airtable project_status and syncs ClickUp task statuses every 2 hours, inactive
+- **[PA] Onboarding Automation** updated to 51 nodes — 23 task seeding nodes (all 4 lists) + Extract All Task IDs + 3 mark-complete nodes + writes all clickup_task_* IDs to Airtable — 2026-03-27
+- **[PA] Status Update Agent** updated to 20 nodes — 5 new ClickUp sync nodes (determine task + PUT complete + POST comment) — 2026-03-27
+- **28 new Airtable Clients fields added** — 21 clickup_task_* task ID fields + 7 supporting fields (workflows_built, qa_verdict, overdue_flagged_at, build_started_at, build_completed_at, qa_started_at, qa_completed_at) — 2026-03-27
+- **workflow-builder-agent.md updated** — Airtable Status Updates + ClickUp Task Rules sections added — 2026-03-27
+- **qa-agent.md updated** — Airtable Status Updates + ClickUp Task Rules sections added — 2026-03-27
 - **pa-smtp** updated to kai@phoenixautomation.ai (Google Workspace, App Password) — 2026-03-27
 - Haris has full n8n Cloud access (kaiashley.app.n8n.cloud) — confirmed 2026-03-27
 - Google Workspace confirmed active — kai@phoenixautomation.ai and howard@phoenixautomation.ai
@@ -316,7 +322,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | email | email | Onboarding webhook |
 | contact_name | singleLineText | Onboarding webhook |
 | client_slug | singleLineText | Derived: company_name slugified |
-| project_status | singleSelect: lead, proposal_sent, onboarding.in_progress, live, churned | Onboarding automation |
+| project_status | singleSelect: lead, proposal_sent, onboarding.in_progress, live, test-complete + 11 more pending (see Known Issues) — field ID: `fldnAaIuv4VSGcxuB` — ⚠️ **KAI: add new values manually in Airtable UI** | Onboarding automation / manual |
 | service_tier | singleSelect: starter-build, growth-build, scale-build, retainer, agency-retainer | Onboarding webhook |
 | industry | singleLineText | Manual / lead qual |
 | lead_score_grade | singleLineText: A, B, C, D | Lead qual agent |
@@ -329,6 +335,34 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | clickup_list_build | singleLineText | Onboarding automation — Build list ID — field ID: `fldRv30powHF8QPAn` |
 | clickup_list_qa | singleLineText | Onboarding automation — QA list ID — field ID: `flddH0HJlUMdUXIpj` |
 | clickup_list_live | singleLineText | Onboarding automation — Live list ID — field ID: `fldxeGj8sbr56QcyP` |
+| clickup_task_ob_welcome | singleLineText | Onboarding — task ID for "Welcome email sent to client" — field ID: `fldT6coEJgh4oCuhV` |
+| clickup_task_ob_internal | singleLineText | Onboarding — task ID for "Internal summary email sent to Kai" — field ID: `flduaOwqxioIfLU1u` |
+| clickup_task_ob_airtable | singleLineText | Onboarding — task ID for "Airtable record updated" — field ID: `fldg760TgTWfd391E` |
+| clickup_task_ob_credentials | singleLineText | Onboarding — task ID for "Credential setup instructions sent to client" — field ID: `fldm25hznxNJ4jRqK` |
+| clickup_task_ob_tools_connected | singleLineText | Onboarding — task ID for "Client connects all tools in n8n" — field ID: `fldPc3vudpUypeL3Y` |
+| clickup_task_ob_credentials_tested | singleLineText | Onboarding — task ID for "All credentials tested green" — field ID: `fldY9xRR9EwWxy16E` |
+| clickup_task_ob_build_ready | singleLineText | Onboarding — task ID for "Onboarding complete — build ready" — field ID: `fldWrX34a5mHLk63o` |
+| clickup_task_build_started | singleLineText | Build — task ID for "Build started" — field ID: `fldW9mr5f4ofgrA9F` |
+| clickup_task_build_complete | singleLineText | Build — task ID for "Owner review requested" — field ID: `fldejDX9PqtHLI50T` |
+| clickup_task_qa_checklist | singleLineText | QA — task ID for "QA checklist run" — field ID: `fld6kOiL3zmx517ON` |
+| clickup_task_qa_report | singleLineText | QA — task ID for "QA report written" — field ID: `fldOtEINC1glqFeQn` |
+| clickup_task_qa_verdict | singleLineText | QA — task ID for "QA verdict recorded" — field ID: `fldRbi0FryUoPbVcL` |
+| clickup_task_qa_fixes | singleLineText | QA — task ID for "Conditional fixes verified" — field ID: `fldLQeIVW1p6W5M6d` |
+| clickup_task_qa_activation_review | singleLineText | QA — task ID for "Owner activation checklist reviewed" — field ID: `fldU9RKc8nij8fr0d` |
+| clickup_task_live_activated | singleLineText | Live — task ID for "Workflows activated in n8n" — field ID: `fldhopnG1CVw3Yfoq` |
+| clickup_task_live_airtable_updated | singleLineText | Live — task ID for "Airtable project_status set to live" — field ID: `fldUhSJQgKyY0py9N` |
+| clickup_task_live_launch_date | singleLineText | Live — task ID for "project_launch_date recorded in Airtable" — field ID: `fldGb1JSgHmjUUkkc` |
+| clickup_task_live_client_notified | singleLineText | Live — task ID for "Client notified — project is live" — field ID: `fldUEIFE70CGVbuB7` |
+| clickup_task_live_status_confirmed | singleLineText | Live — task ID for "Status update agent confirmed running" — field ID: `fldewHlPQKdtFEHg3` |
+| clickup_task_live_cleanup | singleLineText | Live — task ID for "Test records cleaned up" — field ID: `fldJZPL5NJ7qAgVyP` |
+| clickup_task_live_workflow_ids | singleLineText | Live — task ID for "n8n_workflow_ids added to Airtable" — field ID: `fldO1TXvwNgbOMerM` |
+| workflows_built | multilineText | workflow-builder-agent appends each completed workflow name — field ID: `fldbfimBsVQx79x44` |
+| qa_verdict | singleLineText | PASS / CONDITIONAL PASS / FAIL — written by qa-agent — field ID: `fldhMCjUSubfx1VPn` |
+| overdue_flagged_at | dateTime | Last time Kai was notified of overdue onboarding — ClickUp Sync writes this — field ID: `fldS1rPubm04MixWB` |
+| build_started_at | dateTime | workflow-builder-agent writes on build start — field ID: `fld0r0YVh911klmzk` |
+| build_completed_at | dateTime | workflow-builder-agent writes on build completion — field ID: `fldDwd8axHTZs1Q8r` |
+| qa_started_at | dateTime | qa-agent writes on QA start — field ID: `fldQkSD2yIW75Gcfy` |
+| qa_completed_at | dateTime | qa-agent writes on QA completion — field ID: `fldemSzna3pjxq2xh` |
 | onboarding_started_at | dateTime | Onboarding automation |
 | credentials_checklist | multilineText | Onboarding automation (JSON) |
 | client_timezone | singleLineText | e.g. America/New_York |
@@ -387,46 +421,56 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 
 | Workflow | ID | Nodes | Trigger | Status |
 |---------|-----|-------|---------|--------|
-| [PA] Onboarding Automation | `7RsRJIqBHFpWZoWM` | 31 | POST /payment-confirmed webhook | ✅ Updated (folder+4-lists+task seeding+list IDs to Airtable), inactive |
+| [PA] Onboarding Automation | `7RsRJIqBHFpWZoWM` | 51 | POST /payment-confirmed webhook | ✅ Updated (23 task seeding+task IDs+mark-complete nodes), inactive |
 | [PA] Lead Generation | `YO3f5CL9bYbLTBgw` | 11 | Daily 06:45 + manual | ✅ Built, tested, inactive |
-| [PA] Status Update Agent | `94DpGwRPWGRPqCVU` | 15 | Monday 09:00 + manual | ✅ Updated (reads folder tasks), inactive |
-| [PA] Referral Trigger Agent | `ka6GesSfWVo2FZtU` | 13 | Daily 08:00 + manual | ⏳ Built, Instantly stubbed, needs test |
+| [PA] Status Update Agent | `94DpGwRPWGRPqCVU` | 20 | Monday 09:00 + manual | ✅ Updated (+5 ClickUp sync nodes), inactive |
+| [PA] Referral Trigger Agent | `ka6GesSfWVo2FZtU` | 13 | Daily 08:00 + manual | ✅ Built, E2E tested PASS 2026-03-27 |
+| [PA] ClickUp Sync | `uiTwYIUk6nIFwLtX` | 18 | Every 2 hours + manual | ✅ Built 2026-03-27, inactive — Kai activates |
 
 ## Workflow Node Summaries
 
-### [PA] Onboarding Automation (7RsRJIqBHFpWZoWM) — 24 nodes
+### [PA] Onboarding Automation (7RsRJIqBHFpWZoWM) — 51 nodes
 ```
 1.  Payment Confirmed Webhook (POST /payment-confirmed)
-2.  Normalize Payload (Code — flattens body.* wrapper)
-3.  Validate Payload (IF — checks client_name, client_email, payment_status=paid)
-4.  Derive Client Slug (Code — company_name || client_name → slugified)
-5.  Airtable — Lookup Client (search by email, base: appMLHig3CN7WW0iW, table: tblfvqqyYukRJQYmQ)
-6.  Merge Airtable Context (Code — merges lead_score_grade, industry, airtable_record_id)
-7.  Create n8n Workspace (Code — stubbed for community edition)
-8.  Extract Workspace ID (Code — validates presence)
-9.  Read Scope of Work (Airtable — re-reads client record for tools_required)
-10. Extract Tools Required (Code — parses comma-separated tools list)
-11. Create Credentials Template (Code — {tool: pending_client_setup} per tool)
-12. Extract Template ID (Code — carries credentials_checklist forward)
-13. Create Client ClickUp Folder (HTTP POST /api/v2/space/90144568071/folder — ⚠️ space root only, ClickUp v2 API does not support nested folder creation)
-14. Extract Folder ID (Code — validates folder.id, merges with priorData)
-15. Create List — Onboarding (HTTP POST /api/v2/folder/{folder_id}/list)
-16. Create List — Build (HTTP POST /api/v2/folder/{folder_id}/list)
-17. Create List — QA (HTTP POST /api/v2/folder/{folder_id}/list)
-18. Create List — Live (HTTP POST /api/v2/folder/{folder_id}/list)
-19. Seed Task: Onboarding — Credentials (HTTP POST → onboarding list: "Collect client credentials")
-20. Seed Task: Build — Workflow 1 (HTTP POST → build list)
-21. Seed Task: Build — Workflow 2 (HTTP POST → build list)
-22. Seed Task: QA — Review and test (HTTP POST → qa list)
-23. Seed Task: QA — Client review (HTTP POST → qa list)
-24. Seed Task: Live — Activation (HTTP POST → live list)
-25. Seed Task: Live — Handoff (HTTP POST → live list: "Live — handoff complete")
-26. Merge ClickUp Folder ID (Code — captures folder_id + all 4 list IDs, merges with priorData)
-27. Log ClickUp Error — Continue (Code — error branch, sets folder_id + all list IDs to null, pipeline continues)
-28. Update Airtable Record (HTTP PATCH — sets project_status, workspace/template/clickup_folder_id + 4 list IDs + onboarding_started_at)
-29. Send Onboarding Summary Email (SMTP — HTML to lightofkai777@gmail.com)
-30. Send Client Welcome Email (SMTP — HTML to client email)
-31. Stop — Invalid Payload (stopAndError — false branch of Validate Payload)
+2.  Normalize Payload (Code)
+3.  Validate Payload (IF)
+4.  Derive Client Slug (Code)
+5.  Airtable — Lookup Client (HTTP GET)
+6.  Merge Airtable Context (Code)
+7.  Create n8n Workspace (Code — stubbed)
+8.  Extract Workspace ID (Code)
+9.  Read Scope of Work (HTTP GET Airtable)
+10. Extract Tools Required (Code)
+11. Create Credentials Template (Code)
+12. Extract Template ID (Code)
+13. Create Client ClickUp Folder (HTTP POST /api/v2/space/90144568071/folder — ⚠️ space root only)
+14. Extract Folder ID (Code)
+15. Create List — Onboarding (HTTP POST)
+16. Create List — Build (HTTP POST)
+17. Create List — QA (HTTP POST)
+18. Create List — Live (HTTP POST)
+19–25. Seed 7 Onboarding Tasks: "Welcome email sent to client", "Internal summary email sent to Kai",
+       "Airtable record updated", "Credential setup instructions sent to client",
+       "Client connects all tools in n8n", "All credentials tested green",
+       "Onboarding complete — build ready"
+26–29. Seed 4 Build Tasks: "Build started", "Error handling configured",
+       "Build log written", "Owner review requested"
+30–34. Seed 5 QA Tasks: "QA checklist run", "QA report written", "QA verdict recorded",
+       "Conditional fixes verified", "Owner activation checklist reviewed"
+35–41. Seed 7 Live Tasks: "Workflows activated in n8n", "Airtable project_status set to live",
+       "project_launch_date recorded in Airtable", "Client notified — project is live",
+       "Status update agent confirmed running", "Test records cleaned up",
+       "n8n_workflow_ids added to Airtable"
+42. Extract All Task IDs (Code — maps all 23 task creation responses to clickup_task_* field names)
+43. Merge ClickUp Folder ID (Code — adds folder_id + 4 list IDs to priorData)
+44. Log ClickUp Error — Continue (Code — error branch, nulls all IDs)
+45. Update Airtable Record (HTTP PATCH — writes project_status + all IDs + all 21 clickup_task_* fields)
+46. Mark Task: OB Airtable Complete (HTTP PUT → clickup_task_ob_airtable → "complete", pa-clickup)
+47. Send Onboarding Summary Email (SMTP → lightofkai777@gmail.com)
+48. Mark Task: OB Internal Complete (HTTP PUT → clickup_task_ob_internal → "complete", pa-clickup)
+49. Send Client Welcome Email (SMTP → client email)
+50. Mark Task: OB Welcome Complete (HTTP PUT → clickup_task_ob_welcome → "complete", pa-clickup)
+51. Stop — Invalid Payload (stopAndError)
 ```
 
 ### [PA] Lead Generation (YO3f5CL9bYbLTBgw) — 11 nodes
@@ -444,23 +488,52 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 11. Aggregate Run Stats + Log Run Summary (Code + HTTP POST → automation_logs)
 ```
 
-### [PA] Status Update Agent (94DpGwRPWGRPqCVU) — 15 nodes
+### [PA] Status Update Agent (94DpGwRPWGRPqCVU) — 20 nodes
 ```
 1.  Schedule Trigger (Monday 09:00)
 2.  Manual Trigger
 3.  Fetch Active Clients (HTTP GET → Airtable Clients, filter: {project_status}="live")
 4.  Check Active Clients (IF — exits if 0)
 5.  Exit - No Active Clients (NoOp)
-6.  Split Client Records (Code — flattens records, outputs clickup_folder_id per client)
-7.  Get All Tasks From Folder (HTTP GET → ClickUp team tasks API: /api/v2/team/90141018999/task?folder_ids[]={clickup_folder_id}&include_closed=true&limit=100 — reads all 4 lists at once)
+6.  Split Client Records (Code — flattens records, filters null clickup_folder_id)
+7.  Get All Tasks From Folder (HTTP GET → /api/v2/team/90141018999/task?folder_ids[]={clickup_folder_id}&include_closed=true&limit=100)
 8.  Error Skip (Code — non-blocking on ClickUp error)
-9.  Merge Client and Tasks (Code — index-aligns ClickUp response with client records)
-10. Structure Task Data (Code — categorises tasks: completed/in_progress/blocked, outputs clickup_folder_id)
-11. Build Claude Payload (Code — constructs Anthropic API request body)
-12. Generate Email via Claude (HTTP POST → Anthropic API, credential: pa-anthropic)
-13. Extract Email Body (Code — parses Claude plain text, builds branded HTML template)
-14. Send Status Email (SMTP → client email, HTML format, credential: pa-smtp)
+9.  Merge Client and Tasks (Code)
+10. Structure Task Data (Code — categorises tasks: completed/in_progress/blocked)
+11. Build Claude Payload (Code)
+12. Generate Email via Claude (HTTP POST → Anthropic API, pa-anthropic)
+13. Extract Email Body (Code — builds branded HTML)
+14. Send Status Email (SMTP → client email, pa-smtp)
 15. Update Airtable Record (HTTP PATCH → sets last_status_update_sent_at)
+16. Determine ClickUp Task Update (Code — maps project_status to cu_update_task_id + cu_comment_task_id)
+17. IF Has Task Update (IF)
+18. PUT ClickUp Task Complete (HTTP PUT → clickup_task_live_status_confirmed → "complete", pa-clickup, continueOnFail)
+19. IF Has Comment (IF)
+20. POST ClickUp Comment (HTTP POST → task comment: "Weekly status email sent — [date]", pa-clickup, continueOnFail)
+```
+
+### [PA] ClickUp Sync (uiTwYIUk6nIFwLtX) — 18 nodes
+```
+1.  Schedule Trigger (every 2 hours: 0 */2 * * *)
+2.  Manual Trigger
+3.  Fetch Active Clients (HTTP GET → Airtable, filter excludes: lead, proposal_sent, closed.*, test-complete, empty)
+4.  Check Has Clients (IF)
+5.  Exit — No Active Clients (NoOp)
+6.  Split Client Records (Code — one item per record, all clickup_task_* fields extracted)
+7.  Loop Over Clients (splitInBatches, batch=1)
+8.  Determine Sync Actions (Code — switch on project_status → task_updates[], email, airtable_update)
+9.  IF Has Task Updates (IF)
+10. Split Task Updates (Code — one item per {task_id, new_status})
+11. Loop Task Updates (splitInBatches, batch=1)
+12. PUT ClickUp Task Status (HTTP PUT → /api/v2/task/{task_id}, pa-clickup, continueOnFail=true)
+13. Continue After Task Loop (Code — pass-through)
+14. IF Send Notification Email (IF — checks sync_actions.email)
+15. Send Notification Email (emailSend → lightofkai777@gmail.com, pa-smtp)
+16. IF Update Airtable (IF — checks sync_actions.airtable_update)
+17. PATCH Airtable — Overdue Flag (HTTP PATCH → overdue_flagged_at, pa-airtable)
+18. Log Sync Summary (Code)
+
+Status cases handled: onboarding.in_progress (overdue check + email), build.ready, build.in_progress, build.blocked (email), build.complete, qa.in_progress, qa.pass (email), qa.fail (email), activation.pending, live
 ```
 
 **Workflows with scopes ready to build:**
@@ -642,6 +715,8 @@ business-agent-foundry/
 | `automations_delivered` field missing from Airtable | Low | ⏳ Referral Trigger uses `scope_of_work` as fallback — add dedicated field for cleaner output | Kai decision |
 | `onboarding_started_at` not written by Onboarding Automation | Low | ✅ RESOLVED 2026-03-26 — added to Node 21 (Update Airtable Record) jsonBody | Haris |
 | Brightline test records still live in Airtable (Clients + Prospects) | Low | ⏳ Clean up after Step 6 confirmed — see e2e-test-report.md | Kai/Haris |
+| project_status singleSelect missing 11 new values | Medium — ClickUp Sync won't email/sync for new statuses until added | ⏳ **KAI: add manually in Airtable UI** — field ID `fldnAaIuv4VSGcxuB` → add: build.ready, build.in_progress, build.blocked, build.complete, qa.in_progress, qa.pass, qa.fail, activation.pending, onboarding.stalled, closed.no_deal, closed.post_delivery | Kai |
+| Brightline + Meridian clickup_task_* fields are empty | Low — test records; won't affect real clients | ⏳ Expected: Onboarding was run before task ID fields existed. Real clients onboarded now will have all fields populated automatically. | — |
 | Status Update Agent + Referral Trigger Agent not API-executable | Low | Known — schedule-only workflows must be run from n8n editor | — |
 | Meridian Consulting `project_status=live` pollutes Status Update Agent emails | High | ✅ RESOLVED 2026-03-26 — Status Test Client set to test-complete; Meridian folder created (90148117751) with 4 lists; Airtable folder ID corrected | Haris |
 | Welcome email says "I'll send exact instructions shortly" — credential follow-up is NOT automated | High | ✅ RESOLVED 2026-03-26 — tool-specific step-by-step instructions now inline in welcome email; subject updated | Haris |
@@ -679,6 +754,13 @@ business-agent-foundry/
 - [x] ✅ End-to-end test Onboarding Automation — PASS 2026-03-22 (execution 209)
 - [x] ✅ Kai sets up n8n Cloud — kaiashley.app.n8n.cloud (2026-03-24)
 - [ ] Change default GitHub branch to main (Kai)
+- [x] ✅ **Haris:** Build [PA] ClickUp Sync (18 nodes, ID: uiTwYIUk6nIFwLtX) — 2026-03-27
+- [x] ✅ **Haris:** Update Onboarding Automation — 51 nodes, all 23 tasks seeded with correct names, clickup_task_* IDs stored in Airtable — 2026-03-27
+- [x] ✅ **Haris:** Update Status Update Agent — 20 nodes, ClickUp task update + comment on send — 2026-03-27
+- [x] ✅ **Haris:** Add 28 new Airtable fields (21 clickup_task_* + 7 supporting) — 2026-03-27
+- [x] ✅ **Haris:** Update workflow-builder-agent.md + qa-agent.md with Airtable status updates + ClickUp task rules — 2026-03-27
+- [ ] **KAI:** Add 11 new project_status values in Airtable UI — field `fldnAaIuv4VSGcxuB` → add: build.ready, build.in_progress, build.blocked, build.complete, qa.in_progress, qa.pass, qa.fail, activation.pending, onboarding.stalled, closed.no_deal, closed.post_delivery
+- [ ] **KAI:** Activate [PA] ClickUp Sync when ready (ID: uiTwYIUk6nIFwLtX)
 
 ## Short-term
 - [ ] Build [PA] Reporting Agent (Haris — scope ready)
@@ -1169,3 +1251,71 @@ business-agent-foundry/
 
 ### Files changed this session
 - `PROJECT_OVERVIEW.md` — version 2.9, template test conclusion, 4 stale lists deleted, Status Update Agent URL typo fixed, Session 11 continuation handoff
+
+---
+
+## Session Handoff — 2026-03-27 (Session 12)
+**Worked by:** Haris + Claude (Claude Code VSCode)
+
+### What was completed
+- **Part 1 — Airtable Schema:**
+  - 21 new `clickup_task_*` singleLineText fields added (all task IDs across Onboarding/Build/QA/Live lists)
+  - 7 new supporting fields added: `workflows_built`, `qa_verdict`, `overdue_flagged_at`, `build_started_at`, `build_completed_at`, `qa_started_at`, `qa_completed_at`
+  - ⚠️ `project_status` singleSelect: Airtable Meta API cannot update existing field options — 11 new values need manual addition by Kai in Airtable UI (see Known Issues)
+
+- **Part 2 — Onboarding Automation (7RsRJIqBHFpWZoWM) updated: 31 → 51 nodes:**
+  - Replaced 7 wrong-name seed tasks with 23 properly named tasks (9 onboarding + 4 build + 5 QA + 7 live matching clickup-structure.md exactly)
+  - Added `Extract All Task IDs` Code node — maps all 23 task creation responses to `clickup_task_*` field names
+  - Updated `Merge ClickUp Folder ID` to read from `Extract All Task IDs`
+  - Updated `Update Airtable Record` to write all 21 clickup_task_* fields + 4 list IDs
+  - Added 3 mark-complete HTTP nodes: OB Airtable, OB Internal, OB Welcome (mark complete after each action fires)
+
+- **Part 3 — workflow-builder-agent.md updated:**
+  - Added `## Airtable Status Updates` section (build.in_progress → build.complete → build.blocked)
+  - Added `## ClickUp Task Rules` section (never update ClickUp directly; exception: blocked comment)
+
+- **Part 4 — qa-agent.md updated:**
+  - Added `## Airtable Status Updates` section (qa.in_progress → qa.pass/fail)
+  - Added `## ClickUp Task Rules` section (comment to clickup_task_qa_verdict after verdict)
+
+- **Part 5 — [PA] ClickUp Sync built (ID: uiTwYIUk6nIFwLtX, 18 nodes, inactive):**
+  - Every 2 hours: reads Airtable active clients, syncs ClickUp task statuses
+  - All 10 project_status cases handled via Code node switch statement
+  - Email notifications: onboarding overdue (>48h), build.blocked, qa.pass, qa.fail
+  - Airtable update: overwrites `overdue_flagged_at` (rate-limited to once per 24h)
+  - Uses pa-airtable, pa-clickup, pa-smtp credentials
+
+- **Part 6 — Status Update Agent (94DpGwRPWGRPqCVU) updated: 15 → 20 nodes:**
+  - After Airtable update: new Determine ClickUp Task Update code node
+  - IF Has Task Update → PUT ClickUp Task Complete (marks live_status_confirmed complete)
+  - IF Has Comment → POST ClickUp Comment ("Weekly status email sent to client — [date]")
+
+- **Verification passed:**
+  - All 6 parts verified via API checks
+  - ClickUp Sync test: test-complete excluded ✅, live status included ✅
+  - Brightline restored to test-complete ✅
+
+### What is in progress (not finished)
+- project_status singleSelect: 11 new values need manual addition by Kai in Airtable UI
+- [PA] ClickUp Sync: built and verified but not activated — Kai's decision
+- Reporting Agent: scope ready but not built
+
+### Blockers for next session
+- **KAI ACTION REQUIRED:** Add 11 new project_status values in Airtable UI before ClickUp Sync is activated
+- Instantly.ai not set up — blocks Outreach Agent and Referral Trigger live sends
+
+### Next person should start with
+1. `git pull origin main` then read PROJECT_OVERVIEW.md
+2. **KAI:** Open Airtable → Clients table → `project_status` field → Edit field → add all 11 new values: `build.ready`, `build.in_progress`, `build.blocked`, `build.complete`, `qa.in_progress`, `qa.pass`, `qa.fail`, `activation.pending`, `onboarding.stalled`, `closed.no_deal`, `closed.post_delivery`
+3. **KAI:** After adding values, activate [PA] ClickUp Sync (ID: `uiTwYIUk6nIFwLtX`) in n8n
+4. **KAI:** Set up pa-instantly credential in n8n
+5. **Haris:** Build [PA] Reporting Agent (scope ready in docs/workflows/build-scopes/)
+
+### Files changed this session
+- `PROJECT_OVERVIEW.md` — version 3.0
+- `.claude/agents/workflow-builder-agent.md` — Airtable Status Updates + ClickUp Task Rules sections
+- `.claude/agents/qa-agent.md` — Airtable Status Updates + ClickUp Task Rules sections
+- **n8n workflows updated via API:**
+  - `[PA] Onboarding Automation` (7RsRJIqBHFpWZoWM) — 51 nodes
+  - `[PA] Status Update Agent` (94DpGwRPWGRPqCVU) — 20 nodes
+  - `[PA] ClickUp Sync` (uiTwYIUk6nIFwLtX) — new workflow, 18 nodes

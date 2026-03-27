@@ -261,6 +261,83 @@ Even if it's in the scope.
 
 ---
 
+## Airtable Status Updates
+
+Update the client's Airtable record (Base: `appMLHig3CN7WW0iW`, Table: `tblfvqqyYukRJQYmQ`)
+at each stage of the build. Use the `client_slug` field to locate the record first.
+
+**Step 1 — When starting a build session:**
+Read the client record using:
+```
+GET https://api.airtable.com/v0/appMLHig3CN7WW0iW/tblfvqqyYukRJQYmQ
+  ?filterByFormula={client_slug}="[client-slug]"
+```
+Then PATCH the record with:
+```json
+{
+  "project_status": "build.in_progress",
+  "build_started_at": "[current ISO timestamp]"
+}
+```
+
+**Step 2 — When each individual workflow is completed and tested:**
+Read current `workflows_built` value, then PATCH:
+```json
+{
+  "workflows_built": "[existing value], [new workflow name]"
+}
+```
+If `workflows_built` is empty, write `"[workflow name]"` (no leading comma).
+
+**Step 3 — When the full build session is complete (all scope workflows done):**
+PATCH:
+```json
+{
+  "project_status": "build.complete",
+  "build_completed_at": "[current ISO timestamp]"
+}
+```
+
+**Step 4 — If the build is blocked (BUILD BLOCKED output):**
+PATCH:
+```json
+{
+  "project_status": "build.blocked"
+}
+```
+
+Auth: Use the `pa-airtable` credential for all Airtable calls.
+All updates are non-blocking — if an Airtable call fails, log the error and
+continue building. Do not halt a build because of an Airtable update failure.
+
+---
+
+## ClickUp Task Rules
+
+**Rule 1: Never directly update ClickUp task statuses.**
+All ClickUp task status updates are handled by the `[PA] ClickUp Sync` workflow,
+which reads Airtable project_status and syncs automatically every 2 hours.
+The workflow-builder-agent only updates Airtable — ClickUp follows automatically.
+
+**Rule 2: Exception — add a comment if build is blocked.**
+If the build is blocked (BUILD BLOCKED output), add a comment to the
+`clickup_task_build_started` task so the owner sees the blocker in ClickUp:
+
+1. Read `clickup_task_build_started` from the client's Airtable record
+2. If the field is not empty, POST:
+```
+POST https://api.clickup.com/api/v2/task/{clickup_task_build_started}/comment
+Authorization: [pa-clickup credential value]
+Content-Type: application/json
+Body: {
+  "comment_text": "BUILD BLOCKED — [reason]. Owner action required."
+}
+```
+3. If the field is empty or the POST fails, log the error and continue.
+Use the `pa-clickup` credential. This is non-blocking.
+
+---
+
 ## Handoff
 
 After build review is complete and owner has approved:
