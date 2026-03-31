@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 3.3 — Last updated: 2026-03-31 — Updated by: Haris + Claude
+> **Version:** 3.4 — Last updated: 2026-03-31 — Updated by: Haris + Claude
 
 ---
 
@@ -83,6 +83,7 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - **[PA] Referral Trigger Agent** (ka6GesSfWVo2FZtU) — 13 nodes, built, E2E tested PASS 2026-03-27, Instantly stubbed (logs INSTANTLY_NOT_CONFIGURED)
 - **[PA] ClickUp Sync** (uiTwYIUk6nIFwLtX) — 18 nodes, built 2026-03-27, reads Airtable project_status and syncs ClickUp task statuses every 2 hours, inactive
 - **[PA] Reporting Agent** (scj61gBYYWpQydMC) — 16 nodes, built (date unknown — confirmed present 2026-03-31), monthly retainer reports via Claude → email → Airtable update, inactive, never run
+- **[PA] Typeform Lead Qualification** (kXxN7O77ongTMwKG) — 13 nodes, built 2026-03-31, fires on Typeform submission → extracts answers → dedup → write Airtable Prospects → score via Claude → email Kai if Grade A/B, inactive, Typeform webhook registered
 - **[PA] Onboarding Automation** updated to 51 nodes — 23 task seeding nodes (all 4 lists) + Extract All Task IDs + 3 mark-complete nodes + writes all clickup_task_* IDs to Airtable — 2026-03-27
 - **[PA] Status Update Agent** updated to 20 nodes — 5 new ClickUp sync nodes (determine task + PUT complete + POST comment) — 2026-03-27
 - **28 new Airtable Clients fields added** — 21 clickup_task_* task ID fields + 7 supporting fields (workflows_built, qa_verdict, overdue_flagged_at, build_started_at, build_completed_at, qa_started_at, qa_completed_at) — 2026-03-27
@@ -273,6 +274,10 @@ claude
 | Form ID | `RSsWJkcf` |
 | Form URL | `https://form.typeform.com/to/RSsWJkcf` |
 | Responses endpoint | `https://api.typeform.com/forms/RSsWJkcf/responses` |
+| Webhook tag | `pa-n8n-intake` |
+| Webhook URL | `https://kaiashley.app.n8n.cloud/webhook/typeform-intake` |
+| Webhook secret | `pa-typeform-2026` |
+| n8n workflow | `[PA] Typeform Lead Qualification` — ID: `kXxN7O77ongTMwKG` |
 
 ### Field IDs
 | Ref | Field ID | Type |
@@ -450,6 +455,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | [PA] Referral Trigger Agent | `ka6GesSfWVo2FZtU` | 13 | Daily 08:00 + manual | 🔴 Inactive — E2E tested PASS 2026-03-27; needs Instantly.ai + Kai activates |
 | [PA] ClickUp Sync | `uiTwYIUk6nIFwLtX` | 18 | Every 2 hours + manual | 🔴 Inactive — built 2026-03-27, never run — Kai activates |
 | [PA] Reporting Agent | `scj61gBYYWpQydMC` | 16 | Monthly 1st + manual | 🔴 Inactive — built, never run, not documented until 2026-03-31 audit |
+| [PA] Typeform Lead Qualification | `kXxN7O77ongTMwKG` | 13 | Typeform webhook (POST /typeform-intake) | 🔴 Inactive — built 2026-03-31, webhook registered with Typeform — Kai activates |
 
 ## Workflow Node Summaries
 
@@ -578,6 +584,29 @@ Status cases handled: onboarding.in_progress (overdue check + email), build.read
 14. Extract Report and Build HTML (Code)
 15. Send Report Email (emailSend → client email, pa-smtp)
 16. Update Airtable Record (HTTP PATCH → last_report_sent_at, pa-airtable)
+```
+
+### [PA] Typeform Lead Qualification (kXxN7O77ongTMwKG) — 13 nodes
+```
+1.  Typeform Intake Webhook (POST /typeform-intake — production URL: https://kaiashley.app.n8n.cloud/webhook/typeform-intake)
+2.  Extract Answers (Code — parses Typeform payload by field ref: business_name, industry, team_size, pain_point, hours_lost, email)
+3.  Check Duplicate (HTTP GET → Airtable Prospects, filterByFormula by email, continueOnFail)
+4.  IF Duplicate (IF — records.length > 0)
+    TRUE  → 7 (skip write, use existing record_id)
+    FALSE → 5
+5.  Write to Airtable (HTTP POST → Prospects table, typecast:true, continueOnFail)
+6.  Set New Record Data (Code — extracts record_id from write response, sets is_new:true)
+7.  Build Score Payload (Code — fan-in from 4-TRUE and 6; constructs claude_payload with scoring prompt)
+8.  Score Lead via Claude (HTTP POST → Anthropic API, pa-anthropic, continueOnFail)
+9.  Parse Score (Code — extracts score_total 0-8, score_grade A/B/C/D, pre_call_brief from Claude JSON)
+10. Update Airtable Score (HTTP PATCH → Prospects record, writes lead_score_total, continueOnFail)
+11. IF Grade A or B (IF — ["A","B"].includes(score_grade))
+    TRUE  → 12
+    FALSE → 13
+12. Email Kai — High Grade Lead (emailSend → lightofkai777@gmail.com, pa-smtp, with pre_call_brief, continueOnFail)
+13. Log to Automation Logs (HTTP POST → tblL7tDAh1KTLtwpt, pa-airtable, continueOnFail)
+
+Typeform webhook: tag=pa-n8n-intake, secret=pa-typeform-2026, enabled=true
 ```
 
 **Workflows still to build:**
@@ -1227,6 +1256,7 @@ business-agent-foundry/
 
 # Change Log
 
+- **[2026-03-31]** — Typeform intake form created (RSsWJkcf, 6 fields), [PA] Typeform Lead Qualification workflow built (kXxN7O77ongTMwKG, 13 nodes), webhook registered with Typeform (pa-n8n-intake, secret: pa-typeform-2026). Scores leads A–D via Claude, emails Kai on Grade A/B.
 - **[2026-03-31]** — Live n8n audit via API: confirmed Onboarding, Status Update Agent, Lead Generation all active and running on schedule. [PA] Reporting Agent (scj61gBYYWpQydMC, 16 nodes) confirmed built and present — was missing from docs. Registry, TODO, node summaries updated. project_status singleSelect: all 11 new values added via typecast:true.
 - **[2026-03-27]** — Session 12: 28 new Airtable fields, Onboarding Automation 31→51 nodes (23 tasks + Extract Task IDs + mark-complete), ClickUp Sync built (18 nodes), Status Update Agent 15→20 nodes, workflow-builder-agent.md + qa-agent.md updated with Airtable/ClickUp rules
 - **[2026-03-22]** — 10 Airtable Clients fields added (reporting/referral agents); `clickup_project_id` renamed to `clickup_folder_id`; [PA] Onboarding Automation updated to create ClickUp folder+4-lists (24 nodes); [PA] Status Update Agent updated to read all folder tasks (15 nodes)
