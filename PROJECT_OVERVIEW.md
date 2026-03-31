@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 3.1 — Last updated: 2026-03-27 — Updated by: Haris + Claude
+> **Version:** 3.2 — Last updated: 2026-03-31 — Updated by: Haris + Claude
 
 ---
 
@@ -82,6 +82,7 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - **[PA] Status Update Agent** (94DpGwRPWGRPqCVU) — 15 nodes, tested, branded emails working
 - **[PA] Referral Trigger Agent** (ka6GesSfWVo2FZtU) — 13 nodes, built, E2E tested PASS 2026-03-27, Instantly stubbed (logs INSTANTLY_NOT_CONFIGURED)
 - **[PA] ClickUp Sync** (uiTwYIUk6nIFwLtX) — 18 nodes, built 2026-03-27, reads Airtable project_status and syncs ClickUp task statuses every 2 hours, inactive
+- **[PA] Reporting Agent** (scj61gBYYWpQydMC) — 16 nodes, built (date unknown — confirmed present 2026-03-31), monthly retainer reports via Claude → email → Airtable update, inactive, never run
 - **[PA] Onboarding Automation** updated to 51 nodes — 23 task seeding nodes (all 4 lists) + Extract All Task IDs + 3 mark-complete nodes + writes all clickup_task_* IDs to Airtable — 2026-03-27
 - **[PA] Status Update Agent** updated to 20 nodes — 5 new ClickUp sync nodes (determine task + PUT complete + POST comment) — 2026-03-27
 - **28 new Airtable Clients fields added** — 21 clickup_task_* task ID fields + 7 supporting fields (workflows_built, qa_verdict, overdue_flagged_at, build_started_at, build_completed_at, qa_started_at, qa_completed_at) — 2026-03-27
@@ -108,8 +109,6 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 
 ## Not Started ❌
 - [PA] Outreach Agent workflow (blocked on Instantly.ai)
-- [PA] Reporting Agent workflow (scope ready)
-- ~~[PA] Referral Trigger Agent workflow~~ ✅ Built 2026-03-24
 - [PA] Lead Qualification workflow
 - [PA] Proposal Drafting workflow
 - Error handling workflow (deferred from QA)
@@ -421,11 +420,12 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 
 | Workflow | ID | Nodes | Trigger | Status |
 |---------|-----|-------|---------|--------|
-| [PA] Onboarding Automation | `7RsRJIqBHFpWZoWM` | 51 | POST /payment-confirmed webhook | ✅ Updated (23 task seeding+task IDs+mark-complete nodes), inactive |
-| [PA] Lead Generation | `YO3f5CL9bYbLTBgw` | 11 | Daily 06:45 + manual | ✅ Built, tested, inactive |
-| [PA] Status Update Agent | `94DpGwRPWGRPqCVU` | 20 | Monday 09:00 + manual | ✅ Updated (+5 ClickUp sync nodes), inactive |
-| [PA] Referral Trigger Agent | `ka6GesSfWVo2FZtU` | 13 | Daily 08:00 + manual | ✅ Built, E2E tested PASS 2026-03-27 |
-| [PA] ClickUp Sync | `uiTwYIUk6nIFwLtX` | 18 | Every 2 hours + manual | ✅ Built 2026-03-27, inactive — Kai activates |
+| [PA] Onboarding Automation | `7RsRJIqBHFpWZoWM` | 51 | POST /payment-confirmed webhook | 🟢 Active — last run 2026-03-25 (success) |
+| [PA] Lead Generation | `YO3f5CL9bYbLTBgw` | 13 | Daily 06:45 + manual | 🟢 Active — running daily (last run 2026-03-31 success) |
+| [PA] Status Update Agent | `94DpGwRPWGRPqCVU` | 20 | Monday 09:00 + manual | 🟢 Active — last run 2026-03-30 (success) |
+| [PA] Referral Trigger Agent | `ka6GesSfWVo2FZtU` | 13 | Daily 08:00 + manual | 🔴 Inactive — E2E tested PASS 2026-03-27; needs Instantly.ai + Kai activates |
+| [PA] ClickUp Sync | `uiTwYIUk6nIFwLtX` | 18 | Every 2 hours + manual | 🔴 Inactive — built 2026-03-27, never run — Kai activates |
+| [PA] Reporting Agent | `scj61gBYYWpQydMC` | 16 | Monthly 1st + manual | 🔴 Inactive — built, never run, not documented until 2026-03-31 audit |
 
 ## Workflow Node Summaries
 
@@ -536,12 +536,30 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 Status cases handled: onboarding.in_progress (overdue check + email), build.ready, build.in_progress, build.blocked (email), build.complete, qa.in_progress, qa.pass (email), qa.fail (email), activation.pending, live
 ```
 
-**Workflows with scopes ready to build:**
+### [PA] Reporting Agent (scj61gBYYWpQydMC) — 16 nodes
+```
+1.  Schedule Trigger (monthly 1st)
+2.  Manual Trigger
+3.  Fetch Retainer Clients (HTTP GET → Airtable)
+4.  Check Has Clients (IF)
+5.  Exit — No Retainer Clients (NoOp)
+6.  Split Client Records (Code)
+7.  Check Workflow IDs (IF — skips clients with no n8n_workflow_ids)
+8.  Set Zero Execution Metrics (Code — fallback for clients with no executions)
+9.  Fetch Executions (HTTP GET → n8n API, pa-n8n-api)
+10. Merge Client and Executions (Code)
+11. Aggregate Execution Metrics (Code)
+12. Build Claude Payload (Code)
+13. Generate Report via Claude (HTTP POST → Anthropic API, pa-anthropic)
+14. Extract Report and Build HTML (Code)
+15. Send Report Email (emailSend → client email, pa-smtp)
+16. Update Airtable Record (HTTP PATCH → last_report_sent_at, pa-airtable)
+```
+
+**Workflows still to build:**
 | Workflow | Scope file | Blocker |
 |---------|-----------|---------|
 | [PA] Outreach Agent | `docs/workflows/build-scopes/outreach-agent-scope.md` | Needs Instantly.ai account |
-| [PA] Reporting Agent | `docs/workflows/build-scopes/reporting-agent-scope.md` | None — ready |
-| [PA] Referral Trigger | `docs/workflows/build-scopes/referral-trigger-agent-scope.md` | None — ready |
 
 ---
 
@@ -759,11 +777,12 @@ business-agent-foundry/
 - [x] ✅ **Haris:** Update Status Update Agent — 20 nodes, ClickUp task update + comment on send — 2026-03-27
 - [x] ✅ **Haris:** Add 28 new Airtable fields (21 clickup_task_* + 7 supporting) — 2026-03-27
 - [x] ✅ **Haris:** Update workflow-builder-agent.md + qa-agent.md with Airtable status updates + ClickUp task rules — 2026-03-27
-- [ ] **KAI:** Add 11 new project_status values in Airtable UI — field `fldnAaIuv4VSGcxuB` → add: build.ready, build.in_progress, build.blocked, build.complete, qa.in_progress, qa.pass, qa.fail, activation.pending, onboarding.stalled, closed.no_deal, closed.post_delivery
-- [ ] **KAI:** Activate [PA] ClickUp Sync when ready (ID: uiTwYIUk6nIFwLtX)
+- [x] ✅ **Haris:** Add 11 new project_status values via Airtable Records API typecast:true — 2026-03-31
+- [ ] **KAI:** Activate [PA] ClickUp Sync (ID: uiTwYIUk6nIFwLtX) — all project_status values now exist
+- [ ] **KAI:** Activate [PA] Referral Trigger Agent (ID: ka6GesSfWVo2FZtU) — after Instantly.ai set up
+- [ ] **KAI:** Activate [PA] Reporting Agent (ID: scj61gBYYWpQydMC) — after first retainer client is live
 
 ## Short-term
-- [ ] Build [PA] Reporting Agent (Haris — scope ready)
 - [ ] Build automated credential collection follow-up email workflow (Haris — unblocked: Option A decided)
 - [ ] Add n8n to welcome email credential instructions — client signs up at n8n.io, creates API key, shares key + instance URL (Haris — update Onboarding Automation node 23, workflow `7RsRJIqBHFpWZoWM`)
 - [ ] Update Workflow Builder Agent scope — prerequisite: client n8n API key + instance URL present in Airtable `n8n_workspace_id` before agent runs (Haris)
@@ -775,7 +794,8 @@ business-agent-foundry/
 ## Medium-term
 - [ ] Build remaining workflows (Lead Qual, Proposal Drafting)
 - [x] ✅ Build [PA] Referral Trigger Agent (2026-03-24)
-- [ ] Activate all 3 live workflows on their schedules (Kai)
+- [x] ✅ Onboarding Automation, Status Update Agent, Lead Generation active on schedule (confirmed 2026-03-31)
+- [ ] Activate remaining 3 inactive workflows: ClickUp Sync, Referral Trigger, Reporting Agent (Kai)
 - [ ] First real client onboarded end-to-end
 
 ## Long-term
@@ -1183,6 +1203,8 @@ business-agent-foundry/
 
 # Change Log
 
+- **[2026-03-31]** — Live n8n audit via API: confirmed Onboarding, Status Update Agent, Lead Generation all active and running on schedule. [PA] Reporting Agent (scj61gBYYWpQydMC, 16 nodes) confirmed built and present — was missing from docs. Registry, TODO, node summaries updated. project_status singleSelect: all 11 new values added via typecast:true.
+- **[2026-03-27]** — Session 12: 28 new Airtable fields, Onboarding Automation 31→51 nodes (23 tasks + Extract Task IDs + mark-complete), ClickUp Sync built (18 nodes), Status Update Agent 15→20 nodes, workflow-builder-agent.md + qa-agent.md updated with Airtable/ClickUp rules
 - **[2026-03-22]** — 10 Airtable Clients fields added (reporting/referral agents); `clickup_project_id` renamed to `clickup_folder_id`; [PA] Onboarding Automation updated to create ClickUp folder+4-lists (24 nodes); [PA] Status Update Agent updated to read all folder tasks (15 nodes)
 - **[2026-03-20]** — PROJECT_OVERVIEW.md v2: added node summaries, recurring bugs reference, session handoff template, environment setup details, email addresses, common startup errors
 - **[2026-03-20]** — [PA] Status Update Agent built and tested (14 nodes, ID: 94DpGwRPWGRPqCVU); branded HTML emails; ClickUp integration; pa-anthropic added; client_timezone + last_status_update_sent_at added to Clients table
