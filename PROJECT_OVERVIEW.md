@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 3.2 — Last updated: 2026-03-31 — Updated by: Haris + Claude
+> **Version:** 3.3 — Last updated: 2026-03-31 — Updated by: Haris + Claude
 
 ---
 
@@ -263,6 +263,30 @@ claude
 | Base URL | `https://api.airtable.com/v0` |
 | Auth | `Authorization: Bearer YOUR_PAT` |
 | Base ID | `appMLHig3CN7WW0iW` |
+
+## Typeform API
+| Item | Value |
+|------|-------|
+| Base URL | `https://api.typeform.com` |
+| Auth header | `Authorization: Bearer tfp_A6vV...BDtCbv6` (full token: Typeform account → Settings → Personal tokens) |
+| Form name | Phoenix Automation — Free Assessment |
+| Form ID | `RSsWJkcf` |
+| Form URL | `https://form.typeform.com/to/RSsWJkcf` |
+| Responses endpoint | `https://api.typeform.com/forms/RSsWJkcf/responses` |
+
+### Field IDs
+| Ref | Field ID | Type |
+|-----|----------|------|
+| `business_name` | `q9zgFI0gFUNw` | short_text |
+| `industry` | `8sox5Q0vDymK` | dropdown |
+| `team_size` | `k8ScFgIubR1C` | number |
+| `pain_point` | `jrxkugp0UdwT` | long_text |
+| `hours_lost` | `N0zSg93uiRme` | number |
+| `email` | `G3GmVcDig8e2` | short_text |
+| `thankyou` (screen) | `7wh9HcO9y3F8` | thankyou_screen |
+
+> ⚠️ `show_typeform_branding: false` requires a paid Typeform plan — branding is currently visible (free tier). Upgrade to remove.
+> ⚠️ Calendly button URL is placeholder (`https://calendly.com/phoenixautomation/assessment`) — Kai must update to real URL via Typeform UI or API PATCH once Calendly is live.
 
 ## ClickUp API
 | Item | Value |
