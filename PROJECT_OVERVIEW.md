@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 3.4 — Last updated: 2026-03-31 — Updated by: Haris + Claude
+> **Version:** 3.5 — Last updated: 2026-03-31 — Updated by: Haris + Claude
 
 ---
 
@@ -84,6 +84,8 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - **[PA] ClickUp Sync** (uiTwYIUk6nIFwLtX) — 18 nodes, built 2026-03-27, reads Airtable project_status and syncs ClickUp task statuses every 2 hours, inactive
 - **[PA] Reporting Agent** (scj61gBYYWpQydMC) — 16 nodes, built (date unknown — confirmed present 2026-03-31), monthly retainer reports via Claude → email → Airtable update, inactive, never run
 - **[PA] Typeform Lead Qualification** (kXxN7O77ongTMwKG) — 13 nodes, built 2026-03-31, fires on Typeform submission → extracts answers → dedup → write Airtable Prospects → score via Claude → email Kai if Grade A/B, inactive, Typeform webhook registered
+- **[PA] Credential Follow-Up** (uTnQAq5VlmsHYih4) — 11 nodes, built 2026-03-31, daily 10:00 + manual → fetches onboarding.in_progress clients stalled >48h → alerts Kai by email → updates overdue_flagged_at → logs to automation_logs, inactive
+- **[PA] Onboarding Automation Node 49** updated 2026-03-31 — subject changed to "Welcome to Phoenix Automation — action required before we can start"; n8n account setup section inserted before "Your next steps" (step-by-step: sign up at n8n.io, create API key named "Phoenix Automation", reply with instance URL + key)
 - **[PA] Onboarding Automation** updated to 51 nodes — 23 task seeding nodes (all 4 lists) + Extract All Task IDs + 3 mark-complete nodes + writes all clickup_task_* IDs to Airtable — 2026-03-27
 - **[PA] Status Update Agent** updated to 20 nodes — 5 new ClickUp sync nodes (determine task + PUT complete + POST comment) — 2026-03-27
 - **28 new Airtable Clients fields added** — 21 clickup_task_* task ID fields + 7 supporting fields (workflows_built, qa_verdict, overdue_flagged_at, build_started_at, build_completed_at, qa_started_at, qa_completed_at) — 2026-03-27
@@ -456,6 +458,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | [PA] ClickUp Sync | `uiTwYIUk6nIFwLtX` | 18 | Every 2 hours + manual | 🔴 Inactive — built 2026-03-27, never run — Kai activates |
 | [PA] Reporting Agent | `scj61gBYYWpQydMC` | 16 | Monthly 1st + manual | 🔴 Inactive — built, never run, not documented until 2026-03-31 audit |
 | [PA] Typeform Lead Qualification | `kXxN7O77ongTMwKG` | 13 | Typeform webhook (POST /typeform-intake) | 🔴 Inactive — built 2026-03-31, webhook registered with Typeform — Kai activates |
+| [PA] Credential Follow-Up | `uTnQAq5VlmsHYih4` | 11 | Daily 10:00 + manual | 🔴 Inactive — built 2026-03-31, alerts Kai when client stalls on credential submission — Kai activates |
 
 ## Workflow Node Summaries
 
@@ -607,6 +610,26 @@ Status cases handled: onboarding.in_progress (overdue check + email), build.read
 13. Log to Automation Logs (HTTP POST → tblL7tDAh1KTLtwpt, pa-airtable, continueOnFail)
 
 Typeform webhook: tag=pa-n8n-intake, secret=pa-typeform-2026, enabled=true
+```
+
+### [PA] Credential Follow-Up (uTnQAq5VlmsHYih4) — 11 nodes
+```
+1.  Daily 10AM Trigger (scheduleTrigger — daily at 10:00)
+2.  Manual Trigger
+3.  Fetch Stalled Clients (HTTP GET → Airtable Clients, filter: project_status=onboarding.in_progress AND onboarding_started_at IS_BEFORE(NOW()-2days), pa-airtable, continueOnFail)
+4.  IF Stalled Clients Exist (IF — records.length > 0)
+    TRUE  → 6 (has stalled clients)
+    FALSE → 5 (no stalled clients)
+5.  Exit No Stalled Clients (NoOp)
+6.  Split Client Records (Code — extracts record_id, company_name, email, contact_name, onboarding_started_at, overdue_flagged_at, hours_overdue)
+7.  Loop Over Clients (splitInBatches, batch=1)
+8.  IF Already Flagged Today (IF — overdue_flagged_at not empty AND <24h ago)
+    TRUE  → skip (already alerted within 24h)
+    FALSE → 9 (send alert)
+9.  Send Follow-Up Alert to Kai (emailSend → lightofkai777@gmail.com, pa-smtp, continueOnFail — includes company, contact, hours overdue, action prompt)
+10. Update overdue_flagged_at (HTTP PATCH → Airtable Clients record, pa-airtable, continueOnFail)
+11. Log to Automation Logs (HTTP POST → tblL7tDAh1KTLtwpt, event=credential_followup_alert_sent, pa-airtable, continueOnFail)
+    → loops back to Node 7 (Loop Over Clients)
 ```
 
 **Workflows still to build:**
@@ -834,10 +857,11 @@ business-agent-foundry/
 - [ ] **KAI:** Activate [PA] ClickUp Sync (ID: uiTwYIUk6nIFwLtX) — all project_status values now exist
 - [ ] **KAI:** Activate [PA] Referral Trigger Agent (ID: ka6GesSfWVo2FZtU) — after Instantly.ai set up
 - [ ] **KAI:** Activate [PA] Reporting Agent (ID: scj61gBYYWpQydMC) — after first retainer client is live
+- [ ] **KAI:** Activate [PA] Credential Follow-Up (ID: uTnQAq5VlmsHYih4) — daily stall alert, no dependencies
 
 ## Short-term
-- [ ] Build automated credential collection follow-up email workflow (Haris — unblocked: Option A decided)
-- [ ] Add n8n to welcome email credential instructions — client signs up at n8n.io, creates API key, shares key + instance URL (Haris — update Onboarding Automation node 23, workflow `7RsRJIqBHFpWZoWM`)
+- [x] ✅ **Haris:** Build [PA] Credential Follow-Up (11 nodes, ID: uTnQAq5VlmsHYih4) — daily stall checker, Kai alert email, overdue_flagged_at update, Airtable log — 2026-03-31
+- [x] ✅ **Haris:** Add n8n setup instructions to welcome email — Node 49 of 7RsRJIqBHFpWZoWM; subject updated to "action required before we can start"; n8n signup + API key section inserted before "Your next steps" — 2026-03-31
 - [ ] Update Workflow Builder Agent scope — prerequisite: client n8n API key + instance URL present in Airtable `n8n_workspace_id` before agent runs (Haris)
 - [ ] Set up Instantly.ai + pa-instantly credential (Kai)
 - [ ] Build [PA] Outreach Agent (Haris — after Instantly.ai)
@@ -1061,6 +1085,38 @@ business-agent-foundry/
 
 ### Files changed this session
 - `PROJECT_OVERVIEW.md` — version 2.3, Referral Trigger added to registry, TODO/Known Issues updated, Session 7 handoff
+
+---
+
+## Session Handoff — 2026-03-31 (Session 12)
+**Worked by:** Haris + Claude (Claude Code VSCode)
+
+### What was completed
+- **[PA] Onboarding Automation Node 49 updated** — subject changed to "Welcome to Phoenix Automation — action required before we can start"; new "Step 1 — Set up your n8n account" section inserted before "Your next steps" (n8n.io signup, API key creation, reply with URL + key); all 3 verification checks ✅
+- **[PA] Credential Follow-Up built** — ID: `uTnQAq5VlmsHYih4`, 11 nodes, daily 10:00 + manual; fetches Airtable clients stalled >48h on onboarding.in_progress; IF skip if already flagged <24h; emails Kai with company/contact/hours overdue; PATCH overdue_flagged_at; logs to automation_logs; continueOnFail on all HTTP nodes; inactive
+- **[PA] Typeform Lead Qualification built** — ID: `kXxN7O77ongTMwKG`, 13 nodes (prior session); Typeform webhook registered (tag: pa-n8n-intake, secret: pa-typeform-2026); Typeform form created (ID: RSsWJkcf)
+- **PROJECT_OVERVIEW.md updated** to v3.5 — Credential Follow-Up registered, node summary added, TODO items marked complete
+
+### What is in progress (not finished)
+- Gap analysis not yet run (was deferred from this session)
+
+### Blockers for next session
+- Outreach Agent still blocked on Instantly.ai
+- Update Workflow Builder Agent scope: prerequisite — client n8n API key + instance URL in Airtable `n8n_workspace_id` before agent runs
+
+### Next person should start with
+1. `git pull origin main` then read PROJECT_OVERVIEW.md
+2. **KAI:** Activate [PA] Credential Follow-Up (`uTnQAq5VlmsHYih4`) — no dependencies, safe to activate immediately
+3. **KAI:** Activate [PA] Typeform Lead Qualification (`kXxN7O77ongTMwKG`) — Typeform webhook is registered and ready
+4. **KAI:** Update Calendly URL in Referral Trigger Agent (workflow `ka6GesSfWVo2FZtU`, node "Build Claude Payload")
+5. **Haris:** Update Workflow Builder Agent scope — add prerequisite: client n8n API key + instance URL must be in Airtable before build starts
+6. **Haris:** Full gap analysis of all project files (read-only — was deferred)
+
+### Files changed this session
+- `PROJECT_OVERVIEW.md` — v3.5, Credential Follow-Up registered, Node 49 update noted, 2 TODO items marked complete, session handoff
+- **n8n workflows updated (via API — no local file changes):**
+  - `[PA] Onboarding Automation` (7RsRJIqBHFpWZoWM) — Node 49 subject + n8n setup section
+  - `[PA] Credential Follow-Up` (uTnQAq5VlmsHYih4) — created new
 
 ---
 
