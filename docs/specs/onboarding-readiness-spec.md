@@ -47,7 +47,7 @@ No agent can verify this directly.
 
 ## Readiness Checklist
 
-The following table is the Checkpoint 2 checklist. All 12 conditions must
+The following table is the Checkpoint 2 checklist. All 13 conditions must
 be true before workflow-builder-agent is triggered. Status in `build.ready`
 means every item is checked.
 
@@ -78,6 +78,7 @@ means every item is checked.
 |---|-----------|-------------------------------|--------------------------|-----------|
 | C1 | Every tool in scope-of-work.md has a live, working credential connected in the client's n8n workspace | Client logged into each tool and authorised the n8n credential | Owner tests each credential node in n8n — all return green (authenticated, not expired) | Yes |
 | C2 | Client has not shared raw credentials with owner or any agent | Client used n8n's OAuth/API key flow directly (never pasted keys into chat) | Owner confirms no keys were received | Yes |
+| C3 | Client has created their own n8n account and provided their instance URL + API key | Client signs up at n8n.io → Settings → API → creates key named "Phoenix Automation" → replies to welcome email with instance URL + API key | Owner records `n8n_workspace_id` (instance URL) in Airtable Clients record; this is the endpoint workflow-builder-agent uses to build client automations | Yes |
 
 ---
 
@@ -106,6 +107,15 @@ Step 4: onboarding-automation creates credentials template workflow (A3)
 Step 5: Owner sends credential setup instructions to client
         Instructions include: which tools to connect, how to use n8n
         credential store, NOT to share keys via chat or email
+        Welcome email (sent by Onboarding Automation) includes Step 1:
+        sign up at n8n.io, create API key named "Phoenix Automation",
+        reply with instance URL + API key (C3)
+        │
+        ▼
+Step 5a: Owner receives client n8n instance URL + API key via email reply
+         Records in Airtable Clients: n8n_workspace_id = client's instance URL
+         This is a hard prerequisite for workflow-builder-agent (see C3)
+         [PA] Credential Follow-Up fires daily if client stalls >48h on this step
         │
         ▼
 Step 6: Client connects each tool in n8n (C1, C2)
@@ -198,9 +208,10 @@ Track B — Owner-confirmed:
 Track C — Client action confirmed:
 □ C1: All credentials tested green: [tool1], [tool2], [tool3]
 □ C2: Client did not share raw keys
+□ C3: Client n8n instance URL recorded in Airtable n8n_workspace_id
 
 Status: PENDING OWNER CONFIRMATION
-Owner: confirm B1–B6 and C1–C2, then trigger workflow-builder-agent.
+Owner: confirm B1–B6 and C1–C3, then trigger workflow-builder-agent.
 ```
 
 Owner fills in the B and C checkboxes at Checkpoint 2. All 12 must be

@@ -7,8 +7,8 @@ Built: 2026-03-16 / Updated: 2026-03-22
 Build time: ~25 minutes (initial) + ~2h (ClickUp folder+4-lists redesign + end-to-end testing)
 Status: **✅ End-to-end PASS — 2026-03-22**
 
-**Workflow ID:** `Ro9IkQBlNaUxKR6B`
-**n8n URL:** `http://localhost:5678/workflow/Ro9IkQBlNaUxKR6B`
+**Workflow ID:** `7RsRJIqBHFpWZoWM` (cloud — kaiashley.app.n8n.cloud)
+**n8n URL:** `https://kaiashley.app.n8n.cloud/workflow/7RsRJIqBHFpWZoWM`
 **Active:** false — owner must activate before first real client
 
 **Workflow summary:**
@@ -21,7 +21,7 @@ workflow in the client's workspace, creates a ClickUp client folder + 4 lists
 with all generated IDs, and sends both the owner summary email and the client
 welcome email.
 
-**Nodes built (24 total):**
+**Nodes built (51 total — updated 2026-03-31; original build was 24 nodes; expanded to 51 in subsequent sessions — see PROJECT_OVERVIEW.md node summary for full list):**
 1. Payment Confirmed Webhook (n8n-nodes-base.webhook) — POST /webhook/payment-confirmed
 2. Normalize Payload (n8n-nodes-base.code) — normalises field names from webhook payload
 3. Validate Payload (n8n-nodes-base.if) — checks client_name, client_email, payment_status=paid
@@ -78,8 +78,8 @@ Built: 2026-03-19 (initial) / fixed 2026-03-20
 Build time: ~60 minutes (includes bug fixes)
 Status: Built and tested (end-to-end PASS — mock Apollo mode)
 
-**Workflow ID:** `pUqNr2V9Fp5gLWaD`
-**n8n URL:** `http://localhost:5678/workflow/pUqNr2V9Fp5gLWaD`
+**Workflow ID:** `YO3f5CL9bYbLTBgw` (cloud — kaiashley.app.n8n.cloud)
+**n8n URL:** `https://kaiashley.app.n8n.cloud/workflow/YO3f5CL9bYbLTBgw`
 **Active:** false — owner must activate after replacing mock node
 
 **Workflow summary:**
@@ -136,8 +136,8 @@ Built: 2026-03-20
 Build time: ~30 minutes
 Status: Built (structural) — awaiting Anthropic credential and end-to-end test
 
-**Workflow ID:** `VhqfzN6afzpNDTu1`
-**n8n URL:** `http://localhost:5678/workflow/VhqfzN6afzpNDTu1`
+**Workflow ID:** `94DpGwRPWGRPqCVU` (cloud — kaiashley.app.n8n.cloud)
+**n8n URL:** `https://kaiashley.app.n8n.cloud/workflow/94DpGwRPWGRPqCVU`
 **Active:** false — owner must create Anthropic credential and test before activating
 
 **Workflow summary:**
@@ -177,7 +177,7 @@ updates `last_status_update_sent_at` in Airtable.
 
 **Hardcoded values:**
 - Airtable base ID: `appMLHig3CN7WW0iW`
-- Airtable clients table ID: `tblfvqqyYukRJQYmQYgdBXXCYhRqJ`
+- Airtable clients table ID: `tblfvqqyYukRJQYmQ` ⚠️ use SHORT ID only — long version causes 403
 - Owner email: `lightofkai777@gmail.com`
 
 ---

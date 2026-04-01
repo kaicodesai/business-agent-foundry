@@ -155,14 +155,31 @@ Ask 3 questions (business type, team size, biggest manual task). Score
 internally. Route hot leads to Calendly. Route cold leads to a soft
 close. Borderline leads get one clarifying question.
 
-**Mode B — Typeform:**
+**Mode B — Typeform (legacy spec — see Mode C for live implementation):**
 Score submission across 4 dimensions (industry, team size, pain
 specificity, time lost). Write score to Airtable. Generate pre-call
 brief. Email brief to owner if HIGH grade.
 
+**Mode C — Typeform webhook (live — built 2026-03-31):**
+A Typeform form ([Phoenix Automation — Free Assessment](https://form.typeform.com/to/RSsWJkcf), ID: `RSsWJkcf`)
+is embedded on the website. On submission, Typeform fires a POST webhook to
+`https://kaiashley.app.n8n.cloud/webhook/typeform-intake`, triggering
+`[PA] Typeform Lead Qualification` (workflow ID: `kXxN7O77ongTMwKG`).
+
+The workflow:
+1. Extracts: business_name, industry, team_size, pain_point, hours_lost, email
+2. Deduplicates against Airtable Prospects by email
+3. Writes new prospects to Airtable Prospects table
+4. Scores lead via Claude (0–8, grade A/B/C/D)
+5. Updates Airtable with `lead_score_total`, `lead_score_grade`, `pre_call_brief`
+6. If Grade A or B: emails Kai at lightofkai777@gmail.com with pre_call_brief
+7. Logs to automation_logs
+
+**⚠️ Note:** Workflow must be **active** in n8n for the webhook to respond. If inactive, Typeform disables the webhook after failures.
+
 **Outputs produced:**
-- Airtable: `lead_score_total`, `lead_score_grade`, `pre_call_brief`
-- For hot/HIGH leads: Calendly booking prompted
+- Airtable Prospects: `lead_score_total`, `lead_score_grade`, `pre_call_brief`
+- For Grade A/B leads: Kai receives email with pre-call brief
 
 **Advance condition:** Lead books assessment call.
 **Exit condition:** Cold/LOW lead with no booking → `lead.disqualified`.
@@ -270,6 +287,27 @@ in the credentials template before the build starts.
 → `build.ready`.
 **Hold condition:** Credentials not provided → stays `onboarding.in_progress`
 until resolved.
+
+---
+
+### Step 7a — Credential Follow-Up (runs in parallel during Step 7)
+
+**Agent:** [PA] Credential Follow-Up (workflow ID: `uTnQAq5VlmsHYih4`)
+**Trigger:** Daily at 10:00 + manual
+**Status:** `onboarding.in_progress`
+
+Runs automatically every day while clients are in onboarding. Fetches all Airtable
+Clients records where `project_status = onboarding.in_progress` AND
+`onboarding_started_at` is more than 48 hours ago. For each stalled client:
+- Checks if Kai was already alerted within the last 24 hours (`overdue_flagged_at`)
+- If not: sends Kai an email alert with company name, contact, hours overdue, and action prompt
+- Updates `overdue_flagged_at` in Airtable (prevents duplicate alerts within 24h)
+- Logs to `automation_logs`
+
+**Owner action on alert:** Follow up directly with the client (email or call) to
+unblock credential submission. Agent handles the alert; owner handles the relationship.
+
+**⚠️ Note:** Workflow must be activated in n8n for daily alerts to fire.
 
 ---
 

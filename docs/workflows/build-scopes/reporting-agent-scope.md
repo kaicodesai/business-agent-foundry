@@ -26,10 +26,11 @@ report via Claude, emails it to the client, and logs delivery to Airtable.
 
 ### Node 1 — Fetch retainer clients (Airtable)
 
-**Credential:** `airtable-phoenix-automation`
-**Filter:** `AND({project_status} = 'live', FIND('agency-retainer', {service_tier}))`
-**Fields:** `client_name`, `client_email`, `n8n_workflow_ids`, `client_slug`,
-`record_id`, `hours_saved_per_run`
+**Credential:** `pa-airtable`
+**Base:** `appMLHig3CN7WW0iW` / **Table:** `tblfvqqyYukRJQYmQ`
+**Filter:** `AND({project_status}="live",FIND("agency-retainer",{service_tier}))`
+**Fields:** `company_name`, `email`, `n8n_workflow_ids`, `client_slug`,
+`record_id`, `hours_saved_per_week`
 
 **IF after:** If count = 0, exit cleanly.
 
@@ -51,7 +52,7 @@ return ids.map(id => ({ json: { ...$json, workflow_id: id } }));
 
 ### Node 5 — Fetch executions per workflow (HTTP Request — n8n API)
 
-**URL:** `http://localhost:5678/api/v1/executions?workflowId={{ $json.workflow_id }}&startedAfter={{ $now.minus({days: 30}).toISO() }}&limit=100`
+**URL:** `https://kaiashley.app.n8n.cloud/api/v1/executions?workflowId={{ $json.workflow_id }}&startedAfter={{ $now.minus({days: 30}).toISO() }}&limit=100`
 **Credential:** `n8n-internal-api`
 **Method:** GET
 
@@ -133,12 +134,12 @@ return [{ json: {
 
 ## Credentials
 
-| Credential name | Used by |
-|----------------|---------|
-| `airtable-phoenix-automation` | Nodes 1, 9 |
-| `n8n-internal-api` | Node 5 |
-| `anthropic-api` | Node 7 |
-| `smtp-phoenix-automation` | Node 8 |
+| Credential name | n8n credential name | Used by |
+|----------------|---------------------|---------|
+| `pa-airtable` | Airtable PAT | Nodes 1, 9 |
+| `pa-n8n-api` | HTTP Header Auth (X-N8N-API-KEY) | Node 5 |
+| `pa-anthropic` | HTTP Header Auth (x-api-key) | Node 7 |
+| `pa-smtp` | SMTP (kai@phoenixautomation.ai) | Node 8 |
 
 ---
 
