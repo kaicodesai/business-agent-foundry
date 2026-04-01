@@ -1,7 +1,7 @@
 # Phoenix Automation — Business Blueprint
 
-> Schema v1.0.0 · Status: Draft · Last updated: 2026-03-13
-> Business type: AI Automation Agency · Stage: Pre-revenue
+> Schema v1.0.0 · Status: In Review · Last updated: 2026-04-01
+> Business type: AI Automation Agency · Stage: Early-revenue
 
 ---
 
@@ -11,7 +11,7 @@
 - **Who:** Operations managers and founders at 10–200 person e-commerce, professional services, and healthcare businesses drowning in manual repetitive tasks
 - **How:** Free assessment (the sales call) → paid build ($1,500–$7,000) → monthly retainer ($500–$1,500/mo) — fully async delivery, clients own all credentials
 - **Edge:** The build agent (Claude Code + n8n-MCP) creates a 4–6× capacity advantage over any manual n8n builder — the agency can serve more clients without more headcount
-- **Now:** Site cannot generate revenue until CTA buttons connect to Calendly — fix today, then activate chatbot and launch outbound pipeline this week
+- **Now:** Infrastructure is fully live (n8n Cloud, Airtable, ClickUp, Typeform, Calendly). First real client is the next critical milestone — activate remaining workflows, then close.
 
 > ⚠️ **Needs input:** Proof points and client case studies are placeholders. Replace after first 1–2 client deliveries.
 
@@ -19,16 +19,16 @@
 
 ## Business
 
-Phoenix Automation helps businesses eliminate manual processes by identifying operational inefficiencies and implementing AI-powered workflows that run automatically. The model is simple: free assessment to earn trust, paid build to deliver value, monthly retainer to sustain the relationship. The agency runs on a minimal team with Claude and n8n as the operational core.
+Phoenix Automation helps businesses eliminate manual processes by identifying operational inefficiencies and implementing AI-powered workflows that run automatically. The model is simple: free assessment to earn trust, paid build to deliver value, monthly retainer to sustain the relationship. The agency runs on a minimal team with Claude and n8n as the operational core. Infrastructure is fully live as of April 2026 — Airtable, ClickUp, n8n Cloud, and all intake tooling are operational and the agency is approaching its first paying client.
 
 | | |
 |--|--|
 | **Tagline** | Transform Your Business With Intelligent Automation |
 | **Location** | Clearwater, FL / Da Nang, Vietnam (remote-first) |
 | **Model** | AI-First · Minimal Team |
-| **Core Tools** | Claude · n8n · ClickUp |
-| **Stage** | Pre-revenue |
-| **Prepared** | March 2026 |
+| **Core Tools** | Claude · n8n Cloud · ClickUp |
+| **Stage** | Early-revenue |
+| **Last Updated** | April 2026 |
 
 ---
 
@@ -142,42 +142,44 @@ Phoenix Automation's core promise is speed, ownership, and ROI — not a generic
 
 The agency runs on a small, deliberate set of tools. Every tool has one specific job.
 
-| Tool | Job | Cost |
-|------|-----|------|
-| **Claude (Anthropic)** | AI brain — chatbot, proposals, emails, reports, builds via Claude Code | $20/mo or pay-per-use |
-| **n8n** | Automation backbone — all client workflow automations | $0 (self-hosted) or ~$20/mo |
+| Tool | Job | Notes |
+|------|-----|-------|
+| **Claude (Anthropic)** | AI brain — chatbot, proposals, emails, reports, builds via Claude Code | Pay-per-use API |
+| **n8n Cloud** | Automation backbone — all internal and client workflow automations | kaiashley.app.n8n.cloud, 6 credentials active |
 | **n8n-MCP** | Bridge giving Claude Code access to 1,084+ n8n node schemas via API | Open source (npm) |
 | **ClickUp** | Project management — one Space per client, assessment to retainer | $0–$10/mo |
-| **Airtable** | Client database — single source of truth, n8n reads/writes automatically | Free tier initially |
+| **Airtable** | Client database — 50+ fields in Clients table, n8n reads/writes automatically | Free tier |
+| **GitHub** | Source control for agent definitions and workflow files | Free tier |
 | **Apollo.io** | Lead prospecting — bulk export by industry, company size, job title | Subscription |
-| **Instantly.ai** | Cold email sequences — Claude-written, automated, inbox health management | Subscription |
-| **Typeform** | Intake & pre-assessment — 5 questions, auto-posts to Airtable via n8n | Free tier |
+| **Instantly.ai** | Cold email sequences — Claude-written, automated, inbox health management | Pending setup |
+| **Typeform** | Intake & pre-assessment — live at https://form.typeform.com/to/RSsWJkcf | Free tier |
+| **Calendly** | All scheduling — https://calendly.com/kai-phoenixautomation/free-business-assessment | Free / paid |
 | **Loom** | Async client training — replaces live walkthrough calls | Free tier |
-| **Calendly** | All scheduling — no manual coordination | Free / paid |
 
 **Primary LLM:** `claude-sonnet-4-6`
 **Fallback LLM:** `claude-haiku-4-5`
 **Orchestration:** Claude Code + n8n-MCP (czlonkowski/n8n-mcp)
+**Hosting:** n8n Cloud (kaiashley.app.n8n.cloud). Each client gets their own n8n account (Option A model).
 
 ### What AI Handles vs. What Needs a Human
 
 | AI Handles (Fully Automated) | Human Required |
 |------------------------------|----------------|
 | Cold outreach — Claude writes, Instantly sends | Assessment / sales calls (30 min per prospect) |
-| Lead qualification — chatbot on website, 24/7 | Final proposal review before sending |
+| Lead qualification — Typeform + lead scorer | Final proposal review before sending |
 | Booking — Calendly, no manual scheduling | Complex build architecture decisions |
 | Proposal drafting — Claude from call notes | Client relationship management and upsells |
 | Follow-up sequences — 3-step cadence | |
 | Weekly status updates — from ClickUp | |
 | Monthly reports — Claude from n8n data | |
-| Invoicing — triggered on milestone or date | |
+| Credential follow-up — automated reminders | |
 
 ### Credentials Model (Who Pays for What)
 
 | Phoenix Automation Pays | Client Pays (Their Own Accounts) |
 |--------------------------|----------------------------------|
-| n8n (self-hosted or cloud) | Anthropic API key |
-| Claude Code subscription | CRM / email platform (HubSpot, Mailchimp) |
+| n8n Cloud (~$20/mo) | Anthropic API key |
+| Claude Code (pay-per-use) | CRM / email platform (HubSpot, Mailchimp) |
 | ClickUp | Any SaaS tools being automated |
 | Apollo.io + Instantly.ai | Website chatbot hosting |
 | Airtable | API usage costs (~$50–$300/mo) |
@@ -193,17 +195,21 @@ The agency runs on a small, deliberate set of tools. Every tool has one specific
 | # | Stage | What Happens | Tools |
 |---|-------|-------------|-------|
 | 1 | Discovery | Client finds Phoenix Automation via ad, referral, LinkedIn, or website | Website + Calendly |
-| 2 | Intake Form | Client fills 5-question Typeform before booking — Claude pre-scores lead automatically | Typeform + Claude |
-| 3 | Assessment Call | 30-min call: identify 3–5 automation opportunities, calculate ROI — this IS the sales call | Zoom / Meet |
-| 4 | Proposal | Within 24 hrs: Claude drafts proposal from call notes, owner reviews and sends | Claude + Notion |
-| 5 | Onboarding | Client signs and pays — ClickUp project and API key collection trigger automatically | ClickUp + n8n |
-| 6 | Build | Claude Code + n8n-MCP builds workflows. Weekly auto-status updates from ClickUp | Claude Code + n8n |
-| 7 | Launch & Handoff | Automations go live. Client receives Loom walkthroughs — no live training | Loom + n8n |
-| 8 | Retainer | n8n monitors, Claude generates monthly report, referral sequence triggers at 30 days | n8n + Claude |
+| 2 | Intake Form | Client fills Typeform before booking — Claude pre-scores lead automatically | Typeform (live) + Claude |
+| 3 | Booking | Client books assessment call via Calendly (embedded after Typeform) | Calendly (live) |
+| 4 | Assessment Call | 30-min call: identify 3–5 automation opportunities, calculate ROI — this IS the sales call | Zoom / Meet |
+| 5 | Proposal | Within 24 hrs: Claude drafts proposal from call notes, owner reviews and sends | Claude + Notion |
+| 6 | Onboarding | Client signs and pays — ClickUp project and API key collection trigger automatically | ClickUp + n8n |
+| 7 | Build | Claude Code + n8n-MCP builds workflows. Weekly auto-status updates from ClickUp | Claude Code + n8n |
+| 8 | Launch & Handoff | Automations go live. Client receives Loom walkthroughs — no live training | Loom + n8n |
+| 9 | Retainer | n8n monitors, Claude generates monthly report, referral sequence triggers at 30 days | n8n + Claude |
+
+**Intake form:** https://form.typeform.com/to/RSsWJkcf
+**Booking:** https://calendly.com/kai-phoenixautomation/free-business-assessment
 
 **Methodology:** Blueprint-first, async delivery — no live check-ins, no manual status updates.
 
-**CRM:** Airtable (Typeform auto-posts, n8n reads/writes, single source of truth)
+**CRM:** Airtable (50+ fields in Clients table — Typeform auto-posts, n8n reads/writes, single source of truth)
 
 **Project management:** ClickUp — one Space per client. Shared read-only links replace a custom client portal until 5+ active clients.
 
@@ -236,9 +242,12 @@ The agency is designed to run lean — Claude and n8n handle all repeatable work
 
 | Role | Count | Type | Responsibilities |
 |------|-------|------|-----------------|
-| Founder / Agency Owner | 1 | Founder | Assessment calls, final proposal review, complex architecture, client relationships, upsells |
+| Founder / Agency Owner (Kai Edwards) | 1 | Founder | Assessment calls, final proposal review, complex architecture, client relationships, upsells, strategic direction |
+| VA / Workflow Builder (Haris) | 1 | Contractor | Builds n8n workflows under Kai's direction, executes client delivery workflows, supports internal build development |
 
-**Hiring plan (VAs, only if needed):**
+**Co-founder / Partner:** Howard Littel — Partnership Agreement drafted.
+
+**Hiring plan (when needed):**
 
 | Role | Trigger |
 |------|---------|
@@ -252,46 +261,49 @@ The agency is designed to run lean — Claude and n8n handle all repeatable work
 
 | | |
 |--|--|
-| **Current MRR** | $0 (pre-revenue) |
+| **Current MRR** | $0 (approaching first client) |
 | **3-month MRR target** | ⚠️ [TO BE CONFIRMED] — define after closing first 2 clients |
 | **12-month MRR target** | ⚠️ [TO BE CONFIRMED] — define after closing first 2 clients |
 | **12-month client target** | 10 active retainer clients |
 | **Runway** | ⚠️ [TO BE CONFIRMED] |
 
 **Agency cost structure:**
-- Claude Code: ~$20/mo or pay-per-use
-- n8n: $0 (self-hosted) or ~$20/mo
+- Claude Code: pay-per-use Anthropic API (primary build tool, fully operational)
+- n8n Cloud: ~$20/mo (kaiashley.app.n8n.cloud, 6 credentials active)
 - ClickUp: $0–$10/mo
-- Apollo.io + Instantly.ai: subscription (lead gen)
-- Airtable: free tier initially
+- Apollo.io + Instantly.ai: subscriptions (lead gen — Instantly.ai setup pending)
+- Airtable: free tier (50+ field Clients base live)
 - Loom: free tier initially
+- GitHub: free tier
 
 ---
 
 ## Agent Map
 
-The agency's internal AI agent ecosystem. 9 agents planned; 0 currently live. Build order driven by revenue impact.
+The agency's internal AI agent ecosystem. 9 agents defined; 6 are live or built and tested as of April 2026.
+
+**Status legend:** Live = active in n8n Cloud or fully operational. Planned = not yet built.
 
 ```mermaid
 flowchart TD
     %% Inbound channel
-    leadQualifierChatbot["🤖 Lead Qualifier Chatbot\n(planned)"]
-    leadScorer["🤖 Lead Scorer\n(planned)"]
+    leadQualifierChatbot["Lead Qualifier Chatbot\nplanned"]
+    leadScorer["Lead Scorer / Typeform Qual\nLIVE"]
 
     %% Outbound channel
-    outreachAgent["🤖 Outreach Agent\n(planned)"]
+    outreachAgent["Outreach Agent\nplanned — blocked on Instantly.ai"]
 
     %% Conversion
-    proposalDraftingAgent["🤖 Proposal Drafting Agent\n(planned)"]
-    onboardingAutomation["⚙️ Onboarding Automation\n(planned)"]
+    proposalDraftingAgent["Proposal Drafting Agent\nplanned"]
+    onboardingAutomation["Onboarding Automation\nLIVE — 51 nodes"]
 
     %% Delivery
-    buildAgent["🔨 Build Agent\n(Claude Code + n8n-MCP)\n(planned)"]
-    statusUpdateAgent["📊 Status Update Agent\n(planned)"]
+    buildAgent["Build Agent\nClaude Code + n8n-MCP\nLIVE"]
+    statusUpdateAgent["Status Update Agent\nLIVE — 20 nodes, weekly"]
 
     %% Retention
-    reportingAgent["📈 Reporting Agent\n(planned)"]
-    referralTriggerAgent["🔁 Referral Trigger Agent\n(planned)"]
+    reportingAgent["Reporting Agent\nLIVE — 16 nodes"]
+    referralTriggerAgent["Referral Trigger Agent\nLIVE — 15 nodes, E2E tested"]
 
     %% Flow
     leadQualifierChatbot --> leadScorer
@@ -304,19 +316,37 @@ flowchart TD
     onboardingAutomation --> reportingAgent
     reportingAgent --> referralTriggerAgent
 
-    %% Styling
+    %% Styling — green=live, grey=planned
+    style leadScorer fill:#16a34a,color:#fff
+    style onboardingAutomation fill:#16a34a,color:#fff
+    style buildAgent fill:#16a34a,color:#fff
+    style statusUpdateAgent fill:#16a34a,color:#fff
+    style reportingAgent fill:#16a34a,color:#fff
+    style referralTriggerAgent fill:#16a34a,color:#fff
     style leadQualifierChatbot fill:#94a3b8,color:#fff
     style outreachAgent fill:#94a3b8,color:#fff
-    style leadScorer fill:#94a3b8,color:#fff
     style proposalDraftingAgent fill:#94a3b8,color:#fff
-    style onboardingAutomation fill:#94a3b8,color:#fff
-    style buildAgent fill:#94a3b8,color:#fff
-    style statusUpdateAgent fill:#94a3b8,color:#fff
-    style reportingAgent fill:#94a3b8,color:#fff
-    style referralTriggerAgent fill:#94a3b8,color:#fff
 ```
 
-See `agent-map.md` for full agent inventory and detail.
+### Agent Inventory
+
+| Agent | Status | Nodes | Notes |
+|-------|--------|-------|-------|
+| Lead Qualifier Chatbot | Planned | — | Website chatbot not yet embedded |
+| Outreach Agent | Planned | — | Blocked on Instantly.ai setup |
+| Lead Scorer / Typeform Qual | Live | 13 | Webhook registered, running on submission |
+| Proposal Drafting Agent | Planned | — | Claude Code manual trigger |
+| Onboarding Automation | Live | 51 | Active in n8n Cloud |
+| Build Agent (Claude Code + n8n-MCP) | Live | — | Fully operational |
+| Status Update Agent | Live | 20 | Running weekly |
+| Reporting Agent | Live | 16 | Built and inactive — Kai activates |
+| Referral Trigger Agent | Live | 15 | E2E tested PASS — Kai activates |
+
+**Also built (not in agent map):**
+- [PA] ClickUp Sync — 18 nodes, inactive
+- [PA] Credential Follow-Up — 11 nodes, inactive — Kai activates before first client
+
+See `.claude/agents/` for agent definition files.
 
 ---
 
@@ -356,7 +386,7 @@ See `assumptions-and-gaps.md` for the full risk register with validation methods
 | # | Assumption | Validated? |
 |---|-----------|------------|
 | 1 | Free assessment + proposal model converts at > 30% | No |
-| 2 | Claude Code + n8n-MCP builds production workflows reliably in < 1 hour | No |
+| 2 | Claude Code + n8n-MCP builds production workflows reliably in < 1 hour | No (system live, client-grade validation pending) |
 | 3 | SMB clients accept the credential ownership model without friction | No |
 | 4 | 30–50 automated outreaches/day generates 2+ client closes per month | No |
 | 5 | Async delivery (Loom, no live calls) accepted by clients paying $1,500–$7,000 | No |
@@ -369,27 +399,33 @@ See `assumptions-and-gaps.md` for the full gap register with severities and reso
 
 | Severity | Gap |
 |----------|-----|
-| 🔴 BLOCKING | CTA buttons not connected to Calendly — site cannot generate revenue |
-| 🟠 HIGH | Website chatbot not activated |
-| 🟠 HIGH | Typeform intake form not embedded on website |
-| 🟠 HIGH | Claude Code + n8n-MCP not installed or tested |
-| 🟠 HIGH | No real client case studies on website |
+| 🟠 HIGH | Outreach Agent not yet built — blocked on Instantly.ai setup |
+| 🟠 HIGH | Website chatbot not yet embedded — inbound qualification non-functional |
+| 🟠 HIGH | No real client case studies — website placeholder content |
+| 🟡 MEDIUM | Typeform form live but not yet embedded in website conversion flow |
 | 🟡 MEDIUM | MRR targets not defined |
 | 🟡 MEDIUM | No pricing anchor on website |
 | 🟡 MEDIUM | Agency Retainer scope not defined |
-| 🟡 MEDIUM | Privacy Policy and ToS pages empty |
+| 🟡 MEDIUM | Privacy Policy and Terms of Service pages empty |
+| 🟡 MEDIUM | Credential Follow-Up + Typeform Qual workflows built but inactive — activate before first client |
 | ⚪ LOW | No SLA defined for after-hours automation failures |
+| ⚪ LOW | EIN pending — business registration in Florida in progress |
+
+**Resolved since March 2026:**
+- ~~CTA buttons not connected to Calendly~~ — Calendly is live at https://calendly.com/kai-phoenixautomation/free-business-assessment
+- ~~Claude Code + n8n-MCP not installed or tested~~ — fully operational
+- ~~Typeform intake form does not exist~~ — live at https://form.typeform.com/to/RSsWJkcf
 
 ---
 
 ## Next Actions
 
-Derived from `build-priority.md` — do these in order.
+Derived from `build_priority` — do these in order.
 
-| # | Action | Effort | Impact | Timing |
+| # | Action | Effort | Impact | Status |
 |---|--------|--------|--------|--------|
-| 1 | **Connect CTA buttons to live Calendly booking page** | XS | Critical | Today |
-| 2 | **Embed Typeform intake form before Calendly** | XS | High | This week |
-| 3 | **Activate lead qualifier chatbot** | S | High | This week |
-| 4 | **Add pricing anchor to website** | XS | Medium | This week |
-| 5 | **Set up outbound lead pipeline (Apollo + Instantly)** | M | Critical | Week 2 |
+| 1 | **Activate Typeform Lead Qualification + Credential Follow-Up workflows** | XS | Critical | Ready — just activate |
+| 2 | **Embed Typeform form on website before Calendly step** | XS | High | Form live, website placement pending |
+| 3 | **Complete Instantly.ai setup + build Outreach Agent** | M | Critical | Blocked on Instantly.ai |
+| 4 | **Close first real client and deliver first paid build** | L | Critical | Infrastructure ready |
+| 5 | **Replace website placeholder case studies with real client outcomes** | S | High | Depends on first delivery |

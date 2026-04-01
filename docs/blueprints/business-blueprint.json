@@ -2,9 +2,9 @@
   "meta": {
     "schema_version": "1.0.0",
     "business_type": "ai_automation_agency",
-    "status": "draft",
+    "status": "in_review",
     "created_at": "2026-03-13",
-    "last_updated_at": "2026-03-13",
+    "last_updated_at": "2026-04-01",
     "author": "Blueprint Agent (normalised from founder-authored source document)",
     "blueprint_id": "bp-phoenix-automation-001"
   },
@@ -12,8 +12,8 @@
   "business": {
     "name": "Phoenix Automation",
     "tagline": "Transform Your Business With Intelligent Automation",
-    "description": "Phoenix Automation helps businesses eliminate manual processes by identifying operational inefficiencies and implementing AI-powered workflows that run automatically. The model is simple: free assessment to earn trust, paid build to deliver value, monthly retainer to sustain the relationship. The agency runs on a minimal team with Claude and n8n as the operational core.",
-    "stage": "pre-revenue",
+    "description": "Phoenix Automation helps businesses eliminate manual processes by identifying operational inefficiencies and implementing AI-powered workflows that run automatically. The model is simple: free assessment to earn trust, paid build to deliver value, monthly retainer to sustain the relationship. The agency runs on a minimal team with Claude and n8n as the operational core. Infrastructure is fully live as of April 2026 — Airtable, ClickUp, n8n Cloud, and all intake tooling are operational and the agency is approaching its first paying client.",
+    "stage": "early-revenue",
     "founded": "2026-03-01",
     "location": "Clearwater, FL / Da Nang, Vietnam (remote-first)"
   },
@@ -157,7 +157,7 @@
         "Monthly automation performance data"
       ],
       "outputs": [
-        "Monthly performance report (Claude-generated from n8n data)",
+        "Monthly performance report (Claude-written, data-backed)",
         "Bug fixes and maintenance within agreed SLA",
         "n8n monitoring and automated failure alerts",
         "New automation additions as included in tier"
@@ -188,13 +188,13 @@
     "primary_llm": "claude-sonnet-4-6",
     "fallback_llm": "claude-haiku-4-5",
     "orchestration": "Claude Code + n8n-MCP (czlonkowski/n8n-mcp)",
-    "databases": ["Airtable (lead and client database — single source of truth for the agency)"],
+    "databases": ["Airtable (lead and client database — 50+ fields in Clients table, single source of truth for the agency)"],
     "integrations": [
-      "n8n (automation backbone — self-hosted free or n8n Cloud ~$20/mo)",
+      "n8n Cloud (kaiashley.app.n8n.cloud — automation backbone, all 6 credentials active)",
       "Apollo.io (lead prospecting by industry, company size, job title)",
-      "Instantly.ai (personalised cold email sequences, inbox health management)",
-      "Calendly (booking — auto-scheduling, no manual coordination)",
-      "Typeform (intake & pre-assessment form, 5 questions, auto-posts to Airtable via n8n)",
+      "Instantly.ai (personalised cold email sequences, inbox health management — pending setup)",
+      "Calendly (booking — https://calendly.com/kai-phoenixautomation/free-business-assessment)",
+      "Typeform (intake & pre-assessment — live at https://form.typeform.com/to/RSsWJkcf)",
       "Loom (async client training — replaces live walkthrough calls)",
       "LinkedIn Sales Navigator (decision-maker filtering for outreach)",
       "Meta Ads (free automation audit lead magnet)",
@@ -202,13 +202,13 @@
       "Zoom / Google Meet (assessment calls only)",
       "Notion (proposal drafting workspace)"
     ],
-    "hosting": "n8n self-hosted (free, preferred) or n8n Cloud (~$20/mo). Client automations run in client's own n8n workspace.",
-    "internal_tools": ["Claude Code ($20/mo or pay-per-use API)", "n8n", "ClickUp", "Airtable", "Apollo.io", "Instantly.ai", "Loom"],
+    "hosting": "n8n Cloud (kaiashley.app.n8n.cloud). Client automations run in client's own n8n account — each client has a separate n8n account (Option A model).",
+    "internal_tools": ["Claude Code", "n8n Cloud", "ClickUp", "Airtable", "GitHub", "Apollo.io", "Instantly.ai", "Loom"],
     "client_facing_tools": [
       "ClickUp (shared read-only project links — replaces client portal until 5+ clients)",
       "Loom (async video walkthroughs — no live training sessions)",
-      "Typeform (pre-assessment intake form embedded before Calendly)",
-      "Calendly (self-serve booking)"
+      "Typeform (pre-assessment intake form — https://form.typeform.com/to/RSsWJkcf)",
+      "Calendly (self-serve booking — https://calendly.com/kai-phoenixautomation/free-business-assessment)"
     ]
   },
 
@@ -216,14 +216,15 @@
     "client_intake": {
       "steps": [
         "Client discovers Phoenix Automation via ad, referral, LinkedIn, or website organic",
-        "Client clicks CTA ('Get Free Assessment') and is directed to Typeform intake form",
+        "Client clicks CTA ('Get Free Assessment') and is directed to Typeform intake form (https://form.typeform.com/to/RSsWJkcf)",
         "Client fills 5-question Typeform: industry, team size, biggest operational pain, hours lost per week to manual tasks — data auto-posts to Airtable via n8n",
         "Claude pre-scores the lead automatically from Typeform data and updates Airtable record",
-        "Client books 30-minute assessment call via Calendly (embedded after Typeform)",
+        "Client books 30-minute assessment call via Calendly (https://calendly.com/kai-phoenixautomation/free-business-assessment)",
         "Owner conducts assessment call on Zoom/Meet: identifies 3–5 automation opportunities, calculates rough ROI — this IS the sales call, always ends with a proposal outline",
         "Owner reviews Claude-drafted proposal (from call notes) within 24 hours and sends to client",
         "Client signs agreement and pays — onboarding checklist triggers automatically via n8n + ClickUp, including API key collection request"
       ],
+      "intake_form_url": "https://form.typeform.com/to/RSsWJkcf",
       "crm": "Airtable"
     },
     "delivery_workflow": {
@@ -336,7 +337,7 @@
   },
 
   "team": {
-    "current_headcount": 1,
+    "current_headcount": 2,
     "roles": [
       {
         "title": "Founder / Agency Owner",
@@ -346,9 +347,20 @@
           "Final proposal review before sending (Claude drafts, owner reviews)",
           "Complex build architecture decisions",
           "Client relationship management and upsells",
-          "Oversight and sign-off on all delivered automations"
+          "Oversight and sign-off on all delivered automations",
+          "Strategic direction and partner coordination"
         ],
         "type": "founder"
+      },
+      {
+        "title": "VA / Workflow Builder",
+        "count": 1,
+        "responsibilities": [
+          "Builds n8n workflows under Kai's direction and specifications",
+          "Executes workflow builds for client deliveries",
+          "Supports agency internal workflow development and testing"
+        ],
+        "type": "contractor"
       }
     ],
     "hiring_plan": [
@@ -373,13 +385,14 @@
     "mrr_target_12mo": "[TO BE CONFIRMED]",
     "target_client_count_12mo": 10,
     "cost_structure": [
-      "Claude Code — $20/mo or pay-per-use Anthropic API",
-      "n8n — $0 (self-hosted) or ~$20/mo (n8n Cloud)",
+      "Claude Code — pay-per-use Anthropic API (primary build tool, fully operational)",
+      "n8n Cloud — ~$20/mo (kaiashley.app.n8n.cloud, 6 credentials active)",
       "ClickUp — $0–$10/mo",
       "Apollo.io — subscription for outbound prospecting",
       "Instantly.ai — subscription for cold email sequences",
-      "Airtable — free tier initially",
-      "Loom — free tier initially"
+      "Airtable — free tier (50+ field Clients base live)",
+      "Loom — free tier initially",
+      "GitHub — free tier (source control for agent definitions and workflows)"
     ],
     "runway": "[TO BE CONFIRMED]"
   },
@@ -397,7 +410,7 @@
         "tools": ["Claude API (claude-sonnet-4-6)", "Calendly API", "Website chat widget embed"],
         "depends_on": [],
         "services_powered": ["free-assessment"],
-        "definition_path": "[TO BE CREATED] .claude/agents/lead-qualifier-chatbot.md"
+        "definition_path": ".claude/agents/lead-qualification-agent.md"
       },
       {
         "id": "outreach-agent",
@@ -410,20 +423,20 @@
         "tools": ["Claude API", "n8n", "Airtable", "Instantly.ai", "Apollo.io"],
         "depends_on": [],
         "services_powered": [],
-        "definition_path": "[TO BE CREATED] .claude/agents/outreach-agent.md"
+        "definition_path": ".claude/agents/outreach-agent.md"
       },
       {
         "id": "lead-scorer",
-        "name": "Lead Scorer",
+        "name": "Lead Scorer / Typeform Qualification",
         "role": "Pre-scores inbound leads from Typeform submissions before the assessment call, updating Airtable with a qualification score and briefing notes for the owner.",
-        "status": "planned",
-        "triggers": ["New Typeform submission received (webhook via n8n)"],
+        "status": "live",
+        "triggers": ["New Typeform submission received (webhook via n8n — webhook registered and active)"],
         "inputs": ["Industry", "Team size", "Biggest operational pain", "Hours lost per week to manual tasks"],
         "outputs": ["Lead score (high / medium / low)", "Pre-call briefing summary for owner", "Airtable record updated"],
-        "tools": ["Claude API", "n8n", "Typeform webhook", "Airtable"],
+        "tools": ["Claude API", "n8n Cloud", "Typeform webhook", "Airtable"],
         "depends_on": [],
         "services_powered": ["free-assessment"],
-        "definition_path": "[TO BE CREATED] .claude/agents/lead-scorer.md"
+        "definition_path": ".claude/agents/lead-qualification-agent.md"
       },
       {
         "id": "proposal-drafting-agent",
@@ -436,13 +449,13 @@
         "tools": ["Claude API (claude-sonnet-4-6)", "Notion API"],
         "depends_on": ["lead-scorer"],
         "services_powered": ["starter-build", "growth-package"],
-        "definition_path": "[TO BE CREATED] .claude/agents/proposal-drafting-agent.md"
+        "definition_path": ".claude/agents/proposal-drafting-agent.md"
       },
       {
         "id": "onboarding-automation",
         "name": "Onboarding Automation",
         "role": "Triggers the full client onboarding sequence when payment is confirmed — creates ClickUp project, sends welcome message, and initiates API key collection.",
-        "status": "planned",
+        "status": "live",
         "triggers": ["Client payment confirmed (payment platform webhook via n8n)"],
         "inputs": ["Client name", "Email address", "Package purchased", "Project start date"],
         "outputs": [
@@ -451,16 +464,16 @@
           "API key collection form triggered (1Password or encrypted form)",
           "Client n8n workspace and credentials template created"
         ],
-        "tools": ["n8n", "ClickUp API", "Airtable", "Email (Instantly or SMTP)"],
+        "tools": ["n8n Cloud", "ClickUp API", "Airtable", "Email (SMTP)"],
         "depends_on": ["lead-scorer"],
         "services_powered": ["starter-build", "growth-package", "agency-retainer"],
-        "definition_path": "[TO BE CREATED] .claude/agents/onboarding-automation.md"
+        "definition_path": ".claude/agents/onboarding-automation.md"
       },
       {
         "id": "build-agent",
         "name": "Build Agent (Claude Code + n8n-MCP)",
         "role": "Builds, tests, and self-corrects n8n automation workflows from plain English descriptions using the n8n-MCP bridge — reducing build time from 3–5 hours to 30–60 minutes per workflow.",
-        "status": "planned",
+        "status": "live",
         "triggers": ["Owner describes workflow to Claude Code in plain English"],
         "inputs": [
           "Plain English workflow description",
@@ -475,52 +488,60 @@
         "tools": ["Claude Code", "n8n-MCP (czlonkowski/n8n-mcp)", "n8n API (1,084+ node schemas)", "n8n-skills repo"],
         "depends_on": [],
         "services_powered": ["starter-build", "growth-package"],
-        "definition_path": "[TO BE CREATED] .claude/agents/build-agent.md"
+        "definition_path": ".claude/agents/agent-builder.md"
       },
       {
         "id": "status-update-agent",
         "name": "Status Update Agent",
         "role": "Sends automated weekly project status updates to clients from ClickUp task data — eliminating the need for manual check-in emails.",
-        "status": "planned",
+        "status": "live",
         "triggers": ["Weekly n8n cron schedule (Monday morning client timezone)"],
         "inputs": ["ClickUp project data (tasks completed, in progress, next milestone)"],
         "outputs": ["Weekly status email to client with project progress and next steps"],
-        "tools": ["n8n", "ClickUp API", "Claude API (for email copy)", "Email (SMTP or Instantly)"],
+        "tools": ["n8n Cloud", "ClickUp API", "Claude API (for email copy)", "Email (SMTP)"],
         "depends_on": ["onboarding-automation"],
         "services_powered": ["starter-build", "growth-package", "agency-retainer"],
-        "definition_path": "[TO BE CREATED] .claude/agents/status-update-agent.md"
+        "definition_path": ".claude/agents/status-update-agent.md"
       },
       {
         "id": "reporting-agent",
         "name": "Reporting Agent",
         "role": "Auto-generates monthly performance reports for retainer clients from n8n workflow execution data — showing automations run, errors caught, time saved, and value delivered.",
-        "status": "planned",
+        "status": "live",
         "triggers": ["Monthly n8n cron schedule (1st of each month)", "Retainer billing date trigger"],
         "inputs": ["n8n workflow execution logs for client", "Automation performance metrics", "Error count and resolution data"],
         "outputs": ["Monthly performance report (Claude-written, data-backed)", "Email to client with report attached or linked"],
-        "tools": ["Claude API (claude-sonnet-4-6)", "n8n", "Airtable"],
+        "tools": ["Claude API (claude-sonnet-4-6)", "n8n Cloud", "Airtable"],
         "depends_on": ["onboarding-automation"],
         "services_powered": ["agency-retainer"],
-        "definition_path": "[TO BE CREATED] .claude/agents/reporting-agent.md"
+        "definition_path": ".claude/agents/reporting-agent.md"
       },
       {
         "id": "referral-trigger-agent",
         "name": "Referral Trigger Agent",
         "role": "Sends an automated referral request email sequence 30 days after client launch — systematically converting happy clients into referral sources without manual outreach.",
-        "status": "planned",
+        "status": "live",
         "triggers": ["30 days after client project launch date (n8n scheduled trigger)"],
         "inputs": ["Client name", "Project outcomes and automations delivered", "Launch date"],
-        "outputs": ["Referral request email sequence (Claude-written, 2–3 touch points via Instantly)"],
-        "tools": ["n8n", "Claude API", "Instantly.ai", "Airtable"],
+        "outputs": ["Referral request email sequence (Claude-written, 2–3 touch points)"],
+        "tools": ["n8n Cloud", "Claude API", "Airtable"],
         "depends_on": ["reporting-agent"],
         "services_powered": [],
-        "definition_path": "[TO BE CREATED] .claude/agents/referral-trigger-agent.md"
+        "definition_path": ".claude/agents/referral-trigger-agent.md"
       }
     ],
     "planned_builds": [
       {
         "name": "Client Portal (Phase 2)",
         "rationale": "ClickUp shared links are sufficient until 5+ active clients. Build on Lovable or Bubble with Airtable API backend. Must-haves: secure login, onboarding checklist, project tracker, deliverables library, support tickets, invoice history, monthly report."
+      },
+      {
+        "name": "ClickUp Sync Workflow",
+        "rationale": "Built in n8n (18 nodes, inactive) — syncs project data between internal ClickUp and client-facing views. Needs activation and testing before first client onboards."
+      },
+      {
+        "name": "Credential Follow-Up Workflow",
+        "rationale": "Built in n8n (11 nodes, inactive) — sends automated follow-up when client has not submitted API credentials within a defined window. Kai activates before first client onboard."
       }
     ]
   },
@@ -594,7 +615,7 @@
     {
       "assumption": "Claude Code + n8n-MCP reliably builds production-grade client workflows in under 1 hour",
       "risk_if_wrong": "Build times stay at 3–5 hours — the core operational advantage disappears and pricing model breaks",
-      "validation_method": "Run 5 test builds across different workflow types (simple trigger-action, multi-step, AI-integrated) before signing the first client",
+      "validation_method": "System is operational and in use for internal builds. Validate against client-grade workflow complexity before signing first client.",
       "validated": false
     },
     {
@@ -619,34 +640,28 @@
 
   "gaps": [
     {
-      "gap": "CTA buttons on website are not yet connected to Calendly — the site cannot generate revenue",
-      "severity": "blocking",
-      "owner": "Founder",
-      "resolution": "Connect both 'Get Free Assessment' and 'Schedule Your Free Assessment' buttons to a live Calendly booking page. 15-minute fix. Do today."
-    },
-    {
-      "gap": "Website chatbot is not yet activated — inbound lead qualification is non-functional",
+      "gap": "Outreach Agent not yet built — Instantly.ai setup pending, blocking the outbound email pipeline",
       "severity": "high",
       "owner": "Founder",
-      "resolution": "Connect chat widget to Claude API with a 3-question qualification prompt (industry, team size, biggest pain). Route hot leads to Calendly, cold leads to nurture. Target: this week."
+      "resolution": "Complete Instantly.ai account setup (inbox warming, domain authentication), then build and activate the outreach n8n workflow. This is the primary revenue driver before referrals kick in."
     },
     {
-      "gap": "Typeform intake form is not yet embedded on the website — leads arrive to assessment call unqualified",
+      "gap": "Website chatbot not yet embedded — inbound lead qualification from website visitors is non-functional",
       "severity": "high",
       "owner": "Founder",
-      "resolution": "Embed Typeform before Calendly booking step. Questions: industry, team size, biggest operational pain, hours lost per week. Auto-post to Airtable via n8n. Target: this week."
-    },
-    {
-      "gap": "Claude Code + n8n-MCP not yet installed or tested — core delivery system unproven",
-      "severity": "high",
-      "owner": "Founder",
-      "resolution": "Install Claude Code, connect n8n-MCP (czlonkowski/n8n-mcp via npm), create credentials template in n8n, run a test build end-to-end. Target: Week 2–3."
+      "resolution": "Connect chat widget to Claude API with a 3-question qualification prompt (industry, team size, biggest pain). Route hot leads to Calendly, cold leads to nurture. The Typeform form is live but the chatbot covers different traffic patterns."
     },
     {
       "gap": "No real client case studies — website's 'Real Results' section shows placeholder content",
       "severity": "high",
       "owner": "Founder",
-      "resolution": "Replace placeholder case studies after first 1–2 client deliveries. In the interim, add the efficiency benchmark (3–5 hrs → 30–60 min) as a concrete proof point."
+      "resolution": "Replace placeholder case studies after first 1–2 client deliveries. In the interim, the efficiency benchmark (3–5 hrs → 30–60 min) is a concrete proof point to use."
+    },
+    {
+      "gap": "Typeform intake form not yet embedded on website — form is live but not yet placed in the conversion flow",
+      "severity": "medium",
+      "owner": "Founder",
+      "resolution": "Embed https://form.typeform.com/to/RSsWJkcf before the Calendly booking step on the website. The form exists and is live — this is a website placement task only."
     },
     {
       "gap": "MRR targets (3-month, 12-month) not formally defined — makes financial planning and decision-making inconsistent",
@@ -673,82 +688,94 @@
       "resolution": "Draft and publish both pages before acquiring paying clients. Use a privacy policy generator for the first version."
     },
     {
+      "gap": "Credential Follow-Up and Typeform Lead Qualification workflows built but inactive — Kai must activate before first client onboards",
+      "severity": "medium",
+      "owner": "Founder",
+      "resolution": "Activate [PA] Credential Follow-Up (11 nodes) and confirm [PA] Typeform Lead Qualification (13 nodes) webhook is responding correctly. Both are built and tested."
+    },
+    {
       "gap": "No defined process for handling client automation failures outside business hours",
       "severity": "low",
       "owner": "Founder",
       "resolution": "Define SLA for retainer clients (e.g. 24-hour response for non-critical failures, 4-hour for revenue-impacting). Include in retainer agreement template."
+    },
+    {
+      "gap": "EIN pending — business registration in Florida is in progress",
+      "severity": "low",
+      "owner": "Founder",
+      "resolution": "Monitor EIN application. Required before issuing invoices to US clients or opening a business bank account."
     }
   ],
 
   "build_priority": [
     {
       "priority": 1,
-      "item": "Connect CTA buttons to live Calendly booking page",
+      "item": "Activate Typeform Lead Qualification and Credential Follow-Up workflows",
       "type": "process",
-      "rationale": "The website cannot generate a single lead without this. Both 'Get Free Assessment' buttons are currently decorative. 15-minute fix that unlocks all revenue.",
+      "rationale": "Both workflows are built and tested. Activating them before the first client onboards ensures the intake and credential collection sequences fire automatically — zero manual intervention needed from day one.",
       "effort": "XS",
       "impact": "critical"
     },
     {
       "priority": 2,
-      "item": "Embed Typeform intake form before Calendly step",
+      "item": "Embed Typeform intake form on website before Calendly step",
       "type": "process",
-      "rationale": "Pre-qualifies every lead before the call. Feeds Airtable automatically. Saves 10 minutes per assessment and enables lead-scorer agent. Deploy this week.",
+      "rationale": "The Typeform form is live but not yet in the conversion flow on the website. Without this, leads book assessment calls unqualified and the lead-scorer agent receives no data to work with.",
       "effort": "XS",
-      "impact": "high",
-      "depends_on": ["Connect CTA buttons to live Calendly booking page"]
+      "impact": "high"
     },
     {
       "priority": 3,
-      "item": "Activate lead qualifier chatbot on website",
+      "item": "Complete Instantly.ai setup and build Outreach Agent",
       "type": "agent",
-      "rationale": "Qualifies inbound visitors 24/7 and routes hot leads to Calendly. Claude API + 3-question prompt. Inbound channel is dead without it.",
-      "effort": "S",
-      "impact": "high",
-      "depends_on": ["Connect CTA buttons to live Calendly booking page"]
+      "rationale": "Outbound is the primary revenue driver before referrals are established. Instantly.ai inbox warming and domain authentication must be completed first, then the outreach n8n workflow activated. Target 30 contacts/day.",
+      "effort": "M",
+      "impact": "critical",
+      "depends_on": ["Activate Typeform Lead Qualification and Credential Follow-Up workflows"]
     },
     {
       "priority": 4,
-      "item": "Add pricing anchor to website",
-      "type": "content",
-      "rationale": "Removes the largest pre-call objection. 'Projects start from $1,500' or a 3-tier card. Visitors leave when they cannot gauge affordability. Quick win.",
-      "effort": "XS",
-      "impact": "medium"
+      "item": "Close first real client and deliver first paid build",
+      "type": "process",
+      "rationale": "First client is the validation milestone that proves the assessment-to-delivery model works end to end, generates initial revenue, and produces a real case study. Use personal network and early outreach pipeline. Infrastructure is ready.",
+      "effort": "L",
+      "impact": "critical",
+      "depends_on": ["Activate Typeform Lead Qualification and Credential Follow-Up workflows"]
     },
     {
       "priority": 5,
-      "item": "Set up outbound lead pipeline (Apollo + Instantly)",
-      "type": "agent",
-      "rationale": "Outbound is the primary revenue driver pre-referral. Apollo prospect list (100–200 contacts), Claude writes email copy, Instantly sends. Target 30 outreaches/day. Airtable as CRM.",
-      "effort": "M",
-      "impact": "critical",
-      "depends_on": ["Connect CTA buttons to live Calendly booking page"]
+      "item": "Replace website placeholder case studies with first real client outcomes",
+      "type": "content",
+      "rationale": "Social proof is the strongest conversion lever on the website. Cannot be completed until first client delivery is done — but should be executed immediately afterwards.",
+      "effort": "S",
+      "impact": "high",
+      "depends_on": ["Close first real client and deliver first paid build"]
     },
     {
       "priority": 6,
-      "item": "Install Claude Code + n8n-MCP and run test build",
-      "type": "integration",
-      "rationale": "The core operational advantage of the agency. Must be installed, connected, and proven before signing the first client. Enables 4–6× build capacity.",
-      "effort": "M",
-      "impact": "critical"
+      "item": "Activate lead qualifier chatbot on website",
+      "type": "agent",
+      "rationale": "Website chatbot qualifies inbound visitors 24/7 independently of the Typeform flow. Captures visitors who do not click the primary CTA. Claude API + 3-question prompt.",
+      "effort": "S",
+      "impact": "high"
     },
     {
       "priority": 7,
-      "item": "Close first 3 clients and deliver exceptional results",
-      "type": "process",
-      "rationale": "Generates first revenue, real case studies, and proof that the delivery model works end to end. Use personal network and early outreach pipeline.",
-      "effort": "L",
-      "impact": "critical",
-      "depends_on": ["Install Claude Code + n8n-MCP and run test build", "Set up outbound lead pipeline (Apollo + Instantly)"]
+      "item": "Build error handling and alerting workflow in n8n",
+      "type": "integration",
+      "rationale": "As live workflows accumulate for real clients, automated error detection and alerting becomes critical for retainer SLA delivery. Should be built before the second client onboards.",
+      "effort": "S",
+      "impact": "high",
+      "depends_on": ["Close first real client and deliver first paid build"]
     },
     {
       "priority": 8,
-      "item": "Replace website placeholder case studies with real client outcomes",
-      "type": "content",
-      "rationale": "Social proof is the strongest conversion lever on the website. Cannot be done until first deliveries are complete.",
-      "effort": "S",
-      "impact": "high",
-      "depends_on": ["Close first 3 clients and deliver exceptional results"]
+      "item": "Define and publish Agency Retainer scope limits and SLA",
+      "type": "process",
+      "rationale": "Prevents scope creep once the first client transitions to retainer. Scope definition must exist before the retainer agreement is signed.",
+      "effort": "XS",
+      "impact": "medium",
+      "depends_on": ["Close first real client and deliver first paid build"]
     },
     {
       "priority": 9,
@@ -757,7 +784,7 @@
       "rationale": "ClickUp shared links are sufficient until 5+ active clients. Build the portal only once delivery is proven and client volume justifies the investment.",
       "effort": "XL",
       "impact": "medium",
-      "depends_on": ["Close first 3 clients and deliver exceptional results"]
+      "depends_on": ["Close first real client and deliver first paid build"]
     }
   ]
 }
