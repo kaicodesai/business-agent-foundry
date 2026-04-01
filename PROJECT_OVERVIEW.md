@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 3.5 — Last updated: 2026-03-31 — Updated by: Haris + Claude
+> **Version:** 4.0 — Last updated: 2026-04-01 — Updated by: Haris + Claude
 
 ---
 
@@ -105,19 +105,15 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 ## In Progress ⏳
 - Default GitHub branch needs switching from `claude/setup-blueprint-agent-YnHBF` to `main` (Kai → Settings → Branches)
 - Haris needs n8n Cloud access (Kai to invite)
-
-## In Progress ⏳ (continued)
-- Airtable Clients table — 5 fields missing, 10 proposed fields to add (see docs/setup/airtable-structure.md)
-- ClickUp space structure — blueprint defined, manual setup + automation update pending (see docs/setup/clickup-structure.md)
+- ClickUp API key expired — regenerate in ClickUp Settings, update `ClickUp account` credential (hLrtpicYXOOXrUh0) in n8n
+- Typeform webhook is disabled (`enabled: false`) — Kai must activate [PA] Typeform Lead Qualification, then run Typeform webhook re-enable script (see Known Issues)
 
 ## Not Started ❌
-- [PA] Outreach Agent workflow (blocked on Instantly.ai)
-- [PA] Lead Qualification workflow
-- [PA] Proposal Drafting workflow
+- [PA] Outreach Agent workflow (blocked on Instantly.ai — needs sending account configured first)
 - Error handling workflow (deferred from QA)
-- Instantly.ai account + pa-instantly credential
-- Test record cleanup (Status Test Client, Meridian Consulting Group)
-- End-to-end pipeline test with real client
+- Instantly.ai: add sending email account in Instantly UI (Settings → Email Accounts → Connect)
+- Apollo.io paid plan — free plan blocks `/mixed_people/search`, Lead Gen is MOCK MODE
+- Stripe webhook integration — payment confirmation currently manual
 
 ---
 
@@ -412,6 +408,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | referral_sequence_sent | checkbox | referral-trigger-agent gate — prevents duplicate sequences — field ID: `fld5AJCnq1Qd9BYmy` |
 | lead_score_total | number (integer) | lead-qualification-agent — 0–8 Typeform score — field ID: `fld2rpfsXSFipmqi6` |
 | pre_call_brief | multilineText | lead-qualification-agent — Claude-written owner brief — field ID: `fldCd8333z772ATsU` |
+| n8n_api_key | singleLineText | Owner sets after client replies with key — required by workflow-builder-agent — field ID: `fldxqbU9PIVvurgPl` — added 2026-04-01 |
 
 ### Prospects Table — `tbluEsKoQ2p49ktVq`
 
@@ -430,14 +427,18 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 
 ### Automation Logs Table — `tblL7tDAh1KTLtwpt`
 
-| Field | Type |
-|-------|------|
-| workflow | singleLineText |
-| run_at | dateTime |
-| prospects_found | number |
-| prospects_added | number |
-| prospects_skipped | number |
-| status | singleLineText: completed / error |
+| Field | Field ID | Type | Written by |
+|-------|----------|------|------------|
+| workflow | fldlZa5Tls26z0HdB | singleLineText | All workflows |
+| run_at | fldvZbjYYNQjpDNVp | dateTime | All workflows |
+| prospects_found | fldtNuLWXYrNobNfb | number | Lead Gen |
+| prospects_added | fldYS3iKl8BmNT4fG | number | Lead Gen |
+| prospects_skipped | fldX6YXtuw2ymbDSn | number | Lead Gen |
+| status | fldzMmZjKBd48jc3Y | singleLineText | All workflows |
+| event | fldLJJlsN4YaEwM1h | singleLineText | Credential Follow-Up, ClickUp Sync — added 2026-04-01 |
+| client | fldAN5uJmukAgaJM4 | singleLineText | Credential Follow-Up, ClickUp Sync — added 2026-04-01 |
+| notes | fldszrHm2ZvTPlaMu | multilineText | Credential Follow-Up, ClickUp Sync, Referral — added 2026-04-01 |
+| timestamp | fldQq93QdesxwZszk | dateTime | ClickUp Sync — added 2026-04-01 |
 
 ### Test Records (delete before first real client)
 | Record | Table | ID |
@@ -813,6 +814,14 @@ business-agent-foundry/
 | Brightline + Meridian clickup_task_* fields are empty | Low — test records; won't affect real clients | ⏳ Expected: Onboarding was run before task ID fields existed. Real clients onboarded now will have all fields populated automatically. | — |
 | Status Update Agent + Referral Trigger Agent not API-executable | Low | Known — schedule-only workflows must be run from n8n editor | — |
 | Meridian Consulting `project_status=live` pollutes Status Update Agent emails | High | ✅ RESOLVED 2026-03-26 — Status Test Client set to test-complete; Meridian folder created (90148117751) with 4 lists; Airtable folder ID corrected | Haris |
+| ClickUp API key expired | Medium — ClickUp Sync will fail all executions | ⏳ Regenerate in ClickUp Settings → Apps → API Token; update credential `ClickUp account` (ID: hLrtpicYXOOXrUh0) in n8n | Kai |
+| Typeform webhook disabled | High — inbound leads cannot be scored | ⏳ Activate [PA] Typeform Lead Qualification in n8n first, then run re-enable: `PUT /forms/RSsWJkcf/webhooks/pa-n8n-intake` with `enabled:true` | Kai |
+| automation_logs missing 4 fields | Medium — newer workflows log to fields that didn't exist (silent fail) | ✅ RESOLVED 2026-04-01 — added event, client, notes, timestamp fields via Airtable API | Haris |
+| Test Company client (recv2Tj14xMqP0alp) at proposal_sent | Low — pollutes Credential Follow-Up filter | ✅ RESOLVED 2026-04-01 — set to closed.no_deal | Haris |
+| Alice/Bob/Carol prospects at outreach_status=pending | Low — fake .invalid addresses would be queued by Outreach Agent | ✅ RESOLVED 2026-04-01 — set to test-complete | Haris |
+| n8n_api_key field missing from Clients table | Medium — workflow-builder-agent needs it to connect to client n8n | ✅ RESOLVED 2026-04-01 — added field (ID: fldxqbU9PIVvurgPl) | Haris |
+| Instantly.ai has 0 sending accounts | Blocks Outreach Agent entirely | ⏳ Add sending email account in Instantly UI: Settings → Email Accounts → Connect | Kai |
+| Apollo.io free plan blocks lead search | Lead Gen is mock-only | ⏳ Upgrade to paid plan (~$49/mo) when ready to scale outreach | Kai decision |
 | Welcome email says "I'll send exact instructions shortly" — credential follow-up is NOT automated | High | ✅ RESOLVED 2026-03-26 — tool-specific step-by-step instructions now inline in welcome email; subject updated | Haris |
 | Status Update Agent could mix tasks from clients with wrong/null clickup_folder_id | High | ✅ RESOLVED 2026-03-26 — Split Client Records filters out clients with no folder ID; Get All Tasks endpoint changed to folder-specific URL | Haris |
 | Client n8n account model not decided | High — blocks Workflow Builder Agent | ✅ RESOLVED 2026-03-26 — Client creates and owns their own n8n account. Client shares n8n API key + instance URL as part of credential collection (alongside other tools). Welcome email needs n8n setup instructions added. Workflow Builder prereq: n8n API key in Airtable before build starts. | Kai |
@@ -854,10 +863,12 @@ business-agent-foundry/
 - [x] ✅ **Haris:** Add 28 new Airtable fields (21 clickup_task_* + 7 supporting) — 2026-03-27
 - [x] ✅ **Haris:** Update workflow-builder-agent.md + qa-agent.md with Airtable status updates + ClickUp task rules — 2026-03-27
 - [x] ✅ **Haris:** Add 11 new project_status values via Airtable Records API typecast:true — 2026-03-31
-- [ ] **KAI:** Activate [PA] ClickUp Sync (ID: uiTwYIUk6nIFwLtX) — all project_status values now exist
+- [ ] **KAI:** Activate [PA] ClickUp Sync (ID: uiTwYIUk6nIFwLtX) — ⚠️ first regenerate ClickUp API key + update credential hLrtpicYXOOXrUh0
 - [ ] **KAI:** Activate [PA] Referral Trigger Agent (ID: ka6GesSfWVo2FZtU) — now uses pa-smtp directly (no Instantly dependency)
 - [ ] **KAI:** Activate [PA] Reporting Agent (ID: scj61gBYYWpQydMC) — after first retainer client is live
 - [ ] **KAI:** Activate [PA] Credential Follow-Up (ID: uTnQAq5VlmsHYih4) — daily stall alert, no dependencies
+- [ ] **KAI:** Activate [PA] Typeform Lead Qualification (ID: kXxN7O77ongTMwKG) — then run Typeform webhook re-enable via API
+- [ ] **KAI:** Regenerate ClickUp API key in ClickUp Settings and update n8n credential (ID: hLrtpicYXOOXrUh0)
 
 ## Short-term
 - [x] ✅ **Haris:** Build [PA] Credential Follow-Up (11 nodes, ID: uTnQAq5VlmsHYih4) — daily stall checker, Kai alert email, overdue_flagged_at update, Airtable log — 2026-03-31
@@ -1087,6 +1098,55 @@ business-agent-foundry/
 
 ### Files changed this session
 - `PROJECT_OVERVIEW.md` — version 2.3, Referral Trigger added to registry, TODO/Known Issues updated, Session 7 handoff
+
+---
+
+## Session Handoff — 2026-04-01 (Session 13 — Full System Audit)
+**Worked by:** Haris + Claude (Claude Code VSCode)
+
+### What was completed
+- **Full live system audit** — queried n8n, Airtable, Instantly, Typeform APIs to verify every workflow, credential, and data layer
+- **automation_logs Airtable** — added 4 missing fields: event (`fldLJJlsN4YaEwM1h`), client (`fldAN5uJmukAgaJM4`), notes (`fldszrHm2ZvTPlaMu`), timestamp (`fldQq93QdesxwZszk`) — newer workflows (Credential Follow-Up, ClickUp Sync) were silently failing to log properly
+- **Clients table** — added `n8n_api_key` field (`fldxqbU9PIVvurgPl`) — required for workflow-builder-agent to connect to client n8n instances
+- **Test data cleaned** — Alice Test, Bob Sample, Carol Demo prospects set to `test-complete`; "Test Company" client set to `closed.no_deal`
+- **PROJECT_OVERVIEW.md v4.0** — Known Issues, TODO, Airtable schema, workflow status all updated from audit findings
+
+### Key audit findings (live API)
+| Item | Finding |
+|------|---------|
+| n8n workflows | 8 built; 3 active (Onboarding, Lead Gen, Status Update); 5 inactive awaiting Kai activation |
+| [PA] Outreach Agent | NOT BUILT — Instantly has 0 sending accounts |
+| Error handling workflow | NOT BUILT |
+| ClickUp API key | Expired (OAUTH_025) — all ClickUp Sync executions will fail until regenerated |
+| Typeform webhook | Disabled — workflow inactive caused Typeform to auto-disable it |
+| automation_logs | Was missing 4 fields — fixed this session |
+| Instantly.ai | 0 sending accounts, 0 campaigns — unconfigured |
+| Apollo.io | Free plan — Lead Gen is mock (3 synthetic contacts only) |
+
+### Blockers for next session
+- Kai must activate 4 workflows + regenerate ClickUp key before any of them can run
+- Instantly sending account needed before Outreach Agent can be built
+- Typeform webhook re-enable must happen after Typeform Lead Qual workflow is activated
+
+### Next person should start with
+1. `git pull origin main` then read PROJECT_OVERVIEW.md
+2. **KAI ACTIONS (in order):**
+   a. Regenerate ClickUp API key → update n8n credential hLrtpicYXOOXrUh0
+   b. Activate [PA] Typeform Lead Qualification (kXxN7O77ongTMwKG)
+   c. Re-enable Typeform webhook: `PUT /forms/RSsWJkcf/webhooks/pa-n8n-intake` with `{"url":"https://kaiashley.app.n8n.cloud/webhook/typeform-intake","enabled":true}` + Typeform Bearer token
+   d. Activate [PA] Credential Follow-Up (uTnQAq5VlmsHYih4)
+   e. Activate [PA] Referral Trigger Agent (ka6GesSfWVo2FZtU)
+   f. Activate [PA] ClickUp Sync (uiTwYIUk6nIFwLtX) — after ClickUp key is updated
+3. **KAI:** Set up Instantly sending account (Settings → Email Accounts → Connect in Instantly UI)
+4. **Haris (after Instantly account):** Build [PA] Outreach Agent
+
+### Files changed this session
+- `PROJECT_OVERVIEW.md` — v4.0, audit findings, new Known Issues, Airtable schema updated
+- **Airtable changes (via API):**
+  - automation_logs: 4 fields added (event, client, notes, timestamp)
+  - Clients: 1 field added (n8n_api_key)
+  - Prospects: Alice, Bob, Carol set to test-complete
+  - Clients: Test Company set to closed.no_deal
 
 ---
 
