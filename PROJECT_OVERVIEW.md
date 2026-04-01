@@ -80,7 +80,7 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - **[PA] Onboarding Automation** (7RsRJIqBHFpWZoWM) — 24 nodes, tested, dual emails working
 - **[PA] Lead Generation** (YO3f5CL9bYbLTBgw) — 13 nodes, tested, dedup working
 - **[PA] Status Update Agent** (94DpGwRPWGRPqCVU) — 15 nodes, tested, branded emails working
-- **[PA] Referral Trigger Agent** (ka6GesSfWVo2FZtU) — 13 nodes, built, E2E tested PASS 2026-03-27, Instantly stubbed (logs INSTANTLY_NOT_CONFIGURED)
+- **[PA] Referral Trigger Agent** (ka6GesSfWVo2FZtU) — 15 nodes, built, E2E tested PASS 2026-03-27, updated 2026-04-01 — now uses pa-smtp directly (email_1 to client, email_2 draft + alert to Kai); Calendly URL live
 - **[PA] ClickUp Sync** (uiTwYIUk6nIFwLtX) — 18 nodes, built 2026-03-27, reads Airtable project_status and syncs ClickUp task statuses every 2 hours, inactive
 - **[PA] Reporting Agent** (scj61gBYYWpQydMC) — 16 nodes, built (date unknown — confirmed present 2026-03-31), monthly retainer reports via Claude → email → Airtable update, inactive, never run
 - **[PA] Typeform Lead Qualification** (kXxN7O77ongTMwKG) — 13 nodes, built 2026-03-31, fires on Typeform submission → extracts answers → dedup → write Airtable Prospects → score via Claude → email Kai if Grade A/B, inactive, Typeform webhook registered
@@ -454,7 +454,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | [PA] Onboarding Automation | `7RsRJIqBHFpWZoWM` | 51 | POST /payment-confirmed webhook | 🟢 Active — last run 2026-03-25 (success) |
 | [PA] Lead Generation | `YO3f5CL9bYbLTBgw` | 13 | Daily 06:45 + manual | 🟢 Active — running daily (last run 2026-03-31 success) |
 | [PA] Status Update Agent | `94DpGwRPWGRPqCVU` | 20 | Monday 09:00 + manual | 🟢 Active — last run 2026-03-30 (success) |
-| [PA] Referral Trigger Agent | `ka6GesSfWVo2FZtU` | 13 | Daily 08:00 + manual | 🔴 Inactive — E2E tested PASS 2026-03-27; needs Instantly.ai + Kai activates |
+| [PA] Referral Trigger Agent | `ka6GesSfWVo2FZtU` | 15 | Daily 08:00 + manual | 🔴 Inactive — E2E tested PASS 2026-03-27; updated 2026-04-01 to use pa-smtp (email_1 sent directly, email_2 draft forwarded to Kai) — Kai activates |
 | [PA] ClickUp Sync | `uiTwYIUk6nIFwLtX` | 18 | Every 2 hours + manual | 🔴 Inactive — built 2026-03-27, never run — Kai activates |
 | [PA] Reporting Agent | `scj61gBYYWpQydMC` | 16 | Monthly 1st + manual | 🔴 Inactive — built, never run, not documented until 2026-03-31 audit |
 | [PA] Typeform Lead Qualification | `kXxN7O77ongTMwKG` | 13 | Typeform webhook (POST /typeform-intake) | 🔴 Inactive — built 2026-03-31, webhook registered with Typeform — Kai activates |
@@ -736,7 +736,7 @@ business-agent-foundry/
 10. LIVE
     Status Update Agent → every Monday 09:00 → client email ✅ LIVE
     Reporting Agent → monthly → client report ❌ NOT BUILT
-    Referral Trigger → day 30 → Instantly.ai sequence ❌ NOT BUILT
+    Referral Trigger → day 30 → pa-smtp email_1 to client + email_2 draft to Kai ✅ BUILT (inactive)
 ```
 
 ---
@@ -805,7 +805,7 @@ business-agent-foundry/
 | clickup_project_id stores list ID instead of folder ID | Medium | ✅ RESOLVED 2026-03-22 — renamed to clickup_folder_id, stores folder ID | Haris |
 | Status Update Agent reads single list only | Medium | ✅ RESOLVED 2026-03-22 — now reads all tasks from folder | Haris |
 | n8n access for Haris | Blocker for collaboration | ⏳ Cloud up — Kai to invite Haris | Kai |
-| Calendly URL hardcoded in Referral Trigger Agent | Low | ⏳ Update before first test — node: Build Claude Payload, workflow: ka6GesSfWVo2FZtU | Kai |
+| Calendly URL hardcoded in Referral Trigger Agent | Low | ✅ RESOLVED 2026-04-01 — updated to https://calendly.com/kai-phoenixautomation/free-business-assessment | Haris |
 | `automations_delivered` field missing from Airtable | Low | ⏳ Referral Trigger uses `scope_of_work` as fallback — add dedicated field for cleaner output | Kai decision |
 | `onboarding_started_at` not written by Onboarding Automation | Low | ✅ RESOLVED 2026-03-26 — added to Node 21 (Update Airtable Record) jsonBody | Haris |
 | Brightline test records still live in Airtable (Clients + Prospects) | Low | ⏳ Clean up after Step 6 confirmed — see e2e-test-report.md | Kai/Haris |
@@ -837,7 +837,7 @@ business-agent-foundry/
 - [x] ✅ **Haris:** Deleted 3 blank junk Airtable rows; fixed Status Test Client slug — 2026-03-27
 - [ ] **KAI/Haris:** Clean up Brightline test records after Step 6 confirmed (see e2e-test-report.md)
 - [x] ✅ **KAI DECISION:** Client n8n model decided — **Option A: each client has their own n8n account** (2026-03-26)
-- [ ] **KAI:** Update Calendly URL in Referral Trigger Agent (node: Build Claude Payload, workflow: `ka6GesSfWVo2FZtU`)
+- [x] ✅ **Haris:** Update Calendly URL in Referral Trigger Agent (node: Build Claude Payload, workflow: `ka6GesSfWVo2FZtU`) — 2026-04-01
 - [ ] **KAI:** Invite Haris to n8n Cloud
 - [x] ✅ Add 5 missing fields to Airtable Clients table (2026-03-20)
 - [x] ✅ Set up ClickUp space structure (2026-03-20)
@@ -855,7 +855,7 @@ business-agent-foundry/
 - [x] ✅ **Haris:** Update workflow-builder-agent.md + qa-agent.md with Airtable status updates + ClickUp task rules — 2026-03-27
 - [x] ✅ **Haris:** Add 11 new project_status values via Airtable Records API typecast:true — 2026-03-31
 - [ ] **KAI:** Activate [PA] ClickUp Sync (ID: uiTwYIUk6nIFwLtX) — all project_status values now exist
-- [ ] **KAI:** Activate [PA] Referral Trigger Agent (ID: ka6GesSfWVo2FZtU) — after Instantly.ai set up
+- [ ] **KAI:** Activate [PA] Referral Trigger Agent (ID: ka6GesSfWVo2FZtU) — now uses pa-smtp directly (no Instantly dependency)
 - [ ] **KAI:** Activate [PA] Reporting Agent (ID: scj61gBYYWpQydMC) — after first retainer client is live
 - [ ] **KAI:** Activate [PA] Credential Follow-Up (ID: uTnQAq5VlmsHYih4) — daily stall alert, no dependencies
 
@@ -863,7 +863,9 @@ business-agent-foundry/
 - [x] ✅ **Haris:** Build [PA] Credential Follow-Up (11 nodes, ID: uTnQAq5VlmsHYih4) — daily stall checker, Kai alert email, overdue_flagged_at update, Airtable log — 2026-03-31
 - [x] ✅ **Haris:** Add n8n setup instructions to welcome email — Node 49 of 7RsRJIqBHFpWZoWM; subject updated to "action required before we can start"; n8n signup + API key section inserted before "Your next steps" — 2026-03-31
 - [ ] Update Workflow Builder Agent scope — prerequisite: client n8n API key + instance URL present in Airtable `n8n_workspace_id` before agent runs (Haris)
-- [ ] Set up Instantly.ai + pa-instantly credential (Kai)
+- [x] ✅ Calendly URL updated in Referral Trigger Agent (2026-04-01)
+- [x] ✅ Referral Trigger Agent updated to use pa-smtp directly — Instantly.ai not required for referrals (2026-04-01)
+- [ ] Set up Instantly.ai + pa-instantly credential (Kai — needed for Outreach Agent only, not referrals)
 - [ ] Build [PA] Outreach Agent (Haris — after Instantly.ai)
 - [ ] Build error handling workflow (Haris)
 - [ ] Full pipeline test with real payment webhook (Kai)
