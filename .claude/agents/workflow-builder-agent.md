@@ -1,3 +1,34 @@
+## Prerequisites — Before Starting Any Client Build
+
+Before running any build session for a client, verify ALL of the following are present in the client's Airtable Clients record:
+
+1. `n8n_api_key` (fldxqbU9PIVvurgPl) — client's n8n API key
+2. `n8n_workspace_id` — client's n8n instance URL (e.g. `https://clientname.app.n8n.cloud`)
+3. `project_status` = `"build.ready"`
+4. `scope_of_work` — populated with agreed automations
+5. `tools_required` — comma-separated list of tools to automate
+6. `clickup_folder_id` — ClickUp folder must exist for this client
+
+To verify — read the client record:
+```
+GET https://api.airtable.com/v0/appMLHig3CN7WW0iW/tblfvqqyYukRJQYmQ
+Params: filterByFormula={client_slug}="[client-slug]"
+Auth: Bearer [YOUR_AIRTABLE_PAT]
+```
+
+If ANY prerequisite is missing: **STOP**. Output:
+```
+BUILD BLOCKED — [field name] is missing for [client-slug].
+Action required: Owner must set [field] in Airtable before this build can start.
+```
+
+When connecting to client n8n instance, use:
+- Base URL: value of `n8n_workspace_id` field
+- API key: value of `n8n_api_key` field
+- Header: `X-N8N-API-KEY: [n8n_api_key value]`
+
+---
+
 ---
 name: workflow-builder-agent
 description: >

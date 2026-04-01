@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 4.0 — Last updated: 2026-04-01 — Updated by: Haris + Claude
+> **Version:** 4.1 — Last updated: 2026-04-01 — Updated by: Haris + Claude
 
 ---
 
@@ -228,7 +228,7 @@ claude
 | `pa-smtp` | SMTP | Gmail, port 465, SSL | ✅ Active |
 | `pa-apollo-io` | HTTP Header Auth | `x-api-key` | ✅ Active |
 | `pa-anthropic` | HTTP Header Auth | `x-api-key` | ✅ Active |
-| `pa-instantly` | HTTP Header Auth | `Authorization: Bearer` | ❌ Not set up |
+| `pa-instantly` | HTTP Header Auth | `Authorization: Bearer` | ✅ Active — ID: xoSojCyLffw4nNe7 |
 
 ## Email Addresses
 | Purpose | Address |
@@ -460,6 +460,8 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | [PA] Reporting Agent | `scj61gBYYWpQydMC` | 16 | Monthly 1st + manual | 🔴 Inactive — built, never run, not documented until 2026-03-31 audit |
 | [PA] Typeform Lead Qualification | `kXxN7O77ongTMwKG` | 13 | Typeform webhook (POST /typeform-intake) | 🔴 Inactive — built 2026-03-31, webhook registered with Typeform — Kai activates |
 | [PA] Credential Follow-Up | `uTnQAq5VlmsHYih4` | 11 | Daily 10:00 + manual | 🔴 Inactive — built 2026-03-31, alerts Kai when client stalls on credential submission — Kai activates |
+| [PA] Outreach Agent | `Mib6RUtJ2IOaUZ4s` | 12 | Daily 07:00 + manual | 🔴 Inactive — built 2026-04-01; ⚠️ campaign_id must be set before activating (Kai creates campaign in Instantly UI, updates node "Add Lead to Instantly") |
+| [PA] Error Handler | `JByknkdAgxRmDKp3` | 4 | n8n Error Trigger | 🔴 Inactive — built 2026-04-01; connected to all 9 PA workflows as errorWorkflow — Kai activates |
 
 ## Workflow Node Summaries
 
@@ -633,10 +635,34 @@ Typeform webhook: tag=pa-n8n-intake, secret=pa-typeform-2026, enabled=true
     → loops back to Node 7 (Loop Over Clients)
 ```
 
-**Workflows still to build:**
-| Workflow | Scope file | Blocker |
-|---------|-----------|---------|
-| [PA] Outreach Agent | `docs/workflows/build-scopes/outreach-agent-scope.md` | Needs Instantly.ai account |
+### [PA] Outreach Agent (Mib6RUtJ2IOaUZ4s) — 12 nodes
+```
+1.  Schedule Trigger (daily 07:00)
+2.  Manual Trigger
+3.  Fetch Pending Prospects (HTTP GET → Airtable Prospects, filter: outreach_status="pending", maxRecords=50, pa-airtable)
+4.  IF Has Prospects (IF — records.length > 0)
+5.  Exit — No Pending Prospects (NoOp — FALSE branch)
+6.  Split Prospect Records (Code — flattens records array, extracts record_id + fields)
+7.  Loop Over Prospects (splitInBatches, batch=1)
+8.  Generate Email Sequence via Claude (HTTP POST → Anthropic API, pa-anthropic — generates email_1/2/3 as JSON)
+9.  Parse Email Sequence (Code — extracts email_1/2/3 from Claude JSON response, merges with prospect data)
+10. Add Lead to Instantly (HTTP POST → /api/v1/lead/add, pa-instantly — ⚠️ campaign_id="CONFIGURE_CAMPAIGN_ID_IN_INSTANTLY", continueOnFail)
+11. Update Airtable Prospect (HTTP PATCH → outreach_status=in_sequence + outreach_started_at + instantly_campaign_id, pa-airtable, continueOnFail)
+12. Log Run Summary (HTTP POST → automation_logs, event=outreach_batch_sent, pa-airtable, continueOnFail)
+    → loops back to Node 7 (Loop Over Prospects)
+
+⚠️ Before activating: Kai must create campaign in Instantly UI and update campaign_id in Node 10
+```
+
+### [PA] Error Handler (JByknkdAgxRmDKp3) — 4 nodes
+```
+1.  Error Trigger (n8n Error Trigger — fires when any connected workflow fails)
+2.  Format Error (Code — extracts workflow_name, workflow_id, node_name, error_message, execution_id, timestamp)
+3.  Log to Airtable (HTTP POST → automation_logs, event=workflow_error, pa-airtable, continueOnFail)
+4.  Alert Kai (Send Email → lightofkai777@gmail.com, pa-smtp — subject: "🚨 Workflow error — [workflow name]", body includes all error details + n8n execution URL)
+
+Connected as errorWorkflow for: all 9 PA workflows
+```
 
 ---
 
@@ -709,11 +735,11 @@ business-agent-foundry/
 1. LEAD GENERATION (daily 06:45) ✅ LIVE
    Apollo.io → ICP filter → dedup → write Prospects (outreach_status: pending) → log
 
-2. OUTREACH (daily 07:00) ❌ NOT BUILT
-   Read pending prospects → Claude generates email → Instantly.ai queue → update status
+2. OUTREACH (daily 07:00) ✅ BUILT (inactive — Kai activates after Instantly campaign created)
+   Read pending prospects → Claude generates 3-email sequence → Instantly.ai queue → update Airtable status
 
-3. LEAD QUALIFICATION (inbound) ❌ NOT BUILT
-   Typeform/chatbot → score → grade A/B = Calendly → write to Airtable
+3. LEAD QUALIFICATION (inbound) ✅ BUILT (inactive — Kai activates)
+   Typeform webhook → score via Claude → grade A/B = email Kai → write to Airtable Prospects
 
 4. ASSESSMENT + PROCESS MAPPING (owner)
    Owner call → process-mapping-agent → docs/clients/[slug]/process-map.md
@@ -814,8 +840,10 @@ business-agent-foundry/
 | Brightline + Meridian clickup_task_* fields are empty | Low — test records; won't affect real clients | ⏳ Expected: Onboarding was run before task ID fields existed. Real clients onboarded now will have all fields populated automatically. | — |
 | Status Update Agent + Referral Trigger Agent not API-executable | Low | Known — schedule-only workflows must be run from n8n editor | — |
 | Meridian Consulting `project_status=live` pollutes Status Update Agent emails | High | ✅ RESOLVED 2026-03-26 — Status Test Client set to test-complete; Meridian folder created (90148117751) with 4 lists; Airtable folder ID corrected | Haris |
-| ClickUp API key expired | Medium — ClickUp Sync will fail all executions | ⏳ Regenerate in ClickUp Settings → Apps → API Token; update credential `ClickUp account` (ID: hLrtpicYXOOXrUh0) in n8n | Kai |
-| Typeform webhook disabled | High — inbound leads cannot be scored | ⏳ Activate [PA] Typeform Lead Qualification in n8n first, then run re-enable: `PUT /forms/RSsWJkcf/webhooks/pa-n8n-intake` with `enabled:true` | Kai |
+| ClickUp API key expired | Medium — ClickUp Sync will fail all executions | ✅ RESOLVED 2026-04-01 — new key pk_198267967_... applied to credential hLrtpicYXOOXrUh0 | Haris |
+| Typeform webhook disabled | High — inbound leads cannot be scored | ✅ RESOLVED 2026-04-01 — re-enabled via Typeform API; enabled: true confirmed | Haris |
+| Typeform thank-you screen placeholder Calendly URL | Medium — leads can't book after form | ✅ RESOLVED 2026-04-01 — updated to https://calendly.com/kai-phoenixautomation/free-business-assessment | Haris |
+| Instantly campaign_id not configured | Medium — Outreach Agent cannot add leads without it | ⏳ Kai must create a campaign in Instantly UI, copy the campaign ID, open [PA] Outreach Agent in n8n → node "Add Lead to Instantly" → update campaign_id value | Kai |
 | automation_logs missing 4 fields | Medium — newer workflows log to fields that didn't exist (silent fail) | ✅ RESOLVED 2026-04-01 — added event, client, notes, timestamp fields via Airtable API | Haris |
 | Test Company client (recv2Tj14xMqP0alp) at proposal_sent | Low — pollutes Credential Follow-Up filter | ✅ RESOLVED 2026-04-01 — set to closed.no_deal | Haris |
 | Alice/Bob/Carol prospects at outreach_status=pending | Low — fake .invalid addresses would be queued by Outreach Agent | ✅ RESOLVED 2026-04-01 — set to test-complete | Haris |
@@ -863,12 +891,20 @@ business-agent-foundry/
 - [x] ✅ **Haris:** Add 28 new Airtable fields (21 clickup_task_* + 7 supporting) — 2026-03-27
 - [x] ✅ **Haris:** Update workflow-builder-agent.md + qa-agent.md with Airtable status updates + ClickUp task rules — 2026-03-27
 - [x] ✅ **Haris:** Add 11 new project_status values via Airtable Records API typecast:true — 2026-03-31
-- [ ] **KAI:** Activate [PA] ClickUp Sync (ID: uiTwYIUk6nIFwLtX) — ⚠️ first regenerate ClickUp API key + update credential hLrtpicYXOOXrUh0
-- [ ] **KAI:** Activate [PA] Referral Trigger Agent (ID: ka6GesSfWVo2FZtU) — now uses pa-smtp directly (no Instantly dependency)
-- [ ] **KAI:** Activate [PA] Reporting Agent (ID: scj61gBYYWpQydMC) — after first retainer client is live
+- [x] ✅ **Haris:** Regenerate ClickUp API key in n8n credential (hLrtpicYXOOXrUh0) — 2026-04-01
+- [x] ✅ **Haris:** Re-enable Typeform webhook pa-n8n-intake — 2026-04-01
+- [x] ✅ **Haris:** Update Typeform thank-you Calendly URL — 2026-04-01
+- [x] ✅ **Haris:** Create pa-instantly credential in n8n (ID: xoSojCyLffw4nNe7) — 2026-04-01
+- [x] ✅ **Haris:** Build [PA] Outreach Agent (ID: Mib6RUtJ2IOaUZ4s, 12 nodes) — 2026-04-01
+- [x] ✅ **Haris:** Build [PA] Error Handler (ID: JByknkdAgxRmDKp3, 4 nodes) + connected to all 9 PA workflows — 2026-04-01
+- [ ] **KAI:** Create campaign in Instantly UI → copy campaign ID → update "Add Lead to Instantly" node in [PA] Outreach Agent
+- [ ] **KAI:** Activate [PA] Error Handler (ID: JByknkdAgxRmDKp3) — no dependencies, safe to activate immediately
+- [ ] **KAI:** Activate [PA] Typeform Lead Qualification (ID: kXxN7O77ongTMwKG)
 - [ ] **KAI:** Activate [PA] Credential Follow-Up (ID: uTnQAq5VlmsHYih4) — daily stall alert, no dependencies
-- [ ] **KAI:** Activate [PA] Typeform Lead Qualification (ID: kXxN7O77ongTMwKG) — then run Typeform webhook re-enable via API
-- [ ] **KAI:** Regenerate ClickUp API key in ClickUp Settings and update n8n credential (ID: hLrtpicYXOOXrUh0)
+- [ ] **KAI:** Activate [PA] Referral Trigger Agent (ID: ka6GesSfWVo2FZtU) — now uses pa-smtp directly (no Instantly dependency)
+- [ ] **KAI:** Activate [PA] ClickUp Sync (ID: uiTwYIUk6nIFwLtX) — ClickUp key already updated
+- [ ] **KAI:** Activate [PA] Outreach Agent (ID: Mib6RUtJ2IOaUZ4s) — after Instantly campaign created + email warmup complete
+- [ ] **KAI:** Activate [PA] Reporting Agent (ID: scj61gBYYWpQydMC) — after first retainer client is live
 
 ## Short-term
 - [x] ✅ **Haris:** Build [PA] Credential Follow-Up (11 nodes, ID: uTnQAq5VlmsHYih4) — daily stall checker, Kai alert email, overdue_flagged_at update, Airtable log — 2026-03-31
@@ -1098,6 +1134,60 @@ business-agent-foundry/
 
 ### Files changed this session
 - `PROJECT_OVERVIEW.md` — version 2.3, Referral Trigger added to registry, TODO/Known Issues updated, Session 7 handoff
+
+---
+
+## Session Handoff — 2026-04-01 (Session 14 — Launch Readiness)
+**Worked by:** Haris + Claude (Claude Code VSCode)
+
+### What was completed
+1. **ClickUp API key updated** — credential hLrtpicYXOOXrUh0 updated with new key; ClickUp API confirmed live (team 90141018999)
+2. **Typeform webhook re-enabled** — pa-n8n-intake set to enabled: true via API
+3. **Typeform Calendly URL fixed** — thank-you screen redirect updated from placeholder to real Calendly URL
+4. **pa-instantly credential created** — ID: xoSojCyLffw4nNe7 (httpHeaderAuth, Bearer token)
+5. **[PA] Outreach Agent built** — ID: Mib6RUtJ2IOaUZ4s, 12 nodes; daily 07:00 + manual; generates 3-email sequence per prospect via Claude → queues in Instantly → updates Airtable
+6. **[PA] Error Handler built** — ID: JByknkdAgxRmDKp3, 4 nodes; Error Trigger → Format → Log Airtable → Email Kai
+7. **Error handler connected to all 9 PA workflows** — errorWorkflow: JByknkdAgxRmDKp3 confirmed on every workflow
+8. **automation_logs fixes** — ClickUp Sync log node converted from Code → HTTP POST (now actually writes to Airtable); Referral Trigger log node updated with event/client/timestamp fields
+9. **workflow-builder-agent.md prerequisites** — added build.ready gate + n8n_api_key check at top of agent file; committed
+10. **Full pre-launch verification** — all 15 checks run; all pass except Instantly campaign (expected — Kai creates it)
+
+### Instantly.ai note
+Email account `kai@phoenixautomation.ai` is connected (warmup_status: 0 = warming up). No campaigns exist yet. Before activating [PA] Outreach Agent, Kai must:
+1. Create a campaign in Instantly UI (app.instantly.ai → Campaigns → New)
+2. Copy the campaign ID from the campaign URL
+3. Open [PA] Outreach Agent in n8n → node "Add Lead to Instantly" → update `campaign_id` value
+
+### Blockers for next session
+- Kai must activate 6 workflows (in order: Error Handler → Typeform Lead Qual → Credential Follow-Up → Referral Trigger → ClickUp Sync → Outreach Agent after campaign setup)
+- Stripe webhook connection (for automated onboarding trigger on payment)
+- First real client needed for real data validation
+
+### Next person should start with
+1. `git pull origin main` then read PROJECT_OVERVIEW.md
+2. **KAI ACTIVATION ORDER (in n8n Cloud):**
+   a. [PA] Error Handler (JByknkdAgxRmDKp3) — safe to activate immediately
+   b. [PA] Typeform Lead Qualification (kXxN7O77ongTMwKG) — starts scoring inbound leads
+   c. [PA] Credential Follow-Up (uTnQAq5VlmsHYih4) — starts daily alerts for stalled onboarding
+   d. [PA] Referral Trigger Agent (ka6GesSfWVo2FZtU) — starts 30-day post-launch referral
+   e. [PA] ClickUp Sync (uiTwYIUk6nIFwLtX) — syncs task statuses every 2 hours
+   f. [PA] Outreach Agent (Mib6RUtJ2IOaUZ4s) — after creating Instantly campaign + updating campaign_id
+3. **KAI:** Create Instantly campaign → update campaign_id in Outreach Agent node "Add Lead to Instantly"
+4. **KAI:** Connect Stripe webhook: Dashboard → Webhooks → Add endpoint → URL: https://kaiashley.app.n8n.cloud/webhook/payment-confirmed → Event: payment_intent.succeeded
+
+### Files changed this session
+- `PROJECT_OVERVIEW.md` — v4.1, full update: new workflows, credentials, Known Issues, TODO
+- `workflow-builder-agent.md` — prerequisites section added (committed separately)
+- **n8n changes (via API):**
+  - ClickUp credential hLrtpicYXOOXrUh0: key updated
+  - Typeform webhook pa-n8n-intake: enabled
+  - Typeform form RSsWJkcf: thank-you screen Calendly URL updated
+  - pa-instantly credential created (xoSojCyLffw4nNe7)
+  - [PA] Outreach Agent created (Mib6RUtJ2IOaUZ4s)
+  - [PA] Error Handler created (JByknkdAgxRmDKp3)
+  - All 9 PA workflows: errorWorkflow = JByknkdAgxRmDKp3 set
+  - [PA] ClickUp Sync: Log Sync Summary converted to Airtable HTTP POST
+  - [PA] Referral Trigger Agent: log node updated with event/client/timestamp
 
 ---
 
