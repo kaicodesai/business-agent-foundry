@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 4.1 — Last updated: 2026-04-01 — Updated by: Haris + Claude
+> **Version:** 4.2 — Last updated: 2026-04-03 — Updated by: Haris + Claude
 
 ---
 
@@ -85,6 +85,10 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - **[PA] Reporting Agent** (scj61gBYYWpQydMC) — 16 nodes, built (date unknown — confirmed present 2026-03-31), monthly retainer reports via Claude → email → Airtable update, inactive, never run
 - **[PA] Typeform Lead Qualification** (kXxN7O77ongTMwKG) — 13 nodes, built 2026-03-31, fires on Typeform submission → extracts answers → dedup → write Airtable Prospects → score via Claude → email Kai if Grade A/B, inactive, Typeform webhook registered
 - **[PA] Credential Follow-Up** (uTnQAq5VlmsHYih4) — 11 nodes, built 2026-03-31, daily 10:00 + manual → fetches onboarding.in_progress clients stalled >48h → alerts Kai by email → updates overdue_flagged_at → logs to automation_logs, inactive
+- **[PA] Credential Detector** (hbtSbm2pzrHX1QTn) — 10 nodes, built 2026-04-03, every 2h + manual → fetches onboarding.in_progress clients whose n8n_api_key is now populated → auto-sets project_status=build.ready → alerts Kai to start workflow build → logs to automation_logs, inactive
+- **[PA] Website Chatbot** (EPMCxdqKOuwc6hzB) — 15 nodes, built 2026-04-03, webhook POST /website-chatbot → stateless 3-question chatbot → Claude scores lead → hot: writes Airtable Prospect + returns Calendly link; cold: returns nurture message; borderline: asks clarifying question, inactive
+- **Mock client created** — docs/clients/sarahs-wellness-studio/ (process-map.md + scope-of-work.md) — Typeform program admission use case, ready for workflow-builder-agent test run
+- **Chat embed widget** — docs/website-chatbot-embed.html — copy/paste snippet for Framer/Webflow/any website; calls /webhook/website-chatbot
 - **[PA] Onboarding Automation Node 49** updated 2026-03-31 — subject changed to "Welcome to Phoenix Automation — action required before we can start"; n8n account setup section inserted before "Your next steps" (step-by-step: sign up at n8n.io, create API key named "Phoenix Automation", reply with instance URL + key)
 - **[PA] Onboarding Automation** updated to 51 nodes — 23 task seeding nodes (all 4 lists) + Extract All Task IDs + 3 mark-complete nodes + writes all clickup_task_* IDs to Airtable — 2026-03-27
 - **[PA] Status Update Agent** updated to 20 nodes — 5 new ClickUp sync nodes (determine task + PUT complete + POST comment) — 2026-03-27
@@ -461,7 +465,9 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | [PA] Typeform Lead Qualification | `kXxN7O77ongTMwKG` | 13 | Typeform webhook (POST /typeform-intake) | 🔴 Inactive — built 2026-03-31, webhook registered with Typeform — Kai activates |
 | [PA] Credential Follow-Up | `uTnQAq5VlmsHYih4` | 11 | Daily 10:00 + manual | 🔴 Inactive — built 2026-03-31, alerts Kai when client stalls on credential submission — Kai activates |
 | [PA] Outreach Agent | `Mib6RUtJ2IOaUZ4s` | 12 | Daily 07:00 + manual | 🔴 Inactive — built 2026-04-01; campaign_id set 2026-04-01 (6817d31e-e8e6-4a09-87de-e3be8e7cfc4e) — ready for Kai activation |
-| [PA] Error Handler | `JByknkdAgxRmDKp3` | 4 | n8n Error Trigger | 🔴 Inactive — built 2026-04-01; connected to all 9 PA workflows as errorWorkflow — Kai activates |
+| [PA] Error Handler | `JByknkdAgxRmDKp3` | 4 | n8n Error Trigger | 🔴 Inactive — built 2026-04-01; connected to all 11 PA workflows as errorWorkflow — Kai activates |
+| [PA] Credential Detector | `hbtSbm2pzrHX1QTn` | 10 | Every 2 hours + manual | 🔴 Inactive — built 2026-04-03; polls for clients who submitted n8n credentials → auto-sets build.ready + alerts Kai — Kai activates |
+| [PA] Website Chatbot | `EPMCxdqKOuwc6hzB` | 15 | Webhook POST /website-chatbot | 🔴 Inactive — built 2026-04-03; 3-question qualifier → Claude scoring → hot/cold routing → Calendly or nurture — Kai activates + embeds widget |
 
 ## Workflow Node Summaries
 
@@ -651,7 +657,7 @@ Typeform webhook: tag=pa-n8n-intake, secret=pa-typeform-2026, enabled=true
 12. Log Run Summary (HTTP POST → automation_logs, event=outreach_batch_sent, pa-airtable, continueOnFail)
     → loops back to Node 7 (Loop Over Prospects)
 
-⚠️ Before activating: Kai must create campaign in Instantly UI and update campaign_id in Node 10
+campaign_id: 6817d31e-e8e6-4a09-87de-e3be8e7cfc4e (set 2026-04-01)
 ```
 
 ### [PA] Error Handler (JByknkdAgxRmDKp3) — 4 nodes
@@ -661,7 +667,47 @@ Typeform webhook: tag=pa-n8n-intake, secret=pa-typeform-2026, enabled=true
 3.  Log to Airtable (HTTP POST → automation_logs, event=workflow_error, pa-airtable, continueOnFail)
 4.  Alert Kai (Send Email → lightofkai777@gmail.com, pa-smtp — subject: "🚨 Workflow error — [workflow name]", body includes all error details + n8n execution URL)
 
-Connected as errorWorkflow for: all 9 PA workflows
+Connected as errorWorkflow for: all 11 PA workflows
+```
+
+### [PA] Credential Detector (hbtSbm2pzrHX1QTn) — 10 nodes
+```
+1.  Every 2 Hours (Schedule Trigger — runs every 2 hours)
+2.  Manual Trigger
+3.  Fetch Clients With Credentials (HTTP GET → Airtable Clients, filter: project_status="onboarding.in_progress" AND n8n_api_key!="", pa-airtable)
+4.  IF Credentials Found (IF — records.length > 0)
+5.  Exit — No New Credentials (NoOp — FALSE branch)
+6.  Split Client Records (Code — extracts record_id, client_name, client_slug, n8n_api_key, n8n_workspace_id)
+7.  Loop Over Clients (splitInBatches, batch=1)
+8.  Set Status to build.ready (HTTP PATCH → Airtable Clients, project_status="build.ready", pa-airtable, continueOnFail)
+9.  Alert Kai — Build Ready (Send Email → lightofkai777@gmail.com — subject: "✅ Build Ready: [client]", includes client slug + n8n workspace URL + next step instructions, continueOnFail)
+10. Log to Automation Logs (HTTP POST → automation_logs, event=credentials_received, pa-airtable, continueOnFail)
+    → loops back to Node 7
+```
+
+### [PA] Website Chatbot (EPMCxdqKOuwc6hzB) — 15 nodes
+```
+Webhook URL: https://kaiashley.app.n8n.cloud/webhook/website-chatbot
+Input: POST { session_id, step (0–3), business_type, team_size, pain_description }
+Output: JSON { message, next_step, done, route?, calendly_url? }
+
+1.  Chatbot Webhook (Webhook — POST /website-chatbot, responseMode: responseNode)
+2.  Route by Step (Switch — routes on step value 0/1/2/3)
+3.  Greeting Response (Set — step=0, returns opening question)
+4.  Question 2 Response (Set — step=1, asks team size)
+5.  Question 3 Response (Set — step=2, asks biggest pain)
+6.  Send Early Step Response (Respond to Webhook — returns message + next_step for steps 0–2)
+7.  Score Lead via Claude (HTTP POST → Anthropic API — prompt includes all 3 answers, returns { route, pain_summary, clarifying_question }, step=3 only)
+8.  Parse Claude Score (Code — extracts route/pain_summary/clarifying_question, merges with prospect context)
+9.  IF Hot Lead (IF — route = "hot")
+10. Write Hot Prospect to Airtable (HTTP POST → Airtable Prospects, outreach_status=pending, lead_source=website_chatbot, pa-airtable, continueOnFail)
+11. Hot Response Data (Set — returns Calendly URL + personalised message referencing pain_summary)
+12. IF Borderline (IF — route = "borderline")
+13. Borderline Response Data (Set — returns clarifying_question from Claude)
+14. Cold Response Data (Set — returns nurture message with kai@phoenixautomation.ai contact)
+15. Send Response (Respond to Webhook — returns final JSON with CORS headers)
+
+Embed widget: docs/website-chatbot-embed.html — copy/paste before </body> tag
 ```
 
 ---
@@ -850,6 +896,9 @@ business-agent-foundry/
 | n8n_api_key field missing from Clients table | Medium — workflow-builder-agent needs it to connect to client n8n | ✅ RESOLVED 2026-04-01 — added field (ID: fldxqbU9PIVvurgPl) | Haris |
 | Instantly.ai has 0 sending accounts | Blocks Outreach Agent entirely | ⏳ Add sending email account in Instantly UI: Settings → Email Accounts → Connect | Kai |
 | Apollo.io free plan blocks lead search | Lead Gen is mock-only | ⏳ Upgrade to paid plan (~$49/mo) when ready to scale outreach | Kai decision |
+| Website chatbot not built | High — blueprint requires 24/7 AI qualifier before Typeform | ✅ RESOLVED 2026-04-03 — [PA] Website Chatbot built (EPMCxdqKOuwc6hzB, 15 nodes); embed widget at docs/website-chatbot-embed.html — Kai pastes snippet into website and activates workflow | Haris |
+| Credential auto-handoff gap — no detector when credentials arrive | High — Kai must manually set project_status=build.ready | ✅ RESOLVED 2026-04-03 — [PA] Credential Detector built (hbtSbm2pzrHX1QTn, 10 nodes); polls every 2h, auto-sets build.ready + emails Kai — Kai activates | Haris |
+| No mock client for end-to-end testing new use cases | Medium — no reference example for workflow-builder-agent | ✅ RESOLVED 2026-04-03 — docs/clients/sarahs-wellness-studio/ created (process-map.md + scope-of-work.md); Typeform program admission use case fully scoped | Haris |
 | Welcome email says "I'll send exact instructions shortly" — credential follow-up is NOT automated | High | ✅ RESOLVED 2026-03-26 — tool-specific step-by-step instructions now inline in welcome email; subject updated | Haris |
 | Status Update Agent could mix tasks from clients with wrong/null clickup_folder_id | High | ✅ RESOLVED 2026-03-26 — Split Client Records filters out clients with no folder ID; Get All Tasks endpoint changed to folder-specific URL | Haris |
 | Client n8n account model not decided | High — blocks Workflow Builder Agent | ✅ RESOLVED 2026-03-26 — Client creates and owns their own n8n account. Client shares n8n API key + instance URL as part of credential collection (alongside other tools). Welcome email needs n8n setup instructions added. Workflow Builder prereq: n8n API key in Airtable before build starts. | Kai |
@@ -1137,6 +1186,40 @@ business-agent-foundry/
 
 ---
 
+## Session Handoff — 2026-04-03 (Session 15 — Gap Closure + Lead Readiness)
+**Worked by:** Haris + Claude (Claude Code VSCode)
+
+### What was completed
+1. **Full project audit vs blueprint** — confirmed 2 blueprint gaps (chatbot, credential handoff) + verified proposal-drafting-agent is fully built (no gap)
+2. **[PA] Credential Detector built** — ID: hbtSbm2pzrHX1QTn, 10 nodes; polls every 2h for clients with onboarding.in_progress + n8n_api_key populated → auto-sets project_status=build.ready → emails Kai "start the build"; connected to Error Handler
+3. **[PA] Website Chatbot built** — ID: EPMCxdqKOuwc6hzB, 15 nodes; stateless webhook /website-chatbot; accepts step + context; routes step 0–2 (questions), step 3 → Claude scoring (hot/cold/borderline) → writes hot prospects to Airtable + returns Calendly link; connected to Error Handler
+4. **Chat embed widget created** — docs/website-chatbot-embed.html; copy/paste snippet, CORS-enabled, animated typing indicator, clickable Calendly link, mobile-friendly; CONFIGURE: change WEBHOOK_URL to prod after activating
+5. **Mock client created** — docs/clients/sarahs-wellness-studio/; process-map.md + scope-of-work.md for Typeform program admission use case; fully scoped for workflow-builder-agent test run; estimated $2,400 Starter Build, 7–12 hrs/week saved for client
+6. **PROJECT_OVERVIEW.md v4.2** — all new workflows added to registry + node summaries; Known Issues updated; activation order updated
+
+### Workflow IDs — new this session
+| Workflow | ID | Notes |
+|----------|----|-------|
+| [PA] Credential Detector | `hbtSbm2pzrHX1QTn` | Activate with other core workflows |
+| [PA] Website Chatbot | `EPMCxdqKOuwc6hzB` | Activate + embed widget on website |
+
+### What Kai must do next
+1. **Activate workflows** (full updated order now in TODO section above)
+2. **Embed chat widget** — open docs/website-chatbot-embed.html, copy the marked section, paste before `</body>` on your website. After activating [PA] Website Chatbot in n8n, the production URL is `https://kaiashley.app.n8n.cloud/webhook/website-chatbot`
+3. **Test mock client pipeline** — run workflow-builder-agent in Claude Code against docs/clients/sarahs-wellness-studio/scope-of-work.md to validate the full delivery pipeline
+4. **Connect Stripe webhook** (see previous session)
+
+### Files changed this session
+- `PROJECT_OVERVIEW.md` — v4.2
+- `docs/website-chatbot-embed.html` — new: embeddable chat widget
+- `docs/clients/sarahs-wellness-studio/process-map.md` — new: mock client process map
+- `docs/clients/sarahs-wellness-studio/scope-of-work.md` — new: mock client scope of work
+- **n8n changes (via API):**
+  - [PA] Credential Detector created (hbtSbm2pzrHX1QTn) — errorWorkflow connected
+  - [PA] Website Chatbot created (EPMCxdqKOuwc6hzB) — errorWorkflow connected
+
+---
+
 ## Session Handoff — 2026-04-01 (Session 14 — Launch Readiness)
 **Worked by:** Haris + Claude (Claude Code VSCode)
 
@@ -1171,9 +1254,12 @@ Email account `kai@phoenixautomation.ai` is connected (warmup_status: 0 = warmin
    c. [PA] Credential Follow-Up (uTnQAq5VlmsHYih4) — starts daily alerts for stalled onboarding
    d. [PA] Referral Trigger Agent (ka6GesSfWVo2FZtU) — starts 30-day post-launch referral
    e. [PA] ClickUp Sync (uiTwYIUk6nIFwLtX) — syncs task statuses every 2 hours
-   f. [PA] Outreach Agent (Mib6RUtJ2IOaUZ4s) — campaign_id configured ✅ — ready to activate after email warmup
+   f. [PA] Credential Detector (hbtSbm2pzrHX1QTn) — auto-promotes build.ready when client submits credentials
+   g. [PA] Website Chatbot (EPMCxdqKOuwc6hzB) — activate, then paste embed snippet from docs/website-chatbot-embed.html into website before </body>
+   h. [PA] Outreach Agent (Mib6RUtJ2IOaUZ4s) — campaign_id configured ✅ — activate only after email warmup (≥14 days)
 3. ~~**KAI:** Create Instantly campaign → update campaign_id in Outreach Agent node "Add Lead to Instantly"~~ ✅ DONE 2026-04-01 (campaign_id: 6817d31e-e8e6-4a09-87de-e3be8e7cfc4e)
 4. **KAI:** Connect Stripe webhook: Dashboard → Webhooks → Add endpoint → URL: https://kaiashley.app.n8n.cloud/webhook/payment-confirmed → Event: payment_intent.succeeded
+5. **KAI (mock client test):** To test the full build pipeline with a mock client — run workflow-builder-agent in Claude Code, pointing at docs/clients/sarahs-wellness-studio/scope-of-work.md. This validates the entire delivery pipeline without a real client.
 
 ### Files changed this session
 - `PROJECT_OVERVIEW.md` — v4.1, full update: new workflows, credentials, Known Issues, TODO

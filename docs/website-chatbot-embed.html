@@ -1,0 +1,288 @@
+<!--
+  Phoenix Automation — Website Chatbot Embed
+
+  HOW TO EMBED ON YOUR WEBSITE:
+  Copy everything between the two "COPY FROM HERE" comments and paste
+  it before the </body> tag on your website page (Framer, Webflow, etc.)
+
+  IMPORTANT: After activating [PA] Website Chatbot in n8n, use the
+  PRODUCTION webhook URL: https://kaiashley.app.n8n.cloud/webhook/website-chatbot
+
+  For testing before activation, use:
+  https://kaiashley.app.n8n.cloud/webhook-test/website-chatbot
+  (Note: test URL only works when n8n workflow is open and in test mode)
+-->
+
+<!-- ============ COPY FROM HERE ============ -->
+<style>
+  #pa-chat-bubble {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #111;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-size: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    z-index: 9999;
+    transition: transform 0.15s ease;
+  }
+  #pa-chat-bubble:hover { transform: scale(1.08); }
+
+  #pa-chat-window {
+    position: fixed;
+    bottom: 96px;
+    right: 28px;
+    width: 340px;
+    max-height: 480px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+    display: none;
+    flex-direction: column;
+    z-index: 9998;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    overflow: hidden;
+  }
+  #pa-chat-window.open { display: flex; }
+
+  #pa-chat-header {
+    background: #111;
+    color: #fff;
+    padding: 14px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+  #pa-chat-header span {
+    display: block;
+    font-size: 12px;
+    font-weight: 400;
+    opacity: 0.65;
+    margin-top: 2px;
+  }
+
+  #pa-chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .pa-msg {
+    max-width: 82%;
+    padding: 10px 13px;
+    border-radius: 12px;
+    font-size: 13.5px;
+    line-height: 1.45;
+    white-space: pre-wrap;
+  }
+  .pa-msg.bot {
+    background: #f3f3f3;
+    color: #111;
+    align-self: flex-start;
+    border-bottom-left-radius: 3px;
+  }
+  .pa-msg.user {
+    background: #111;
+    color: #fff;
+    align-self: flex-end;
+    border-bottom-right-radius: 3px;
+  }
+  .pa-msg a { color: inherit; text-decoration: underline; }
+
+  #pa-chat-footer {
+    display: flex;
+    padding: 10px 12px;
+    border-top: 1px solid #eee;
+    gap: 8px;
+  }
+  #pa-chat-input {
+    flex: 1;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13.5px;
+    outline: none;
+    font-family: inherit;
+  }
+  #pa-chat-input:focus { border-color: #111; }
+  #pa-chat-send {
+    background: #111;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13.5px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 500;
+  }
+  #pa-chat-send:disabled { opacity: 0.4; cursor: default; }
+
+  .pa-typing {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: 10px 13px;
+    background: #f3f3f3;
+    border-radius: 12px;
+    border-bottom-left-radius: 3px;
+    align-self: flex-start;
+  }
+  .pa-typing span {
+    width: 6px;
+    height: 6px;
+    background: #999;
+    border-radius: 50%;
+    animation: pa-bounce 1.2s infinite;
+  }
+  .pa-typing span:nth-child(2) { animation-delay: 0.2s; }
+  .pa-typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pa-bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-5px); }
+  }
+</style>
+
+<button id="pa-chat-bubble" aria-label="Chat with us">💬</button>
+
+<div id="pa-chat-window" role="dialog" aria-label="Phoenix Automation chat">
+  <div id="pa-chat-header">
+    Phoenix Automation
+    <span>AI automation agency · usually responds instantly</span>
+  </div>
+  <div id="pa-chat-messages"></div>
+  <div id="pa-chat-footer">
+    <input id="pa-chat-input" type="text" placeholder="Type a message…" autocomplete="off" />
+    <button id="pa-chat-send">Send</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  // CONFIGURE THIS — use prod URL after activating the workflow in n8n
+  const WEBHOOK_URL = 'https://kaiashley.app.n8n.cloud/webhook/website-chatbot';
+
+  const bubble = document.getElementById('pa-chat-bubble');
+  const window_ = document.getElementById('pa-chat-window');
+  const messages = document.getElementById('pa-chat-messages');
+  const input = document.getElementById('pa-chat-input');
+  const sendBtn = document.getElementById('pa-chat-send');
+
+  let step = 0;
+  let context = {};
+  let sessionId = 'pa-' + Math.random().toString(36).slice(2, 10);
+  let opened = false;
+
+  bubble.addEventListener('click', function() {
+    const isOpen = window_.classList.toggle('open');
+    bubble.textContent = isOpen ? '✕' : '💬';
+    if (isOpen && !opened) {
+      opened = true;
+      sendToWebhook('', 0);  // trigger greeting
+    }
+  });
+
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !sendBtn.disabled) handleSend();
+  });
+  sendBtn.addEventListener('click', handleSend);
+
+  function handleSend() {
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    appendMessage('user', text);
+    // Store answers in context by step
+    if (step === 1) context.business_type = text;
+    else if (step === 2) context.team_size = text;
+    else if (step === 3) context.pain_description = text;
+    sendToWebhook(text, step);
+  }
+
+  async function sendToWebhook(userMessage, currentStep) {
+    sendBtn.disabled = true;
+    input.disabled = true;
+    const typing = showTyping();
+
+    try {
+      const payload = {
+        session_id: sessionId,
+        step: currentStep,
+        ...context
+      };
+      const res = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      let data;
+      try {
+        const text = await res.text();
+        // n8n sometimes double-encodes JSON
+        try { data = JSON.parse(text); } catch(e) { data = JSON.parse(JSON.parse(text)); }
+      } catch(e) {
+        data = { message: "Sorry, something went wrong. Please try again or email kai@phoenixautomation.ai", done: true };
+      }
+
+      removeTyping(typing);
+
+      // Format message — convert Calendly URL to clickable link
+      let msg = data.message || '';
+      msg = msg.replace(/(https:\/\/calendly\.com\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+      appendMessage('bot', msg, true);
+
+      if (!data.done) {
+        step = data.next_step || (currentStep + 1);
+        sendBtn.disabled = false;
+        input.disabled = false;
+        input.focus();
+      } else {
+        // Conversation complete — disable input, show subtle message
+        input.placeholder = 'Chat ended';
+        input.disabled = true;
+        sendBtn.disabled = true;
+      }
+    } catch(err) {
+      removeTyping(typing);
+      appendMessage('bot', 'Something went wrong — please email kai@phoenixautomation.ai directly.');
+      sendBtn.disabled = false;
+      input.disabled = false;
+    }
+  }
+
+  function appendMessage(who, text, isHtml) {
+    const div = document.createElement('div');
+    div.className = 'pa-msg ' + who;
+    if (isHtml) div.innerHTML = text;
+    else div.textContent = text;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function showTyping() {
+    const div = document.createElement('div');
+    div.className = 'pa-typing';
+    div.innerHTML = '<span></span><span></span><span></span>';
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+    return div;
+  }
+
+  function removeTyping(el) {
+    if (el && el.parentNode) el.parentNode.removeChild(el);
+  }
+})();
+</script>
+<!-- ============ COPY TO HERE ============ -->
