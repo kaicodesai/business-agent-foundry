@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 4.2 — Last updated: 2026-04-03 — Updated by: Haris + Claude
+> **Version:** 4.3 — Last updated: 2026-04-03 — Updated by: Haris + Claude
 
 ---
 
@@ -87,6 +87,11 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - **[PA] Credential Follow-Up** (uTnQAq5VlmsHYih4) — 11 nodes, built 2026-03-31, daily 10:00 + manual → fetches onboarding.in_progress clients stalled >48h → alerts Kai by email → updates overdue_flagged_at → logs to automation_logs, inactive
 - **[PA] Credential Detector** (hbtSbm2pzrHX1QTn) — 10 nodes, built 2026-04-03, every 2h + manual → fetches onboarding.in_progress clients whose n8n_api_key is now populated → auto-sets project_status=build.ready → alerts Kai to start workflow build → logs to automation_logs, inactive
 - **[PA] Website Chatbot** (EPMCxdqKOuwc6hzB) — 15 nodes, built 2026-04-03, webhook POST /website-chatbot → stateless 3-question chatbot → Claude scores lead → hot: writes Airtable Prospect + returns Calendly link; cold: returns nurture message; borderline: asks clarifying question, inactive
+- **[PA] Scoping Agent** (E24KwVMam1e8bbjT) — 15 nodes, built 2026-04-03, webhook POST /scope-call + polls call_complete clients → Claude generates scope (automation_1/2/3, tools, tier) → writes all scope fields to Airtable → emails Kai with Approve button, inactive
+- **[PA] Scope Approval** (UB6ZdrnYpJlYfxD4) — 7 nodes, built 2026-04-03, GET /approve-scope?client_slug=X → locks scope_locked_at → Claude generates proposal draft → saves to Airtable proposal_draft field → emails Kai → shows success page, inactive
+- **[PA] Workflow Builder Agent** (fy8OuUEGyyWhYzWC) — 15 nodes, built 2026-04-03, polls build.ready clients hourly → reads scope from Airtable → Claude generates n8n workflow JSON per automation → deploys to client's n8n via their API key → sets build_review + emails Kai review links, inactive
+- **15 new Airtable Clients fields added** — call_notes, scope_summary, automation_count, automation_1/2/3_name, automation_1/2/3_description, scope_locked_at, proposal_draft, workflows_deployed, build_review_url — 2026-04-03
+- **5 new project_status values added** — call_complete, scoping, scope_review, building, build_review — 2026-04-03
 - **Mock client created** — docs/clients/sarahs-wellness-studio/ (process-map.md + scope-of-work.md) — Typeform program admission use case, ready for workflow-builder-agent test run
 - **Chat embed widget** — docs/website-chatbot-embed.html — copy/paste snippet for Framer/Webflow/any website; calls /webhook/website-chatbot
 - **[PA] Onboarding Automation Node 49** updated 2026-03-31 — subject changed to "Welcome to Phoenix Automation — action required before we can start"; n8n account setup section inserted before "Your next steps" (step-by-step: sign up at n8n.io, create API key named "Phoenix Automation", reply with instance URL + key)
@@ -468,6 +473,9 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | [PA] Error Handler | `JByknkdAgxRmDKp3` | 4 | n8n Error Trigger | 🔴 Inactive — built 2026-04-01; connected to all 11 PA workflows as errorWorkflow — Kai activates |
 | [PA] Credential Detector | `hbtSbm2pzrHX1QTn` | 10 | Every 2 hours + manual | 🔴 Inactive — built 2026-04-03; polls for clients who submitted n8n credentials → auto-sets build.ready + alerts Kai — Kai activates |
 | [PA] Website Chatbot | `EPMCxdqKOuwc6hzB` | 15 | Webhook POST /website-chatbot | 🔴 Inactive — built 2026-04-03; 3-question qualifier → Claude scoring → hot/cold routing → Calendly or nurture — Kai activates + embeds widget |
+| [PA] Scoping Agent | `E24KwVMam1e8bbjT` | 15 | Webhook POST /scope-call + poll every 2h | 🔴 Inactive — built 2026-04-03; call notes → Claude scope → Airtable scope fields → email Kai for approval — Kai activates |
+| [PA] Scope Approval | `UB6ZdrnYpJlYfxD4` | 7 | GET /approve-scope?client_slug=X | 🔴 Inactive — built 2026-04-03; Kai clicks link in email → locks scope → generates proposal draft → emails Kai — Kai activates |
+| [PA] Workflow Builder Agent | `fy8OuUEGyyWhYzWC` | 15 | Poll hourly + manual | 🔴 Inactive — built 2026-04-03; reads build.ready clients → Claude generates workflow JSON → deploys to client n8n → emails Kai to review — Kai activates |
 
 ## Workflow Node Summaries
 
@@ -1183,6 +1191,49 @@ business-agent-foundry/
 
 ### Files changed this session
 - `PROJECT_OVERVIEW.md` — version 2.3, Referral Trigger added to registry, TODO/Known Issues updated, Session 7 handoff
+
+---
+
+## Session Handoff — 2026-04-03 (Session 16 — Full Cloud Automation Architecture)
+**Worked by:** Haris + Claude (Claude Code VSCode)
+
+### Architectural shift completed
+The system is now fully cloud-based. automation-scoping-agent and workflow-builder-agent no longer require Claude Code running locally. Everything runs in n8n Cloud. Kai's only manual steps are: (1) approve scope via email link, (2) review + send proposal, (3) activate built workflows in client's n8n.
+
+### New project_status flow
+```
+lead → call_complete → scoping → scope_review → proposal_sent
+  → payment_confirmed → onboarding → onboarding.in_progress
+  → build.ready → building → build_review → live
+```
+
+### What was built this session
+1. **15 new Airtable fields** on Clients table: call_notes, scope_summary, automation_count, automation_1/2/3_name + description, scope_locked_at, proposal_draft, workflows_deployed, build_review_url
+2. **5 new project_status values**: call_complete, scoping, scope_review, building, build_review
+3. **[PA] Scoping Agent** (E24KwVMam1e8bbjT) — Kai posts call notes to /scope-call OR sets project_status=call_complete in Airtable → Claude generates full scope → writes to Airtable → emails Kai scope summary + Approve button
+4. **[PA] Scope Approval** (UB6ZdrnYpJlYfxD4) — Kai clicks Approve in email → locks scope_locked_at → Claude writes proposal draft → saves to Airtable → emails Kai the draft to review and send
+5. **[PA] Workflow Builder Agent** (fy8OuUEGyyWhYzWC) — polls build.ready clients hourly → reads scope from Airtable → Claude generates n8n workflow JSON → deploys to client's n8n via their API key → sets build_review → emails Kai direct links to review workflows
+
+### Kai's new end-to-end flow (post-session 16)
+1. After assessment call: POST call notes to https://kaiashley.app.n8n.cloud/webhook/scope-call (or set project_status=call_complete + fill call_notes in Airtable)
+2. Receive scope review email → click Approve → proposal draft emailed automatically
+3. Review proposal → send to client yourself
+4. Client pays → Onboarding Automation fires automatically
+5. Credentials arrive → Credential Detector sets build.ready automatically
+6. Workflow Builder deploys workflows to client's n8n automatically → Kai receives review email
+7. Review workflows in client's n8n → activate them
+
+### New n8n workflows — IDs
+| Workflow | ID | Webhook |
+|----------|----|---------|
+| [PA] Scoping Agent | `E24KwVMam1e8bbjT` | POST /scope-call |
+| [PA] Scope Approval | `UB6ZdrnYpJlYfxD4` | GET /approve-scope?client_slug=X |
+| [PA] Workflow Builder Agent | `fy8OuUEGyyWhYzWC` | polls Airtable hourly |
+
+### Files changed this session
+- `PROJECT_OVERVIEW.md` — v4.3
+- **Airtable:** 15 new fields on Clients table, 5 new project_status values
+- **n8n:** 3 new workflows created, all connected to Error Handler
 
 ---
 
