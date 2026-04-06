@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 4.3 — Last updated: 2026-04-03 — Updated by: Haris + Claude
+> **Version:** 4.4 — Last updated: 2026-04-06 — Updated by: Haris + Claude
 
 ---
 
@@ -1191,6 +1191,39 @@ business-agent-foundry/
 
 ### Files changed this session
 - `PROJECT_OVERVIEW.md` — version 2.3, Referral Trigger added to registry, TODO/Known Issues updated, Session 7 handoff
+
+---
+
+## Session Handoff — 2026-04-06 (Session 17 — Native AI Nodes + Workflow Audit)
+**Worked by:** Haris + Claude (Claude Code VSCode)
+
+### What was completed
+1. **Full workflow audit** — all 15 [PA] workflows checked; 9 were using raw HTTP Request to Anthropic API
+2. **Native AI node migration — 9/9 workflows** — all Claude calls now use `@n8n/n8n-nodes-langchain.chainLlm` (Basic LLM Chain) + `@n8n/n8n-nodes-langchain.lmChatAnthropic` (Anthropic model sub-node) with the existing "Anthropic account" credential (`fKRThaHCAxKe1JBQ`)
+3. **All response parsing code updated** — downstream Code nodes that read `$json.content[0].text` updated to `$json.text` (correct LLM Chain output format)
+4. **Workflow Builder multi-automation support added** — now handles automation_2 for clients with multiple automations; IF node routes to second Claude chain + second deploy node + results merge
+5. **Verified clean** — all 9 pass: no raw Anthropic HTTP, correct native node types, correct credential, no stale content references
+
+### Workflows migrated to native AI nodes
+| Workflow | Chain node name | Active |
+|----------|----------------|--------|
+| Status Update Agent | Claude — Email | YES |
+| Scoping Agent | Claude — Scope | YES |
+| Website Chatbot | Claude — Score Lead | YES |
+| Outreach Agent | Claude — Email Sequence | YES |
+| Scope Approval | Claude — Proposal | no |
+| Workflow Builder Agent | Claude — Workflow 1 + Workflow 2 | no |
+| Typeform Lead Qual | Claude — Score Lead | YES |
+| Referral Trigger Agent | Claude — Referral Emails | no |
+| Reporting Agent | Claude — Report | no |
+
+### No-AI workflows — unchanged and correct
+- [PA] Onboarding Automation — no AI needed (pure task orchestration)
+- [PA] Error Handler — no AI needed
+- [PA] Lead Generation — no AI needed (data fetching/dedup)
+- [PA] Credential Follow-Up — no AI needed
+- [PA] Credential Detector — no AI needed
+- [PA] ClickUp Sync — no AI needed
 
 ---
 
