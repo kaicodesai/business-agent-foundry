@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 4.4 — Last updated: 2026-04-06 — Updated by: Haris + Claude
+> **Version:** 4.6 — Last updated: 2026-04-08 — Updated by: Haris + Claude
 
 ---
 
@@ -78,7 +78,8 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - Airtable base structured — Clients + Prospects + automation_logs tables
 - All 6 n8n credentials added (pa-airtable, pa-n8n-api, pa-clickup, pa-smtp, pa-apollo-io, pa-anthropic)
 - **[PA] Onboarding Automation** (7RsRJIqBHFpWZoWM) — 24 nodes, tested, dual emails working
-- **[PA] Lead Generation** (YO3f5CL9bYbLTBgw) — 13 nodes, tested, dedup working
+- **[PA] Lead Generation** (YO3f5CL9bYbLTBgw) — 18 nodes, updated 2026-04-08 — Hunter.io domain-search replaces Apollo; Tavily Search (live web) runs 3 real-time Google searches per run → GPT-4o-mini extracts ICP company domains from live results; Normalize Leads filters to ICP titles + skips no-name/no-title contacts; source field set to `hunter`
+- **[PA] Outreach Agent** (Mib6RUtJ2IOaUZ4s) — updated 2026-04-08 — branded dark blue HTML email template (#1B2A4A) matching Status Update Agent; Build HTML Emails node added; return format fixed for runOnceForEachItem Code nodes
 - **[PA] Status Update Agent** (94DpGwRPWGRPqCVU) — 15 nodes, tested, branded emails working
 - **[PA] Referral Trigger Agent** (ka6GesSfWVo2FZtU) — 15 nodes, built, E2E tested PASS 2026-03-27, updated 2026-04-01 — now uses pa-smtp directly (email_1 to client, email_2 draft + alert to Kai); Calendly URL live
 - **[PA] ClickUp Sync** (uiTwYIUk6nIFwLtX) — 18 nodes, built 2026-03-27, reads Airtable project_status and syncs ClickUp task statuses every 2 hours, inactive
@@ -114,15 +115,12 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 ## In Progress ⏳
 - Default GitHub branch needs switching from `claude/setup-blueprint-agent-YnHBF` to `main` (Kai → Settings → Branches)
 - Haris needs n8n Cloud access (Kai to invite)
-- ClickUp API key expired — regenerate in ClickUp Settings, update `ClickUp account` credential (hLrtpicYXOOXrUh0) in n8n
-- Typeform webhook is disabled (`enabled: false`) — Kai must activate [PA] Typeform Lead Qualification, then run Typeform webhook re-enable script (see Known Issues)
+- Outreach Agent HTML email E2E — Instantly has 19 old duplicate leads blocking personalization test; needs manual cleanup in Instantly dashboard then re-test
+- Instantly campaign is active (status confirmed) — warmup_status: 0, needs enabling manually in Instantly dashboard
 
 ## Not Started ❌
-- [PA] Outreach Agent workflow (blocked on Instantly.ai — needs sending account configured first)
-- Error handling workflow (deferred from QA)
-- Instantly.ai: add sending email account in Instantly UI (Settings → Email Accounts → Connect)
-- Apollo.io paid plan — free plan blocks `/mixed_people/search`, Lead Gen is MOCK MODE
 - Stripe webhook integration — payment confirmation currently manual
+- Apollo.io paid plan — deferred (Lead Gen now uses Hunter.io + AI Research Agent)
 
 ---
 
@@ -238,6 +236,7 @@ claude
 | `pa-apollo-io` | HTTP Header Auth | `x-api-key` | ✅ Active |
 | `pa-anthropic` | HTTP Header Auth | `x-api-key` | ✅ Active |
 | `pa-instantly` | HTTP Header Auth | `Authorization: Bearer` | ✅ Active — ID: xoSojCyLffw4nNe7 |
+| `pa-tavily` | Hardcoded in Lead Gen Code node | — | ✅ Active — key: `tvly-dev-ytdoA-...` (stored in Tavily Search node jsCode) |
 
 ## Email Addresses
 | Purpose | Address |
@@ -903,7 +902,11 @@ business-agent-foundry/
 | Alice/Bob/Carol prospects at outreach_status=pending | Low — fake .invalid addresses would be queued by Outreach Agent | ✅ RESOLVED 2026-04-01 — set to test-complete | Haris |
 | n8n_api_key field missing from Clients table | Medium — workflow-builder-agent needs it to connect to client n8n | ✅ RESOLVED 2026-04-01 — added field (ID: fldxqbU9PIVvurgPl) | Haris |
 | Instantly.ai has 0 sending accounts | Blocks Outreach Agent entirely | ⏳ Add sending email account in Instantly UI: Settings → Email Accounts → Connect | Kai |
-| Apollo.io free plan blocks lead search | Lead Gen is mock-only | ⏳ Upgrade to paid plan (~$49/mo) when ready to scale outreach | Kai decision |
+| Apollo.io free plan blocks lead search | Lead Gen is mock-only | ✅ RESOLVED 2026-04-08 — switched to Hunter.io domain-search + AI Research Agent; Apollo no longer used | Haris |
+| Lead Gen writes incomplete prospect records (missing name/company/title) | Rows in Airtable with only email + team_size:0 | Split Into Items node used Apollo field structure (p.first_name, p.organization.name) but Normalize Leads outputs flat format (prospect_name, company_name) | ✅ RESOLVED 2026-04-08 — Split Into Items rewritten to pass through pre-normalized fields directly | Haris |
+| Lead Gen source field shows "apollo" after Hunter switch | source: apollo written by Write New Prospect despite Hunter data | Hardcoded string in jsonBody | ✅ RESOLVED 2026-04-08 — changed to source: hunter | Haris |
+| Hunter returns contacts with no name AND no job title | bro.man@domain.com style addresses slip through — unusable for personalized outreach | Normalize Leads kept no-title contacts by default | ✅ RESOLVED 2026-04-08 — skip leads where both prospect_name and job_title are empty | Haris |
+| Instantly 19 duplicate leads blocking HTML email test | personalization shows 0 chars despite successful exec | Instantly silently deduplicates on email; old test leads from same campaign cannot be deleted via API (returns count:0) | ⏳ Manual fix: delete duplicate leads in Instantly dashboard then re-run Outreach Agent | Kai |
 | Website chatbot not built | High — blueprint requires 24/7 AI qualifier before Typeform | ✅ RESOLVED 2026-04-03 — [PA] Website Chatbot built (EPMCxdqKOuwc6hzB, 15 nodes); embed widget at docs/website-chatbot-embed.html — Kai pastes snippet into website and activates workflow | Haris |
 | Credential auto-handoff gap — no detector when credentials arrive | High — Kai must manually set project_status=build.ready | ✅ RESOLVED 2026-04-03 — [PA] Credential Detector built (hbtSbm2pzrHX1QTn, 10 nodes); polls every 2h, auto-sets build.ready + emails Kai — Kai activates | Haris |
 | No mock client for end-to-end testing new use cases | Medium — no reference example for workflow-builder-agent | ✅ RESOLVED 2026-04-03 — docs/clients/sarahs-wellness-studio/ created (process-map.md + scope-of-work.md); Typeform program admission use case fully scoped | Haris |
@@ -1191,6 +1194,42 @@ business-agent-foundry/
 
 ### Files changed this session
 - `PROJECT_OVERVIEW.md` — version 2.3, Referral Trigger added to registry, TODO/Known Issues updated, Session 7 handoff
+
+---
+
+## Session Handoff — 2026-04-08 (Session 18 — Outreach HTML + Hunter.io + AI Research Agent)
+**Worked by:** Haris + Claude (Claude Code VSCode)
+
+### What was completed
+1. **[PA] Outreach Agent — branded HTML email template** — dark blue #1B2A4A header/footer matching Status Update Agent; single-quoted HTML attributes to avoid JSON escaping issues; Build HTML Emails Code node added between Parse Email Sequence and Add Lead to Instantly
+2. **Critical Code node return format fix** — Parse Email Sequence and Build HTML Emails both used `return [{json:{...}}]` in `runOnceForEachItem` mode; n8n requires `return {json:{...}}` (no array wrapper) — fixed both nodes
+3. **[PA] Lead Generation — Hunter.io migration** — replaced Apollo HTTP Request with Hunter.io domain-search (`/v2/domain-search?domain=&api_key=&type=personal&limit=10`); modular 3-node architecture: Target Domains → Fetch Leads — Hunter.io → Normalize Leads
+4. **AI Research Agent added to Lead Gen** — replaces static Target Domains Code node; `@n8n/n8n-nodes-langchain.agent` (v1.7) uses GPT-4o-mini via n8n free OpenAI credits; system prompt describes full ICP; generates 8 real company domains per run, varied by date; Parse Research Output fallback to 3 known SMB domains
+5. **Lead Gen field mapping fixed** — Split Into Items was using Apollo's nested format (`p.organization.name`, `p.title`); rewritten to pass through Normalize Leads' already-flat format (`prospect_name`, `company_name`, `job_title`)
+6. **source field corrected** — Write New Prospect changed from `source: 'apollo'` to `source: 'hunter'`
+7. **Empty-contact filter added** — Normalize Leads now skips contacts where both prospect_name AND job_title are empty (was keeping no-title contacts by default, allowing generic email addresses through)
+8. **10 temp build scripts deleted** — fix_outreach.js, fix_parse_node.js, connect_apollo.js, upgrade_outreach_html.js, fix_instantly_body.js, add_html_node.js, fix_html_quotes.js, fix_return_format.js, switch_to_hunter.js, add_ai_research.js
+9. **Tavily live web search added to Lead Gen** — Tavily Search Code node runs 3 parallel searches (DTC brands, marketing agencies, SaaS ops) via Tavily API (`tvly-dev-...`) before the AI Research Agent; live results injected into GPT prompt so agent works from real-time web data instead of training data; credential stored directly in Code node; Tavily free tier: 1000 searches/month
+
+### What is in progress (not finished)
+- **Outreach HTML email E2E not fully verified** — Instantly has 19 old duplicate leads in the campaign; new leads can't be added for those emails; personalization shows 0 chars. Exec 202 succeeded and Airtable shows `in_sequence` but Instantly side unverified
+- **Lead Gen not yet re-run after all fixes** — AI Research Agent deployed but not manually tested end-to-end; some old bad rows (rows 7–14) still in Airtable from the broken run
+
+### Blockers for next session
+- **Instantly duplicate cleanup** — 19 old leads with same test emails block the outreach E2E test. Must delete them manually in Instantly dashboard (Leads tab → select all → delete), then re-trigger Outreach Agent with fresh pending prospects
+- **Email warmup** — warmup_status: 0; enable in Instantly dashboard → Email Accounts → kai@phoenixautomation.ai → Warmup
+
+### Next person should start with
+1. **Kai:** In Instantly dashboard — delete all leads in the campaign with ashleyedwards305@gmail.com and muneebfiaz201@gmail.com; then re-run [PA] Outreach Agent manually
+2. **Kai:** Enable email warmup for kai@phoenixautomation.ai in Instantly (Settings → Email Accounts → Warmup toggle)
+3. **Haris:** Delete old Airtable prospect rows 7–14 (partial/bad records from today's broken run) then trigger [PA] Lead Generation manually to confirm AI Research Agent generates real ICP domains + Hunter.io returns named contacts
+4. Read PROJECT_OVERVIEW.md for full context
+
+### Files changed this session
+- `PROJECT_OVERVIEW.md` — v4.5, Lead Gen + Outreach Agent updated in registry, Known Issues + In Progress updated, session handoff
+- **n8n workflows updated via API (no local file changes):**
+  - `[PA] Lead Generation` (YO3f5CL9bYbLTBgw) — Hunter.io swap, AI Research Agent, Split Into Items rewrite, source fix, empty-contact filter (17 nodes)
+  - `[PA] Outreach Agent` (Mib6RUtJ2IOaUZ4s) — branded HTML email template, Build HTML Emails node, return format fix (12 nodes)
 
 ---
 
