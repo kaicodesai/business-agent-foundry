@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 4.6 — Last updated: 2026-04-08 — Updated by: Haris + Claude
+> **Version:** 4.7 — Last updated: 2026-04-10 — Updated by: Kai + Claude
 
 ---
 
@@ -87,7 +87,8 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - **[PA] Typeform Lead Qualification** (kXxN7O77ongTMwKG) — 13 nodes, built 2026-03-31, fires on Typeform submission → extracts answers → dedup → write Airtable Prospects → score via Claude → email Kai if Grade A/B, inactive, Typeform webhook registered
 - **[PA] Credential Follow-Up** (uTnQAq5VlmsHYih4) — 11 nodes, built 2026-03-31, daily 10:00 + manual → fetches onboarding.in_progress clients stalled >48h → alerts Kai by email → updates overdue_flagged_at → logs to automation_logs, inactive
 - **[PA] Credential Detector** (hbtSbm2pzrHX1QTn) — 10 nodes, built 2026-04-03, every 2h + manual → fetches onboarding.in_progress clients whose n8n_api_key is now populated → auto-sets project_status=build.ready → alerts Kai to start workflow build → logs to automation_logs, inactive
-- **[PA] Website Chatbot** (EPMCxdqKOuwc6hzB) — 15 nodes, built 2026-04-03, webhook POST /website-chatbot → stateless 3-question chatbot → Claude scores lead → hot: writes Airtable Prospect + returns Calendly link; cold: returns nurture message; borderline: asks clarifying question, inactive
+- **[PA] Website Chatbot** (EPMCxdqKOuwc6hzB) — 15 nodes, built 2026-04-03, fully operational 2026-04-10 — webhook POST /website-chatbot → stateless 3-question chatbot → Claude scores lead (HTTP Request node, not Langchain) → hot: writes Airtable Prospect + returns Calendly link; cold: returns nurture message; borderline: asks clarifying question. Live on phoenixautomation.ai with auto-popup (7s teaser, 13s auto-open). End-to-end verified: hot lead record recRypnI7vsMlisJR created in Airtable Prospects.
+- **3 new Airtable Prospects fields added** — `biggest_operational_pain` (long text), `lead_score_grade` (text), `lead_source` (text) — 2026-04-10; field names aligned to chatbot n8n node output
 - **[PA] Scoping Agent** (E24KwVMam1e8bbjT) — 15 nodes, built 2026-04-03, webhook POST /scope-call + polls call_complete clients → Claude generates scope (automation_1/2/3, tools, tier) → writes all scope fields to Airtable → emails Kai with Approve button, inactive
 - **[PA] Scope Approval** (UB6ZdrnYpJlYfxD4) — 7 nodes, built 2026-04-03, GET /approve-scope?client_slug=X → locks scope_locked_at → Claude generates proposal draft → saves to Airtable proposal_draft field → emails Kai → shows success page, inactive
 - **[PA] Workflow Builder Agent** (fy8OuUEGyyWhYzWC) — 15 nodes, built 2026-04-03, polls build.ready clients hourly → reads scope from Airtable → Claude generates n8n workflow JSON per automation → deploys to client's n8n via their API key → sets build_review + emails Kai review links, inactive
@@ -430,8 +431,11 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | email | email | |
 | linkedin_url | url | |
 | outreach_status | singleSelect: pending, in_sequence, replied, closed, error | pending = ready for outreach |
-| source | singleLineText | apollo |
+| source | singleLineText | apollo / hunter |
 | sourced_at | dateTime | ISO 8601 |
+| biggest_operational_pain | longText | Written by Website Chatbot — pain_description from step 3 — added 2026-04-10 |
+| lead_score_grade | singleLineText | Written by Website Chatbot — Claude scoring output (hot/borderline/cold) — added 2026-04-10 |
+| lead_source | singleLineText | Written by Website Chatbot — set to `website_chatbot` — added 2026-04-10 |
 
 ### Automation Logs Table — `tblL7tDAh1KTLtwpt`
 
@@ -471,7 +475,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | [PA] Outreach Agent | `Mib6RUtJ2IOaUZ4s` | 12 | Daily 07:00 + manual | 🔴 Inactive — built 2026-04-01; campaign_id set 2026-04-01 (6817d31e-e8e6-4a09-87de-e3be8e7cfc4e) — ready for Kai activation |
 | [PA] Error Handler | `JByknkdAgxRmDKp3` | 4 | n8n Error Trigger | 🔴 Inactive — built 2026-04-01; connected to all 11 PA workflows as errorWorkflow — Kai activates |
 | [PA] Credential Detector | `hbtSbm2pzrHX1QTn` | 10 | Every 2 hours + manual | 🔴 Inactive — built 2026-04-03; polls for clients who submitted n8n credentials → auto-sets build.ready + alerts Kai — Kai activates |
-| [PA] Website Chatbot | `EPMCxdqKOuwc6hzB` | 15 | Webhook POST /website-chatbot | 🔴 Inactive — built 2026-04-03; 3-question qualifier → Claude scoring → hot/cold routing → Calendly or nurture — Kai activates + embeds widget |
+| [PA] Website Chatbot | `EPMCxdqKOuwc6hzB` | 15 | Webhook POST /website-chatbot | 🟢 Active — live on phoenixautomation.ai since 2026-04-10; 3-question qualifier → Claude HTTP scoring → hot: Airtable write + Calendly; cold: nurture; borderline: clarifying Q. E2E PASS (record recRypnI7vsMlisJR) |
 | [PA] Scoping Agent | `E24KwVMam1e8bbjT` | 15 | Webhook POST /scope-call + poll every 2h | 🔴 Inactive — built 2026-04-03; call notes → Claude scope → Airtable scope fields → email Kai for approval — Kai activates |
 | [PA] Scope Approval | `UB6ZdrnYpJlYfxD4` | 7 | GET /approve-scope?client_slug=X | 🔴 Inactive — built 2026-04-03; Kai clicks link in email → locks scope → generates proposal draft → emails Kai — Kai activates |
 | [PA] Workflow Builder Agent | `fy8OuUEGyyWhYzWC` | 15 | Poll hourly + manual | 🔴 Inactive — built 2026-04-03; reads build.ready clients → Claude generates workflow JSON → deploys to client n8n → emails Kai to review — Kai activates |
@@ -704,10 +708,17 @@ Output: JSON { message, next_step, done, route?, calendly_url? }
 4.  Question 2 Response (Set — step=1, asks team size)
 5.  Question 3 Response (Set — step=2, asks biggest pain)
 6.  Send Early Step Response (Respond to Webhook — returns message + next_step for steps 0–2)
-7.  Score Lead via Claude (HTTP POST → Anthropic API — prompt includes all 3 answers, returns { route, pain_summary, clarifying_question }, step=3 only)
-8.  Parse Claude Score (Code — extracts route/pain_summary/clarifying_question, merges with prospect context)
+7.  Score Lead via Claude (HTTP POST → Anthropic API /v1/messages, pa-anthropic HTTP Header Auth
+    — prompt includes all 3 answers, returns JSON { route, pain_summary, clarifying_question }
+    — uses $json.body?.pain_description || $json.body?.pain_point as fallback, step=3 only
+    ⚠️ NOTE: was originally a Langchain AI node — replaced 2026-04-10 because Langchain nodes require
+    "Anthropic API" credential type; pa-anthropic is "HTTP Header Auth" — incompatible)
+8.  Parse Claude Score (Code — reads $input.first().json.content?.[0]?.text, strips markdown fences,
+    parses JSON, extracts route/pain_summary/clarifying_question, merges with prospect context)
 9.  IF Hot Lead (IF — route = "hot")
-10. Write Hot Prospect to Airtable (HTTP POST → Airtable Prospects, outreach_status=pending, lead_source=website_chatbot, pa-airtable, continueOnFail)
+10. Write Hot Prospect to Airtable (HTTP POST → Airtable Prospects tbluEsKoQ2p49ktVq,
+    fields: business_type, team_size, biggest_operational_pain, lead_score_grade, lead_source=website_chatbot,
+    outreach_status=pending, pa-airtable, continueOnFail)
 11. Hot Response Data (Set — returns Calendly URL + personalised message referencing pain_summary)
 12. IF Borderline (IF — route = "borderline")
 13. Borderline Response Data (Set — returns clarifying_question from Claude)
@@ -715,6 +726,12 @@ Output: JSON { message, next_step, done, route?, calendly_url? }
 15. Send Response (Respond to Webhook — returns final JSON with CORS headers)
 
 Embed widget: docs/website-chatbot-embed.html — copy/paste before </body> tag
+Website widget features (live on phoenixautomation.ai):
+- Orange bubble (#E8520A) matching brand
+- Auto-popup teaser at 7s, auto-open at 13s
+- Local greeting (no n8n call for step 0 — avoids timing errors)
+- Close button in chat header
+- Calendly links made clickable automatically
 ```
 
 ---
@@ -842,6 +859,8 @@ business-agent-foundry/
 | ClickUp /folder/{id}/task 404 | `Route not found` from ClickUp API | `/folder/{id}/task` endpoint does not exist in ClickUp v2 | Use `/team/{team_id}/task?folder_ids[]={folder_id}` — PA team ID: `90141018999` |
 | Airtable checkbox formula invalid | `INVALID_FILTER_BY_FORMULA` | `{field}=FALSE()` is not valid Airtable formula syntax | Use `NOT({field})` for unchecked checkbox filter |
 | ClickUp nested folder creation fails | `Cannot POST /api/v2/folder/{id}/folder` | ClickUp v2 API does not support sub-folder creation — folders can only be created at space root | Always use `POST /api/v2/space/{space_id}/folder` — the Client Projects folder (90147969224) is a manual UI container only, not a parent via API |
+| Langchain AI node fails with HTTP Header Auth credential | `Credentials of type anthropicApi are not supported` | n8n Langchain AI nodes require "Anthropic API" credential type. `pa-anthropic` is "HTTP Header Auth" — works for HTTP Request nodes but NOT Langchain nodes | Replace Langchain AI nodes with HTTP Request nodes pointing to `https://api.anthropic.com/v1/messages` with `pa-anthropic` credential. Parse response via `$input.first().json.content?.[0]?.text` |
+| Remote Claude Code session blocks n8n API calls | n8n API calls time out or fail silently | Claude Code web/remote sessions run behind an egress proxy that only allows specific domains. `kaiashley.app.n8n.cloud` is not in the allowlist | All n8n workflow changes must be made via Python scripts run locally in Kai's VS Code terminal |
 
 ---
 
@@ -910,6 +929,9 @@ business-agent-foundry/
 | GitHub MCP tools scoped to business-agent-foundry only | Low — blocks direct pushes to phoenixautomation website repo | ⏳ Update MCP repo scope to include kaicodesai/phoenixautomation when access is needed | Kai/Haris |
 | Instantly 19 duplicate leads blocking HTML email test | personalization shows 0 chars despite successful exec | Instantly silently deduplicates on email; old test leads from same campaign cannot be deleted via API (returns count:0) | ⏳ Manual fix: delete duplicate leads in Instantly dashboard then re-run Outreach Agent | Kai |
 | Website chatbot not built | High — blueprint requires 24/7 AI qualifier before Typeform | ✅ RESOLVED 2026-04-03 — [PA] Website Chatbot built (EPMCxdqKOuwc6hzB, 15 nodes); embed widget at docs/website-chatbot-embed.html — Kai pastes snippet into website and activates workflow | Haris |
+| Website chatbot bot messages showing as empty grey circles | High — users saw no responses after each question | All n8n Set nodes (Greeting, Q2, Q3, Hot/Borderline/Cold Response Data) were completely empty — no fields configured. "Send Early Step Response" referenced `$json.message` which was undefined, returning `[{}]` | ✅ RESOLVED 2026-04-10 — all nodes configured with proper fields; Response Body set to `{{ JSON.stringify($json) }}` | Kai |
+| Website chatbot step 3 returning "Something went wrong" | High — leads couldn't complete qualification | "Score Lead via Claude" was a Langchain AI node requiring "Anthropic API" credential type; pa-anthropic is HTTP Header Auth — incompatible | ✅ RESOLVED 2026-04-10 — replaced with HTTP Request node calling Anthropic API directly; Parse Claude Score updated to read HTTP response format | Kai |
+| Chatbot hot leads not written to Airtable | High — leads booked calls but no Airtable record created | Write Hot Prospect to Airtable node had field names mismatched after Langchain replacement; Airtable Prospects table missing pain/score/source fields | ✅ RESOLVED 2026-04-10 — 3 new fields added (biggest_operational_pain, lead_score_grade, lead_source); n8n node field names aligned; E2E verified (record recRypnI7vsMlisJR) | Kai |
 | Credential auto-handoff gap — no detector when credentials arrive | High — Kai must manually set project_status=build.ready | ✅ RESOLVED 2026-04-03 — [PA] Credential Detector built (hbtSbm2pzrHX1QTn, 10 nodes); polls every 2h, auto-sets build.ready + emails Kai — Kai activates | Haris |
 | No mock client for end-to-end testing new use cases | Medium — no reference example for workflow-builder-agent | ✅ RESOLVED 2026-04-03 — docs/clients/sarahs-wellness-studio/ created (process-map.md + scope-of-work.md); Typeform program admission use case fully scoped | Haris |
 | Welcome email says "I'll send exact instructions shortly" — credential follow-up is NOT automated | High | ✅ RESOLVED 2026-03-26 — tool-specific step-by-step instructions now inline in welcome email; subject updated | Haris |
@@ -1052,6 +1074,44 @@ business-agent-foundry/
 ### Files changed this session
 - `PROJECT_OVERVIEW.md` — version 2.4, service_tier options corrected, Known Issues + TODO updated, Session 8 handoff
 - `docs/clients/brightline-property-management/e2e-test-report.md` — created (new)
+
+---
+
+## Session Handoff — 2026-04-10 (Session 11)
+**Worked by:** Kai + Claude (Claude Code web)
+
+### What was completed
+- **Website conversion optimisation** — 9 changes applied via Lovable prompt (higher price language replacing $1,500 mention, urgency mechanism, retainer-implied ongoing support, single highest-converting CTA)
+- **Chatbot widget embedded on phoenixautomation.ai** — complete widget in index.html before `</body>` tag; orange bubble (#E8520A), 7s teaser + 13s auto-open popup, local greeting, close button
+- **Chatbot empty messages fixed** — all n8n Set nodes (Greeting, Q2 Response, Q3 Response, Hot/Borderline/Cold Response Data) configured with proper fields; Response Body set to `{{ JSON.stringify($json) }}`
+- **Chatbot step 3 error fixed** — "Score Lead via Claude" Langchain AI node replaced with HTTP Request node (Langchain requires "Anthropic API" credential type; pa-anthropic is HTTP Header Auth — incompatible). Parse Claude Score node updated to read `$input.first().json.content?.[0]?.text` with markdown fence stripping
+- **Airtable Prospects table updated** — 3 new fields added: `biggest_operational_pain`, `lead_score_grade`, `lead_source`; chatbot n8n node field names aligned to match
+- **End-to-end chatbot pipeline verified** — hot lead flow created record `recRypnI7vsMlisJR` in Airtable Prospects. Full flow: phoenixautomation.ai widget → 3 questions → Claude scoring → Airtable write → Calendly booking link returned
+- **Branch merged to main** — all chatbot + website changes merged from `claude/project-status-client-readiness-c2Vy2` to `main` (commit `5268dd8`)
+- **PROJECT_OVERVIEW.md updated** — v4.7, chatbot fully documented, 3 new Known Issues resolved, Recurring Bugs updated, Prospects schema updated
+
+### What is in progress (not finished)
+- Nothing — all tasks from this session are complete
+
+### Blockers for next session
+- Instantly.ai: warmup_status=0, needs enabling manually in Instantly dashboard (Settings → Email Accounts → toggle warmup ON)
+- Instantly 19 duplicate leads need manual cleanup before Outreach Agent E2E can be re-tested
+- Lovable/phoenixautomation repo is private — future website changes require Kai to add GitHub PAT or use Lovable UI directly
+- Remote Claude Code sessions cannot call n8n API directly (egress proxy blocks kaiashley.app.n8n.cloud) — all future n8n changes must use local Python scripts
+
+### Next person should start with
+1. `git pull origin main` then read PROJECT_OVERVIEW.md
+2. **KAI:** Enable Instantly email warmup in Instantly dashboard (Settings → Email Accounts → warmup toggle)
+3. **KAI:** Delete 19 duplicate leads in Instantly dashboard, then re-run [PA] Outreach Agent to test HTML email personalisation
+4. **KAI:** Activate [PA] Outreach Agent (ID: Mib6RUtJ2IOaUZ4s) after Instantly cleanup + warmup enabled
+5. **KAI:** Activate pending workflows: Error Handler, Typeform Lead Qualification, Credential Follow-Up, Referral Trigger Agent, ClickUp Sync
+
+### Files changed this session
+- `PROJECT_OVERVIEW.md` — v4.7, chatbot fully operational, Prospects schema updated, Recurring Bugs + Known Issues updated
+- **n8n workflows updated (via local Python scripts — no repo file changes):**
+  - `[PA] Website Chatbot` (EPMCxdqKOuwc6hzB) — all Set nodes configured, Langchain→HTTP Request replacement, Parse Claude Score rewritten, Airtable node field names aligned
+- **phoenixautomation.ai (kaicodesai/phoenixautomation — private repo):**
+  - `index.html` — 9 conversion optimisations + full chatbot widget embedded (edited manually by Kai in Lovable)
 
 ---
 
