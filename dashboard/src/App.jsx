@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar'
 import Dashboard from './pages/Dashboard'
 import Pipeline from './pages/Pipeline'
 import Agents from './pages/Agents'
+import Financials from './pages/Financials'
 import Briefs from './pages/Briefs'
 import Settings from './pages/Settings'
 
@@ -16,6 +17,7 @@ export default function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/pipeline" element={<Pipeline />} />
             <Route path="/agents" element={<Agents />} />
+            <Route path="/financials" element={<Financials />} />
             <Route path="/briefs" element={<Briefs />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>

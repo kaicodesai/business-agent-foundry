@@ -9,6 +9,7 @@ import {
   countHotLeads,
 } from '../lib/airtable'
 import { fetchWorkflows, mergeWorkflowData, timeAgo } from '../lib/n8n'
+import { fetchTokenLog, weekSavings, formatUSD } from '../lib/tokenLog'
 
 const PIPELINE_STAGES = [
   'new_lead', 'qualified', 'call_complete', 'scoping',
@@ -109,7 +110,7 @@ function PipelineLane({ clients }) {
 
 // ── KAI'S VIEW ─────────────────────────────────────────────────────────────
 
-function KaiView({ clients, prospects, actionItems, workflows }) {
+function KaiView({ clients, prospects, actionItems, workflows, tokenSavings }) {
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long', month: 'long', day: 'numeric',
   })
@@ -119,9 +120,6 @@ function KaiView({ clients, prospects, actionItems, workflows }) {
   const newLeads = countNewLeadsThisWeek(prospects)
   const activeClients = countActiveClients(clients)
   const needsAction = actionItems.length
-
-  // Token savings — read from mock (real data would come from briefs/token-log.json)
-  const tokenSavings = '$12.48'
 
   return (
     <div className="space-y-6">
@@ -355,20 +353,23 @@ export default function Dashboard() {
   const [prospects, setProspects] = useState([])
   const [actionItems, setActionItems] = useState([])
   const [workflows, setWorkflows] = useState([])
+  const [tokenSavings, setTokenSavings] = useState('—')
   const [loading, setLoading] = useState(true)
 
   const load = async () => {
     setLoading(true)
-    const [c, p, a, wf] = await Promise.all([
+    const [c, p, a, wf, tl] = await Promise.all([
       fetchClients(),
       fetchProspects(),
       fetchActionItems(),
       fetchWorkflows(),
+      fetchTokenLog(),
     ])
     setClients(c)
     setProspects(p)
     setActionItems(a)
     setWorkflows(mergeWorkflowData(wf))
+    setTokenSavings(formatUSD(weekSavings(tl)))
     setLoading(false)
   }
 
@@ -405,6 +406,7 @@ export default function Dashboard() {
             prospects={prospects}
             actionItems={actionItems}
             workflows={workflows}
+            tokenSavings={tokenSavings}
           />
         ) : (
           <HowardView prospects={prospects} />
