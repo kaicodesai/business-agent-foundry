@@ -1,147 +1,165 @@
-// Token log reader — fetches briefs/token-log.json from the repo root
-// In production (Vercel), this file is served as a static asset from /public/
-// In dev, Vite serves it from the public/ folder
+// Token savings tracker — Pro subscription vs API credit model
 //
-// Agents write to briefs/token-log.json in the repo root (via terminal).
-// To surface on the dashboard, the file is symlinked/copied to dashboard/public/token-log.json
-// as part of the build process, or fetched directly via the GitHub raw URL.
+// Concept: You run Claude Code on a Claude Pro subscription (flat $20/month).
+// Without Pro, every terminal session would cost API credits at standard pricing:
+//   claude-sonnet-4-6: $3.00/MTok input, $15.00/MTok output
+//
+// Savings = API-equivalent cost of all sessions - Pro subscription cost (amortized)
+//
+// The log is written manually after each session by reading the token count
+// Claude Code shows at the end. Stored in briefs/token-log.json, served as
+// a static asset from dashboard/public/token-log.json.
 
-const HOURLY_RATE = 50 // assumed $ per hour for comparison
+const PRICING = {
+  input_per_mtok:  3.00,   // $ per million input tokens (claude-sonnet-4-6)
+  output_per_mtok: 15.00,  // $ per million output tokens
+}
 
-// Fetch the log — tries /token-log.json (public asset), falls back to mock
+const PRO_MONTHLY = 20.00  // Claude Pro flat monthly cost
+
+// ── Fetch ─────────────────────────────────────────────────────────────────
+
 export async function fetchTokenLog() {
   try {
     const res = await fetch('/token-log.json')
     if (!res.ok) throw new Error(`${res.status}`)
     const data = await res.json()
-    return data.runs || []
+    return {
+      sessions: data.sessions || [],
+      subscription: data.subscription || { monthly_cost_usd: PRO_MONTHLY },
+      pricing: data._pricing || PRICING,
+    }
   } catch {
-    // Return the seed data as fallback (matches briefs/token-log.json)
-    return MOCK_RUNS
+    return { sessions: MOCK_SESSIONS, subscription: { monthly_cost_usd: PRO_MONTHLY }, pricing: PRICING }
   }
 }
 
-// Total savings across all runs
-export function totalSavings(runs) {
-  return runs.reduce((sum, r) => sum + (r.saving_usd || 0), 0)
+// ── Calculations ──────────────────────────────────────────────────────────
+
+// API-equivalent cost for a single session
+export function sessionApiCost(session) {
+  if (session.api_equivalent_usd != null) return session.api_equivalent_usd
+  const inputCost  = (session.tokens_input  / 1_000_000) * PRICING.input_per_mtok
+  const outputCost = (session.tokens_output / 1_000_000) * PRICING.output_per_mtok
+  return inputCost + outputCost
 }
 
-// This week's savings
-export function weekSavings(runs) {
-  const weekAgo = Date.now() - 7 * 86400000
-  return runs
-    .filter((r) => new Date(r.ran_at).getTime() > weekAgo)
-    .reduce((sum, r) => sum + (r.saving_usd || 0), 0)
-}
-
-// This month's savings
-export function monthSavings(runs) {
+// Sessions in the current calendar month
+export function sessionsThisMonth(sessions) {
   const now = new Date()
-  return runs
-    .filter((r) => {
-      const d = new Date(r.ran_at)
-      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
-    })
-    .reduce((sum, r) => sum + (r.saving_usd || 0), 0)
+  return sessions.filter((s) => {
+    const d = new Date(s.date)
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
+  })
 }
 
-// Savings by agent
-export function savingsByAgent(runs) {
-  const map = {}
-  for (const r of runs) {
-    if (!map[r.agent]) map[r.agent] = { agent: r.agent, runs: 0, saving_usd: 0, cost_usd: 0 }
-    map[r.agent].runs += 1
-    map[r.agent].saving_usd += r.saving_usd || 0
-    map[r.agent].cost_usd += r.cost_usd || 0
-  }
-  return Object.values(map).sort((a, b) => b.saving_usd - a.saving_usd)
+// Sessions in the last 7 days
+export function sessionsThisWeek(sessions) {
+  const weekAgo = Date.now() - 7 * 86400000
+  return sessions.filter((s) => new Date(s.date).getTime() > weekAgo)
+}
+
+// Total API-equivalent cost across a set of sessions
+export function totalApiEquivalent(sessions) {
+  return sessions.reduce((sum, s) => sum + sessionApiCost(s), 0)
+}
+
+// Total tokens across sessions
+export function totalTokens(sessions) {
+  return sessions.reduce(
+    (acc, s) => ({
+      input:  acc.input  + (s.tokens_input  || 0),
+      output: acc.output + (s.tokens_output || 0),
+    }),
+    { input: 0, output: 0 }
+  )
+}
+
+// Pro cost amortized to match the date range of given sessions
+// If sessions span < 1 month, pro cost = (days spanned / 30) × monthly_cost
+export function proRateCost(sessions, monthlyUsd = PRO_MONTHLY) {
+  if (!sessions.length) return monthlyUsd
+  const dates = sessions.map((s) => new Date(s.date).getTime())
+  const spanDays = Math.ceil((Math.max(...dates) - Math.min(...dates)) / 86400000) + 1
+  // Cap at 30 days (one billing cycle)
+  return Math.min(spanDays / 30, 1) * monthlyUsd
+}
+
+// Net savings = API equivalent - Pro subscription cost (for the same period)
+export function netSavings(sessions, monthlyUsd = PRO_MONTHLY) {
+  const apiCost = totalApiEquivalent(sessions)
+  const proCost = proRateCost(sessions, monthlyUsd)
+  return apiCost - proCost
+}
+
+// Monthly savings: this month's API equivalent - full month Pro cost
+export function monthlySavings(sessions, monthlyUsd = PRO_MONTHLY) {
+  const monthly = sessionsThisMonth(sessions)
+  return totalApiEquivalent(monthly) - monthlyUsd
 }
 
 export function formatUSD(n) {
-  return `$${Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  const abs = Math.abs(n)
+  const str = abs.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  return n < 0 ? `-$${str}` : `$${str}`
 }
 
-// ── Mock data (mirrors briefs/token-log.json seed) ──────────────────────────
+export function formatTokens(n) {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000)     return `${(n / 1_000).toFixed(0)}K`
+  return `${n}`
+}
 
-const MOCK_RUNS = [
+// ── Mock data (mirrors briefs/token-log.json) ─────────────────────────────
+
+const MOCK_SESSIONS = [
   {
-    id: 'workflow-builder-agent_2026-04-03T09:15:00Z',
-    agent: 'workflow-builder-agent',
-    task: 'Built Onboarding Automation workflow for brightline-property-management',
-    client_slug: 'brightline-property-management',
-    tokens_input: 4200, tokens_output: 3800,
-    model: 'claude-sonnet-4-6',
-    cost_usd: 0.061, time_saved_minutes: 180, hourly_rate_usd: 50, saving_usd: 149.94,
-    ran_at: '2026-04-03T09:15:00Z',
+    id: 'session_2026-04-01_onboarding-build',
+    date: '2026-04-01',
+    task: 'Built Onboarding Automation — 51 nodes, ClickUp seeding, dual welcome emails',
+    tokens_input: 142000, tokens_output: 38000,
+    model: 'claude-sonnet-4-6', api_equivalent_usd: 0.996,
   },
   {
-    id: 'proposal-drafting-agent_2026-04-05T11:30:00Z',
-    agent: 'proposal-drafting-agent',
-    task: "Drafted proposal for Sarah's Wellness Studio",
-    client_slug: 'sarahs-wellness-studio',
-    tokens_input: 2100, tokens_output: 1900,
-    model: 'claude-sonnet-4-6',
-    cost_usd: 0.030, time_saved_minutes: 60, hourly_rate_usd: 50, saving_usd: 49.97,
-    ran_at: '2026-04-05T11:30:00Z',
+    id: 'session_2026-04-03_scoping-workflows',
+    date: '2026-04-03',
+    task: 'Built Scoping Agent, Scope Approval, Workflow Builder Agent',
+    tokens_input: 218000, tokens_output: 61000,
+    model: 'claude-sonnet-4-6', api_equivalent_usd: 1.569,
   },
   {
-    id: 'qa-agent_2026-04-06T14:00:00Z',
-    agent: 'qa-agent',
-    task: 'QA checklist run for brightline-property-management',
-    client_slug: 'brightline-property-management',
-    tokens_input: 3500, tokens_output: 2200,
-    model: 'claude-sonnet-4-6',
-    cost_usd: 0.043, time_saved_minutes: 90, hourly_rate_usd: 50, saving_usd: 74.96,
-    ran_at: '2026-04-06T14:00:00Z',
+    id: 'session_2026-04-05_proposal-outreach',
+    date: '2026-04-05',
+    task: 'Drafted proposals for 2 leads + personalised outreach sequences',
+    tokens_input: 89000, tokens_output: 34000,
+    model: 'claude-sonnet-4-6', api_equivalent_usd: 0.777,
   },
   {
-    id: 'process-mapping-agent_2026-04-07T10:00:00Z',
-    agent: 'process-mapping-agent',
-    task: 'Process map from assessment call — Meridian Consulting Group',
-    client_slug: 'meridian-consulting-group',
-    tokens_input: 1800, tokens_output: 2400,
-    model: 'claude-sonnet-4-6',
-    cost_usd: 0.031, time_saved_minutes: 45, hourly_rate_usd: 50, saving_usd: 37.47,
-    ran_at: '2026-04-07T10:00:00Z',
+    id: 'session_2026-04-07_process-mapping',
+    date: '2026-04-07',
+    task: 'Process map from Meridian Consulting assessment call + scope of work',
+    tokens_input: 74000, tokens_output: 28000,
+    model: 'claude-sonnet-4-6', api_equivalent_usd: 0.642,
   },
   {
-    id: 'outreach-agent_2026-04-08T07:05:00Z',
-    agent: 'outreach-agent',
-    task: 'Personalised outreach sequences for 12 new prospects',
-    client_slug: null,
-    tokens_input: 5200, tokens_output: 4100,
-    model: 'claude-sonnet-4-6',
-    cost_usd: 0.069, time_saved_minutes: 120, hourly_rate_usd: 50, saving_usd: 99.93,
-    ran_at: '2026-04-08T07:05:00Z',
+    id: 'session_2026-04-08_lead-gen-fix',
+    date: '2026-04-08',
+    task: 'Fixed Lead Generation — Hunter.io + Tavily live search integration',
+    tokens_input: 163000, tokens_output: 44000,
+    model: 'claude-sonnet-4-6', api_equivalent_usd: 1.149,
   },
   {
-    id: 'workflow-builder-agent_2026-04-09T09:30:00Z',
-    agent: 'workflow-builder-agent',
-    task: 'Built Lead Qualification + Status Update workflows for sarahs-wellness-studio',
-    client_slug: 'sarahs-wellness-studio',
-    tokens_input: 6100, tokens_output: 5200,
-    model: 'claude-sonnet-4-6',
-    cost_usd: 0.085, time_saved_minutes: 240, hourly_rate_usd: 50, saving_usd: 199.92,
-    ran_at: '2026-04-09T09:30:00Z',
+    id: 'session_2026-04-10_chatbot-live',
+    date: '2026-04-10',
+    task: 'Website Chatbot — full pipeline operational, E2E tested, live',
+    tokens_input: 198000, tokens_output: 52000,
+    model: 'claude-sonnet-4-6', api_equivalent_usd: 1.374,
   },
   {
-    id: 'status-update-agent_2026-04-10T09:00:00Z',
-    agent: 'status-update-agent',
-    task: 'Weekly status emails to 2 active clients',
-    client_slug: null,
-    tokens_input: 1200, tokens_output: 1800,
-    model: 'claude-sonnet-4-6',
-    cost_usd: 0.022, time_saved_minutes: 30, hourly_rate_usd: 50, saving_usd: 24.98,
-    ran_at: '2026-04-10T09:00:00Z',
-  },
-  {
-    id: 'proposal-drafting-agent_2026-04-10T14:20:00Z',
-    agent: 'proposal-drafting-agent',
-    task: 'Drafted proposal for RiverBend Dental',
-    client_slug: 'riverbend-dental',
-    tokens_input: 2300, tokens_output: 2100,
-    model: 'claude-sonnet-4-6',
-    cost_usd: 0.032, time_saved_minutes: 60, hourly_rate_usd: 50, saving_usd: 49.97,
-    ran_at: '2026-04-10T14:20:00Z',
+    id: 'session_2026-04-13_dashboard-build',
+    date: '2026-04-13',
+    task: 'Built full KAI OS dashboard — light UI redesign, Vercel deploy, Financials',
+    tokens_input: 412000, tokens_output: 118000,
+    model: 'claude-sonnet-4-6', api_equivalent_usd: 3.006,
   },
 ]

@@ -9,7 +9,7 @@ import {
   countHotLeads,
 } from '../lib/airtable'
 import { fetchWorkflows, mergeWorkflowData, timeAgo } from '../lib/n8n'
-import { fetchTokenLog, weekSavings, formatUSD } from '../lib/tokenLog'
+import { fetchTokenLog, sessionsThisWeek, totalApiEquivalent, formatUSD } from '../lib/tokenLog'
 
 const PIPELINE_STAGES = [
   'new_lead', 'qualified', 'call_complete', 'scoping',
@@ -134,7 +134,7 @@ function KaiView({ clients, prospects, actionItems, workflows, tokenSavings }) {
         <StatCard label="New Leads (7d)" value={newLeads} trend={2} />
         <StatCard label="Active Clients" value={activeClients} />
         <StatCard label="Needs Your Action" value={needsAction} />
-        <StatCard label="Token Savings (7d)" value={tokenSavings} />
+        <StatCard label="API Credits Saved (7d)" value={tokenSavings} />
       </div>
 
       {/* Row 2 — Pipeline */}
@@ -369,7 +369,7 @@ export default function Dashboard() {
     setProspects(p)
     setActionItems(a)
     setWorkflows(mergeWorkflowData(wf))
-    setTokenSavings(formatUSD(weekSavings(tl)))
+    setTokenSavings(formatUSD(totalApiEquivalent(sessionsThisWeek(tl.sessions || tl))))
     setLoading(false)
   }
 
