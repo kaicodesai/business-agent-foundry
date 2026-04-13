@@ -198,13 +198,18 @@ async function airtableFetch(url, options = {}) {
   return res.json()
 }
 
-async function fetchAllRecords(tableId) {
+// sortField must be an actual field name that exists in the table.
+// Clients: no reliable date field for sort — use default Airtable order (creation time, newest first).
+// Prospects: sort by sourced_at desc.
+async function fetchAllRecords(tableId, sortField = null) {
   let all = []
   let offset = null
   do {
     const url = new URL(`${BASE_URL}/${tableId}`)
-    url.searchParams.set('sort[0][field]', 'created_at')
-    url.searchParams.set('sort[0][direction]', 'desc')
+    if (sortField) {
+      url.searchParams.set('sort[0][field]', sortField)
+      url.searchParams.set('sort[0][direction]', 'desc')
+    }
     if (offset) url.searchParams.set('offset', offset)
     const data = await airtableFetch(url.toString())
     all = all.concat(data.records || [])
@@ -221,7 +226,8 @@ export async function fetchClients() {
     return MOCK_CLIENTS
   }
   try {
-    return await fetchAllRecords(CLIENTS_TABLE)
+    // No sort field — Airtable default order is creation time (newest first)
+    return await fetchAllRecords(CLIENTS_TABLE, null)
   } catch (err) {
     console.error('[airtable] fetchClients failed:', err)
     return MOCK_CLIENTS
@@ -234,7 +240,8 @@ export async function fetchProspects() {
     return MOCK_PROSPECTS
   }
   try {
-    return await fetchAllRecords(PROSPECTS_TABLE)
+    // Sort by sourced_at desc — this field exists in the Prospects table
+    return await fetchAllRecords(PROSPECTS_TABLE, 'sourced_at')
   } catch (err) {
     console.error('[airtable] fetchProspects failed:', err)
     return MOCK_PROSPECTS
