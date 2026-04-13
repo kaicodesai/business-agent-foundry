@@ -1,0 +1,51 @@
+{
+  "businesses": [
+    {
+      "id": "phoenix-automation",
+      "name": "Phoenix Automation",
+      "slug": "phoenix-automation",
+      "owner": "Kai Edwards",
+      "email": "kai@phoenixautomation.ai",
+      "website": "https://phoenixautomation.ai",
+      "airtable": {
+        "base_id": "appMLHig3CN7WW0iW",
+        "clients_table": "tblfvqqyYukRJQYmQ",
+        "prospects_table": "tbluEsKoQ2p49ktVq",
+        "automation_logs_table": "tblL7tDAh1KTLtwpt"
+      },
+      "n8n": {
+        "base_url": "https://kaiashley.app.n8n.cloud",
+        "api_key_credential": "pa-n8n-api"
+      },
+      "clickup": {
+        "team_id": "90141018999",
+        "space_id": "90144568071",
+        "space_name": "Phoenix Automation",
+        "folder_client_projects": "90147969224",
+        "folder_internal": "90147969240",
+        "list_lead_management": "901414699479",
+        "list_operations": "901414699480"
+      },
+      "brand": {
+        "primary_color": "#FF6B35",
+        "secondary_color": "#1B2A4A"
+      },
+      "workflows": [
+        { "name": "Onboarding Automation", "id": "7RsRJIqBHFpWZoWM", "description": "Fires on payment confirmation — creates ClickUp project, sends welcome email, writes Airtable record" },
+        { "name": "Lead Generation", "id": "YO3f5CL9bYbLTBgw", "description": "Daily Hunter.io + Tavily search → ICP-matched prospects written to Airtable" },
+        { "name": "Outreach Agent", "id": "Mib6RUtJ2IOaUZ4s", "description": "Personalised cold email sequences queued in Instantly.ai from Airtable prospects" },
+        { "name": "Status Update Agent", "id": "94DpGwRPWGRPqCVU", "description": "Weekly project status emails to active clients from ClickUp data" },
+        { "name": "Referral Trigger Agent", "id": "ka6GesSfWVo2FZtU", "description": "Automated referral request 30 days post-launch, queued in Instantly.ai" },
+        { "name": "ClickUp Sync", "id": "uiTwYIUk6nIFwLtX", "description": "Syncs Airtable project_status to ClickUp task statuses every 2 hours" },
+        { "name": "Reporting Agent", "id": "scj61gBYYWpQydMC", "description": "Monthly performance reports for retainer clients — auto-generated and emailed" },
+        { "name": "Typeform Lead Qualification", "id": "kXxN7O77ongTMwKG", "description": "Scores inbound Typeform leads via Claude, emails Kai if Grade A/B" },
+        { "name": "Credential Follow-Up", "id": "uTnQAq5VlmsHYih4", "description": "Daily check for stalled onboarding clients — alerts Kai if credentials not submitted >48h" },
+        { "name": "Credential Detector", "id": "hbtSbm2pzrHX1QTn", "description": "Every 2h — detects when n8n_api_key is populated and auto-sets project_status to build.ready" },
+        { "name": "Website Chatbot", "id": "EPMCxdqKOuwc6hzB", "description": "Stateless 3-question lead scoring chatbot on phoenixautomation.ai — hot leads booked to Calendly" },
+        { "name": "Scoping Agent", "id": "E24KwVMam1e8bbjT", "description": "Polls call_complete clients → Claude generates scope → emails Kai with Approve button" },
+        { "name": "Scope Approval", "id": "UB6ZdrnYpJlYfxD4", "description": "GET /approve-scope — locks scope, generates proposal draft, emails Kai" },
+        { "name": "Workflow Builder Agent", "id": "fy8OuUEGyyWhYzWC", "description": "Polls build.ready clients → generates n8n workflow JSON → deploys to client n8n → sets build_review" }
+      ]
+    }
+  ]
+}
