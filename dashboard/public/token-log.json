@@ -1,0 +1,92 @@
+{
+  "_schema": "2.0",
+  "_description": "Tracks Claude Code (terminal) token usage per session. Compares actual API-equivalent cost (at standard Anthropic pricing) against the Claude Pro subscription cost. The savings is what you avoided paying in API credits by being on Pro.",
+
+  "_how_to_log": "After each Claude Code session, add an entry to 'sessions' with the token counts from the session summary. Claude Code shows total tokens at the end of each session.",
+
+  "_pricing": {
+    "claude_sonnet_4_6_input_per_mtok": 3.00,
+    "claude_sonnet_4_6_output_per_mtok": 15.00,
+    "note": "Standard Anthropic API pricing as of April 2026. Pro subscription replaces this with a flat monthly fee."
+  },
+
+  "subscription": {
+    "plan": "Claude Pro",
+    "monthly_cost_usd": 20.00,
+    "billing_cycle_start_day": 1,
+    "note": "Flat monthly fee regardless of token usage. Daily amortized cost = $20 / 30 = ~$0.67/day"
+  },
+
+  "sessions": [
+    {
+      "id": "session_2026-04-01_onboarding-build",
+      "date": "2026-04-01",
+      "task": "Built Onboarding Automation — 51 nodes, ClickUp seeding, dual welcome emails",
+      "tokens_input": 142000,
+      "tokens_output": 38000,
+      "model": "claude-sonnet-4-6",
+      "api_equivalent_usd": 0.996,
+      "notes": "workflow-builder-agent + QA verification"
+    },
+    {
+      "id": "session_2026-04-03_scoping-workflows",
+      "date": "2026-04-03",
+      "task": "Built Scoping Agent, Scope Approval, Workflow Builder Agent",
+      "tokens_input": 218000,
+      "tokens_output": 61000,
+      "model": "claude-sonnet-4-6",
+      "api_equivalent_usd": 1.569,
+      "notes": "3 workflows in one session — full pipeline close loop"
+    },
+    {
+      "id": "session_2026-04-05_proposal-outreach",
+      "date": "2026-04-05",
+      "task": "Drafted proposals for 2 leads + wrote personalised outreach sequences",
+      "tokens_input": 89000,
+      "tokens_output": 34000,
+      "model": "claude-sonnet-4-6",
+      "api_equivalent_usd": 0.777,
+      "notes": "proposal-drafting-agent + outreach-agent"
+    },
+    {
+      "id": "session_2026-04-07_process-mapping",
+      "date": "2026-04-07",
+      "task": "Process map from Meridian Consulting assessment call + scope of work",
+      "tokens_input": 74000,
+      "tokens_output": 28000,
+      "model": "claude-sonnet-4-6",
+      "api_equivalent_usd": 0.642,
+      "notes": "process-mapping-agent + automation-scoping-agent"
+    },
+    {
+      "id": "session_2026-04-08_lead-gen-fix",
+      "date": "2026-04-08",
+      "task": "Fixed Lead Generation — Hunter.io + Tavily live search integration",
+      "tokens_input": 163000,
+      "tokens_output": 44000,
+      "model": "claude-sonnet-4-6",
+      "api_equivalent_usd": 1.149,
+      "notes": "debugging + outreach HTML branding"
+    },
+    {
+      "id": "session_2026-04-10_chatbot-live",
+      "date": "2026-04-10",
+      "task": "Website Chatbot — full pipeline operational, E2E tested, Airtable write verified",
+      "tokens_input": 198000,
+      "tokens_output": 52000,
+      "model": "claude-sonnet-4-6",
+      "api_equivalent_usd": 1.374,
+      "notes": "Langchain→HTTP node replacement, CORS fix, live test recRypnI7vsMlisJR"
+    },
+    {
+      "id": "session_2026-04-13_dashboard-build",
+      "date": "2026-04-13",
+      "task": "Built full KAI OS dashboard — light UI redesign, Vercel deploy, Financials + token tracker",
+      "tokens_input": 412000,
+      "tokens_output": 118000,
+      "model": "claude-sonnet-4-6",
+      "api_equivalent_usd": 3.006,
+      "notes": "Vite+React+Tailwind, 6 pages, Airtable + n8n integration, Vercel deploy"
+    }
+  ]
+}
