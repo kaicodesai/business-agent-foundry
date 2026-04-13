@@ -3,18 +3,29 @@ import TopBar from '../components/TopBar'
 import { fetchClients } from '../lib/airtable'
 
 const STAGES = [
-  'new_lead', 'qualified', 'call_complete', 'scoping',
-  'scope_review', 'onboarding', 'build.ready', 'building',
-  'build_review', 'qa.in_progress', 'qa.pass', 'live', 'test-complete',
+  'lead', 'proposal_sent', 'onboarding.in_progress', 'onboarding.stalled',
+  'build.ready', 'build.in_progress', 'build.blocked', 'build.complete',
+  'qa.in_progress', 'qa.pass', 'qa.fail', 'activation.pending', 'live', 'test-complete',
 ]
 
 const STAGE_LABELS = {
-  new_lead: 'New Lead', qualified: 'Qualified', call_complete: 'Call Done',
-  scoping: 'Scoping', scope_review: 'Scope Review', onboarding: 'Onboarding',
-  'build.ready': 'Build Ready', building: 'Building', build_review: 'Build Review',
-  'qa.in_progress': 'QA In Progress', 'qa.pass': 'QA Pass', live: 'Live',
-  'test-complete': 'Test Complete',
+  'lead':                   'Lead',
+  'proposal_sent':          'Proposal Sent',
+  'onboarding.in_progress': 'Onboarding',
+  'onboarding.stalled':     'Stalled',
+  'build.ready':            'Build Ready',
+  'build.in_progress':      'Building',
+  'build.blocked':          'Blocked',
+  'build.complete':         'Built',
+  'qa.in_progress':         'QA',
+  'qa.pass':                'QA Pass',
+  'qa.fail':                'QA Fail',
+  'activation.pending':     'Activating',
+  'live':                   'Live',
+  'test-complete':          'Test Done',
 }
+
+const WARN_STAGES = new Set(['onboarding.stalled', 'build.blocked', 'qa.fail'])
 
 function daysSince(iso) {
   if (!iso) return 0
@@ -109,7 +120,11 @@ export default function Pipeline() {
     setLoading(false)
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+    const id = setInterval(load, 60000)
+    return () => clearInterval(id)
+  }, [])
 
   const byStage = {}
   for (const s of STAGES) byStage[s] = []
@@ -130,14 +145,19 @@ export default function Pipeline() {
           <div className="flex gap-4 min-w-max pb-4">
             {STAGES.map((stage) => {
               const cards = byStage[stage] || []
+              const isWarn = WARN_STAGES.has(stage)
               return (
                 <div key={stage} className="w-44 flex-shrink-0">
                   {/* Column header */}
                   <div className="flex items-center justify-between mb-3 px-1">
-                    <span className="text-[10px] uppercase tracking-widest font-semibold text-text-muted">
+                    <span className={`text-[10px] uppercase tracking-widest font-semibold truncate ${isWarn ? 'text-error' : 'text-text-muted'}`}>
                       {STAGE_LABELS[stage]}
                     </span>
-                    <span className="badge-orange text-[10px] px-1.5 py-0">{cards.length}</span>
+                    {cards.length > 0 && (
+                      <span className={`text-[10px] px-1.5 py-0 ml-1 ${isWarn ? 'badge-error' : 'badge-orange'}`}>
+                        {cards.length}
+                      </span>
+                    )}
                   </div>
 
                   {/* Cards */}
@@ -146,20 +166,20 @@ export default function Pipeline() {
                       <div className="h-12 rounded-card border-2 border-dashed border-border" />
                     )}
                     {cards.map((c) => {
-                      const days = daysSince(c.fields?.created_at)
+                      const days = daysSince(c.createdTime || c.fields?.created_at)
                       return (
                         <button
                           key={c.id}
                           onClick={() => setSelected(c)}
-                          className="w-full text-left bg-surface border border-border rounded-card shadow-card p-3 hover:shadow-card-hover hover:border-primary/30 transition-all duration-200"
+                          className={`w-full text-left bg-surface border rounded-card shadow-card p-3 hover:shadow-card-hover transition-all duration-200 ${isWarn ? 'border-error/30 hover:border-error/50' : 'border-border hover:border-primary/30'}`}
                         >
                           <div className="flex items-center gap-2 mb-1">
-                            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${stageDot(days)}`} />
+                            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isWarn ? 'bg-error' : stageDot(days)}`} />
                             <span className="text-xs font-semibold text-text-primary leading-tight">
                               {c.fields?.company_name}
                             </span>
                           </div>
-                          <p className="text-[11px] text-text-muted pl-4">{days}d in stage</p>
+                          <p className="text-[11px] text-text-muted pl-4">{days > 0 ? `${days}d` : 'today'}</p>
                         </button>
                       )
                     })}

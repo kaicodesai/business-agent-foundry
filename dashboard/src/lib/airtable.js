@@ -264,12 +264,19 @@ export async function fetchActionItems() {
   for (const c of clients) {
     const name = c.fields?.company_name || 'Unknown'
     const status = c.fields?.project_status
-    if (status === 'build_review') {
+    // Real Airtable project_status values from schema
+    if (status === 'build.complete') {
       items.push({ id: c.id, label: `Review workflows for ${name}`, type: 'build_review' })
-    } else if (status === 'scope_review') {
-      items.push({ id: c.id, label: `Approve scope for ${name}`, type: 'scope_review' })
     } else if (status === 'qa.pass') {
       items.push({ id: c.id, label: `Activate ${name} — QA passed`, type: 'qa_pass' })
+    } else if (status === 'activation.pending') {
+      items.push({ id: c.id, label: `Activate ${name} — ready to go live`, type: 'activation' })
+    } else if (status === 'onboarding.stalled') {
+      items.push({ id: c.id, label: `Follow up: ${name} stalled on credentials`, type: 'stalled' })
+    } else if (status === 'build.blocked') {
+      items.push({ id: c.id, label: `Unblock build: ${name}`, type: 'blocked' })
+    } else if (status === 'qa.fail') {
+      items.push({ id: c.id, label: `QA failed — review fixes for ${name}`, type: 'qa_fail' })
     } else if (c.fields?.overdue_flagged_at) {
       items.push({ id: c.id, label: `Follow up: ${name} stalled`, type: 'overdue' })
     }
@@ -286,9 +293,16 @@ export function countNewLeadsThisWeek(prospects) {
 }
 
 export function countActiveClients(clients) {
-  const inactive = new Set(['cancelled', 'churned', 'lead', 'new_lead', 'closed.no_deal'])
-  return clients.filter((c) => !inactive.has(c.fields?.project_status)).length
+  // Active = any status that represents real work in progress
+  const active = new Set([
+    'onboarding.in_progress', 'onboarding.stalled',
+    'build.ready', 'build.in_progress', 'build.blocked', 'build.complete',
+    'qa.in_progress', 'qa.pass', 'qa.fail',
+    'activation.pending', 'live',
+  ])
+  return clients.filter((c) => active.has(c.fields?.project_status)).length
 }
+
 
 export function countHotLeads(prospects) {
   return prospects.filter((p) => ['A', 'B'].includes(p.fields?.lead_score_grade)).length

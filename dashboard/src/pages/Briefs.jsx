@@ -1,155 +1,342 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import TopBar from '../components/TopBar'
+import {
+  fetchClients,
+  fetchProspects,
+  fetchActionItems,
+  countNewLeadsThisWeek,
+  countActiveClients,
+  countHotLeads,
+} from '../lib/airtable'
+import { fetchWorkflows, mergeWorkflowData, timeAgo } from '../lib/n8n'
+import {
+  fetchTokenLog,
+  monthlySavings,
+  sessionsThisMonth,
+  totalApiEquivalent,
+  formatUSD,
+} from '../lib/tokenLog'
 
-const MOCK_BRIEFS = [
-  {
-    id: 'b1',
-    title: 'Lead Generation Agent Brief',
-    date: '2026-04-10',
-    tokens_saved: 1840,
-    content: `# Lead Generation Agent Brief
-
-## Objective
-Source 30–50 new ICP-matched prospects per day from Hunter.io and Tavily live web search.
-
-## ICP Criteria
-- Job titles: Owner, Founder, Director, CEO
-- Team size: 5–50 employees
-- Industries: Professional Services, Trades, Healthcare, Retail
-
-## Workflow
-1. Tavily Search runs 3 real-time Google searches per run
-2. GPT-4o-mini extracts ICP company domains from live results
-3. Hunter.io domain-search finds email addresses
-4. Normalize Leads filters to ICP titles and skips no-name/no-title contacts
-5. Write to Airtable Prospects table with source = 'hunter'
-
-## Output
-Each run adds ~30–50 new prospect records to Airtable with outreach_status = pending.
-
-## Known Issues
-- Duplicate checking relies on email deduplication
-- Apollo.io replaced with Hunter.io (April 2026)
-`,
-  },
-  {
-    id: 'b2',
-    title: 'Website Chatbot Brief',
-    date: '2026-04-10',
-    tokens_saved: 2100,
-    content: `# Website Chatbot Brief
-
-## Objective
-Convert website visitors into qualified leads via a 3-question chatbot on phoenixautomation.ai.
-
-## Flow
-1. User opens chat (auto-popup at 13s)
-2. Bot asks: business size → biggest pain → timeline/budget signal
-3. Claude scores lead: hot / borderline / cold
-4. Hot → write Airtable Prospect + return Calendly link
-5. Cold → return nurture message
-6. Borderline → ask clarifying question
-
-## Live Configuration
-- Webhook: POST /website-chatbot
-- Airtable fields written: biggest_operational_pain, lead_score_grade, lead_source
-- Calendly URL: https://calendly.com/phoenixautomation/assessment
-
-## E2E Test Result
-✅ PASS — 2026-04-10 — record recRypnI7vsMlisJR created in Airtable Prospects
-`,
-  },
-  {
-    id: 'b3',
-    title: 'Onboarding Automation Brief',
-    date: '2026-03-27',
-    tokens_saved: 3200,
-    content: `# Onboarding Automation Brief
-
-## Objective
-Fully automated client onboarding on payment confirmation — zero manual steps.
-
-## Trigger
-POST /payment-confirmed webhook
-
-## Steps
-1. Create ClickUp folder + 4 lists (Onboarding, Build, QA, Live)
-2. Seed 23 tasks across all lists
-3. Write Airtable Clients record
-4. Send welcome email to client (includes n8n setup instructions)
-5. Send internal summary to Kai
-6. Write all clickup_task_* IDs back to Airtable
-
-## Email Template
-Subject: "Welcome to Phoenix Automation — action required before we can start"
-Includes: n8n account setup steps (sign up → create API key → reply with instance URL + key)
-
-## Test Record
-✅ brightline-property-management — 2026-03-25
-`,
-  },
+// Keep in sync with Dashboard.jsx
+const OVERVIEW_ACTION_ITEMS = [
+  { id: 'ov-1', label: 'Enable Instantly.ai campaign warmup manually', type: 'ops' },
+  { id: 'ov-2', label: 'Clean 19 duplicate leads in Instantly dashboard', type: 'ops' },
+  { id: 'ov-3', label: 'Invite Haris to n8n Cloud', type: 'ops' },
+  { id: 'ov-4', label: 'Switch GitHub default branch to main (Settings → Branches)', type: 'ops' },
 ]
 
-export default function Briefs() {
-  const [selected, setSelected] = useState(MOCK_BRIEFS[0])
+const STAGE_LABELS = {
+  'lead':                   'Lead',
+  'proposal_sent':          'Proposal Sent',
+  'onboarding.in_progress': 'Onboarding',
+  'onboarding.stalled':     'Stalled',
+  'build.ready':            'Build Ready',
+  'build.in_progress':      'Building',
+  'build.blocked':          'Blocked',
+  'build.complete':         'Built',
+  'qa.in_progress':         'QA',
+  'qa.pass':                'QA Pass',
+  'qa.fail':                'QA Fail',
+  'activation.pending':     'Activating',
+  'live':                   'Live',
+  'test-complete':          'Test Done',
+}
+
+const WARN_STAGES = new Set(['onboarding.stalled', 'build.blocked', 'qa.fail'])
+
+function Section({ title, badge, children }) {
+  return (
+    <div className="card p-5">
+      <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border">
+        <h2 className="font-heading font-semibold text-text-primary text-sm">{title}</h2>
+        {badge != null && badge > 0 && (
+          <span className="badge-orange">{badge}</span>
+        )}
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function QBBrief({ data }) {
+  const { clients, prospects, actionItems, workflows, tokenLog } = data
+
+  const activeCount    = countActiveClients(clients)
+  const hotLeadsCount  = countHotLeads(prospects)
+  const newLeadsCount  = countNewLeadsThisWeek(prospects)
+  const activeFlows    = workflows.filter((w) => w.active).length
+  const sessions       = tokenLog.sessions || []
+  const monthSavings   = monthlySavings(sessions)
+  const monthApiTotal  = totalApiEquivalent(sessionsThisMonth(sessions))
+
+  // Pipeline snapshot
+  const stageGroups = {}
+  for (const c of clients) {
+    const s = c.fields?.project_status
+    if (s) stageGroups[s] = (stageGroups[s] || 0) + 1
+  }
+
+  // Blockers
+  const blockers = clients.filter((c) => WARN_STAGES.has(c.fields?.project_status))
+
+  // Recent prospects
+  const recentLeads = [...prospects]
+    .sort((a, b) => new Date(b.fields?.sourced_at || 0) - new Date(a.fields?.sourced_at || 0))
+    .slice(0, 6)
+
+  const today = new Date().toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+  })
+
+  const statusLine = blockers.length > 0
+    ? `${blockers.length} client${blockers.length > 1 ? 's' : ''} need${blockers.length === 1 ? 's' : ''} unblocking`
+    : actionItems.length > 0
+    ? `${actionItems.length} item${actionItems.length > 1 ? 's' : ''} need your attention`
+    : 'Business is running clean — nice work'
 
   return (
-    <div className="flex flex-col flex-1">
-      <TopBar title="Briefs" />
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left sidebar — brief list */}
-        <aside className="w-64 border-r border-border bg-surface flex flex-col flex-shrink-0 overflow-y-auto">
-          <div className="px-4 py-3 border-b border-border">
-            <p className="text-xs text-text-muted font-medium uppercase tracking-wide">
-              {MOCK_BRIEFS.length} briefs
-            </p>
-          </div>
-          <ul className="flex-1">
-            {MOCK_BRIEFS.map((b) => (
-              <li key={b.id}>
-                <button
-                  onClick={() => setSelected(b)}
-                  className={`w-full text-left px-4 py-3 border-b border-border transition-colors ${
-                    selected?.id === b.id
-                      ? 'border-l-4 border-l-primary text-primary bg-primary-hover'
-                      : 'border-l-4 border-l-transparent text-text-secondary hover:bg-gray-50'
-                  }`}
-                >
-                  <p className="text-sm font-medium leading-tight">{b.title}</p>
-                  <p className="text-[11px] text-text-muted mt-0.5">{b.date}</p>
-                </button>
+    <div className="max-w-3xl space-y-5">
+
+      {/* ── Header brief card ───────────────────────────────────────── */}
+      <div className="card overflow-hidden">
+        <div className="px-6 py-5 bg-navy text-white">
+          <p className="text-[11px] font-semibold text-white/50 uppercase tracking-widest mb-1">
+            QB Daily Brief · Phoenix Automation
+          </p>
+          <h1 className="font-heading font-bold text-xl text-white leading-tight">{today}</h1>
+          <p className="text-white/70 text-sm mt-1.5">{statusLine}</p>
+        </div>
+
+        {/* Pulse metrics */}
+        <div className="grid grid-cols-4 divide-x divide-border border-t border-border">
+          {[
+            ['Active Clients', activeCount],
+            ['Hot Leads',      hotLeadsCount],
+            ['New Leads (7d)', newLeadsCount],
+            ['Flows Live',     activeFlows],
+          ].map(([label, val]) => (
+            <div key={label} className="px-4 py-4 text-center">
+              <p className="text-2xl font-bold font-heading text-navy">{val}</p>
+              <p className="text-[10px] text-text-muted uppercase tracking-wide mt-0.5">{label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Blockers (only if any) ───────────────────────────────────── */}
+      {blockers.length > 0 && (
+        <Section title="Blockers — Needs Immediate Attention" badge={blockers.length}>
+          <ul className="space-y-2">
+            {blockers.map((c) => (
+              <li key={c.id} className="flex items-center justify-between py-1.5 border-b border-border last:border-0">
+                <div className="flex items-center gap-3">
+                  <span className="w-2 h-2 rounded-full bg-error flex-shrink-0" />
+                  <div>
+                    <span className="text-sm font-semibold text-text-primary">
+                      {c.fields?.company_name}
+                    </span>
+                    <span className="text-xs text-text-muted ml-2">{c.fields?.contact_name}</span>
+                  </div>
+                </div>
+                <span className="badge-error text-[10px]">
+                  {STAGE_LABELS[c.fields?.project_status] || c.fields?.project_status}
+                </span>
               </li>
             ))}
           </ul>
-        </aside>
+        </Section>
+      )}
 
-        {/* Right panel — content */}
-        <main className="flex-1 overflow-y-auto p-6">
-          {selected ? (
-            <div className="card p-6 max-w-3xl">
-              <div className="flex items-start justify-between mb-6 pb-4 border-b border-border">
-                <div>
-                  <h2 className="font-heading font-bold text-text-primary text-xl">{selected.title}</h2>
-                  <p className="text-text-muted text-sm mt-1">{selected.date}</p>
+      {/* ── Action items ─────────────────────────────────────────────── */}
+      <Section title="Needs Your Attention" badge={actionItems.length}>
+        {actionItems.length === 0 ? (
+          <p className="text-text-muted text-sm">All clear — nothing pending.</p>
+        ) : (
+          <ul className="space-y-1">
+            {actionItems.map((item) => (
+              <li
+                key={item.id}
+                className="flex items-start gap-3 py-2 border-b border-border last:border-0"
+              >
+                <span className="w-2 h-2 rounded-full bg-primary mt-1.5 flex-shrink-0" />
+                <span className="text-sm text-text-primary leading-snug">{item.label}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
+
+      {/* ── Pipeline snapshot ────────────────────────────────────────── */}
+      <Section title="Pipeline Snapshot">
+        {Object.keys(stageGroups).length === 0 ? (
+          <p className="text-text-muted text-sm">No clients in pipeline yet.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {Object.entries(stageGroups)
+              .sort(([a], [b]) => {
+                const order = Object.keys(STAGE_LABELS)
+                return order.indexOf(a) - order.indexOf(b)
+              })
+              .map(([stage, count]) => {
+                const isWarn = WARN_STAGES.has(stage)
+                return (
+                  <div
+                    key={stage}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-1.5 ${isWarn ? 'bg-red-50' : 'bg-gray-50'}`}
+                  >
+                    <span className={`text-sm font-bold font-heading ${isWarn ? 'text-error' : 'text-navy'}`}>
+                      {count}
+                    </span>
+                    <span className={`text-xs ${isWarn ? 'text-error' : 'text-text-muted'}`}>
+                      {STAGE_LABELS[stage] || stage}
+                    </span>
+                  </div>
+                )
+              })}
+          </div>
+        )}
+      </Section>
+
+      {/* ── Recent leads ─────────────────────────────────────────────── */}
+      <Section title="Recent Leads" badge={recentLeads.length}>
+        {recentLeads.length === 0 ? (
+          <p className="text-text-muted text-sm">No prospects yet.</p>
+        ) : (
+          <ul className="space-y-0">
+            {recentLeads.map((p) => {
+              const grade = p.fields?.lead_score_grade
+              const added = p.fields?.sourced_at
+                ? new Date(p.fields.sourced_at).toLocaleDateString('en-US', {
+                    month: 'short', day: 'numeric',
+                  })
+                : '—'
+              return (
+                <li
+                  key={p.id}
+                  className="flex items-center justify-between py-2.5 border-b border-border last:border-0"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className={grade && ['A', 'B'].includes(grade) ? 'badge-orange' : 'badge-gray'}>
+                      {grade || '?'}
+                    </span>
+                    <div>
+                      <p className="text-sm font-medium text-text-primary leading-tight">
+                        {p.fields?.prospect_name || '—'}
+                      </p>
+                      <p className="text-xs text-text-muted">
+                        {p.fields?.company_name} · {p.fields?.industry}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right flex-shrink-0 ml-4">
+                    <span className="badge-gray text-[10px] capitalize block mb-0.5">
+                      {p.fields?.outreach_status || '—'}
+                    </span>
+                    <p className="text-[11px] text-text-muted font-mono">{added}</p>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </Section>
+
+      {/* ── Agent status ─────────────────────────────────────────────── */}
+      <Section title="Agent Status">
+        {workflows.length === 0 ? (
+          <p className="text-text-muted text-sm">No workflow data — check n8n API key.</p>
+        ) : (
+          <div className="grid sm:grid-cols-2 gap-x-6 gap-y-0">
+            {workflows.map((wf) => (
+              <div
+                key={wf.id}
+                className="flex items-center justify-between py-2 border-b border-border last:border-0 sm:last:border-0"
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                      wf.active ? 'bg-success' : 'bg-gray-300'
+                    }`}
+                  />
+                  <span className="text-xs text-text-primary truncate max-w-[170px]">{wf.name}</span>
                 </div>
-                <div className="text-right flex-shrink-0 ml-4">
-                  <p className="text-xs text-text-muted">Tokens saved</p>
-                  <p className="font-mono font-medium text-navy text-sm">{selected.tokens_saved.toLocaleString()}</p>
-                </div>
+                <span className="text-[11px] text-text-muted ml-3 flex-shrink-0">
+                  {timeAgo(wf.updatedAt)}
+                </span>
               </div>
-              <div className="prose prose-sm max-w-none">
-                <pre className="font-sans text-sm text-text-primary leading-relaxed whitespace-pre-wrap">
-                  {selected.content}
-                </pre>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-48 text-text-muted">
-              Select a brief to read
-            </div>
-          )}
-        </main>
-      </div>
+            ))}
+          </div>
+        )}
+      </Section>
+
+      {/* ── Claude Pro savings ───────────────────────────────────────── */}
+      <Section title="Claude Pro Savings — This Month">
+        <div className="flex items-end gap-3 mb-2">
+          <span className="text-3xl font-bold font-heading text-navy">
+            {formatUSD(Math.max(0, monthSavings))}
+          </span>
+          <span className="text-sm text-text-muted mb-1">saved vs API credits</span>
+        </div>
+        <div className="flex items-center gap-6 text-sm">
+          <div>
+            <p className="text-xs text-text-muted uppercase tracking-wide">API equivalent</p>
+            <p className="font-medium text-text-primary font-mono">{formatUSD(monthApiTotal)}</p>
+          </div>
+          <div>
+            <p className="text-xs text-text-muted uppercase tracking-wide">Pro cost</p>
+            <p className="font-medium text-text-primary font-mono">$20.00</p>
+          </div>
+        </div>
+        <p className="text-xs text-text-muted mt-3">
+          All Claude Code terminal sessions run on Pro subscription ($20/mo flat) instead of paying per-token API credits.
+        </p>
+      </Section>
+
+    </div>
+  )
+}
+
+export default function Briefs() {
+  const [data, setData]     = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  const load = async () => {
+    setLoading(true)
+    const [clients, prospects, airtableActions, wf, tokenLog] = await Promise.all([
+      fetchClients(),
+      fetchProspects(),
+      fetchActionItems(),
+      fetchWorkflows(),
+      fetchTokenLog(),
+    ])
+    setData({
+      clients,
+      prospects,
+      actionItems: [...OVERVIEW_ACTION_ITEMS, ...airtableActions],
+      workflows:   mergeWorkflowData(wf),
+      tokenLog,
+    })
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    load()
+    const id = setInterval(load, 60000)
+    return () => clearInterval(id)
+  }, [])
+
+  return (
+    <div className="flex flex-col flex-1">
+      <TopBar title="QB Brief" onRefresh={load} />
+      <main className="flex-1 overflow-y-auto p-6">
+        {loading ? (
+          <div className="flex items-center justify-center h-48">
+            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : data ? (
+          <QBBrief data={data} />
+        ) : null}
+      </main>
     </div>
   )
 }

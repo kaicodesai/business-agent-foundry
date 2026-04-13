@@ -11,19 +11,41 @@ import {
 import { fetchWorkflows, mergeWorkflowData, timeAgo } from '../lib/n8n'
 import { fetchTokenLog, sessionsThisWeek, totalApiEquivalent, formatUSD } from '../lib/tokenLog'
 
+// Real Airtable project_status values (from schema)
 const PIPELINE_STAGES = [
-  'new_lead', 'qualified', 'call_complete', 'scoping',
-  'scope_review', 'onboarding', 'build.ready', 'building',
-  'build_review', 'qa.in_progress', 'qa.pass', 'live', 'test-complete',
+  'lead', 'proposal_sent', 'onboarding.in_progress', 'onboarding.stalled',
+  'build.ready', 'build.in_progress', 'build.blocked', 'build.complete',
+  'qa.in_progress', 'qa.pass', 'qa.fail', 'activation.pending', 'live', 'test-complete',
 ]
 
 const STAGE_LABELS = {
-  new_lead: 'New Lead', qualified: 'Qualified', call_complete: 'Call Done',
-  scoping: 'Scoping', scope_review: 'Scope Review', onboarding: 'Onboarding',
-  'build.ready': 'Build Ready', building: 'Building', build_review: 'Build Review',
-  'qa.in_progress': 'QA In Progress', 'qa.pass': 'QA Pass', live: 'Live',
-  'test-complete': 'Test Complete',
+  'lead':                 'Lead',
+  'proposal_sent':        'Proposal Sent',
+  'onboarding.in_progress': 'Onboarding',
+  'onboarding.stalled':   'Stalled',
+  'build.ready':          'Build Ready',
+  'build.in_progress':    'Building',
+  'build.blocked':        'Blocked',
+  'build.complete':       'Built',
+  'qa.in_progress':       'QA',
+  'qa.pass':              'QA Pass',
+  'qa.fail':              'QA Fail',
+  'activation.pending':   'Activating',
+  'live':                 'Live',
+  'test-complete':        'Test Done',
 }
+
+// Stages that need immediate attention (visual warning)
+const WARN_STAGES = new Set(['onboarding.stalled', 'build.blocked', 'qa.fail'])
+
+// Static action items from PROJECT_OVERVIEW.md "In Progress" section
+// Update this list each session to reflect current blockers
+const OVERVIEW_ACTION_ITEMS = [
+  { id: 'ov-1', label: 'Enable Instantly.ai campaign warmup manually', type: 'ops' },
+  { id: 'ov-2', label: 'Clean 19 duplicate leads in Instantly dashboard', type: 'ops' },
+  { id: 'ov-3', label: 'Invite Haris to n8n Cloud', type: 'ops' },
+  { id: 'ov-4', label: 'Switch GitHub default branch to main (Settings → Branches)', type: 'ops' },
+]
 
 function daysSince(isoString) {
   if (!isoString) return 0
@@ -57,24 +79,29 @@ function PipelineLane({ clients }) {
   for (const s of PIPELINE_STAGES) byStage[s] = []
   for (const c of clients) {
     const s = c.fields?.project_status
-    if (s && byStage[s]) byStage[s].push(c)
+    if (s && byStage[s] !== undefined) byStage[s].push(c)
   }
+  const totalInPipeline = clients.length
 
   return (
     <div className="card p-5">
-      <h2 className="font-heading font-semibold text-text-primary text-sm mb-4">Pipeline</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-heading font-semibold text-text-primary text-sm">Pipeline</h2>
+        <span className="text-xs text-text-muted">{totalInPipeline} total · scroll →</span>
+      </div>
       <div className="overflow-x-auto -mx-1">
-        <div className="flex gap-3 pb-2 min-w-max px-1">
+        <div className="flex gap-3 pb-3 min-w-max px-1">
           {PIPELINE_STAGES.map((stage) => {
             const cards = byStage[stage] || []
+            const isWarn = WARN_STAGES.has(stage)
             return (
               <div key={stage} className="w-36 flex-shrink-0">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] uppercase tracking-widest font-semibold text-text-muted truncate">
+                  <span className={`text-[10px] uppercase tracking-widest font-semibold truncate ${isWarn ? 'text-error' : 'text-text-muted'}`}>
                     {STAGE_LABELS[stage]}
                   </span>
                   {cards.length > 0 && (
-                    <span className="badge-orange text-[10px] px-1.5 py-0 ml-1">{cards.length}</span>
+                    <span className={`text-[10px] px-1.5 py-0 ml-1 ${isWarn ? 'badge-error' : 'badge-orange'}`}>{cards.length}</span>
                   )}
                 </div>
                 <div className="space-y-1.5">
@@ -82,19 +109,19 @@ function PipelineLane({ clients }) {
                     <div className="h-8 rounded-lg border border-dashed border-border" />
                   )}
                   {cards.map((c) => {
-                    const days = daysSince(c.fields?.created_at)
+                    const days = daysSince(c.fields?.onboarding_started_at || c.createdTime)
                     return (
                       <div
                         key={c.id}
-                        className="bg-surface border border-border rounded-lg p-2 shadow-card text-left"
+                        className={`bg-surface border rounded-lg p-2 shadow-card text-left ${isWarn ? 'border-error/30' : 'border-border'}`}
                       >
                         <div className="flex items-center gap-1.5">
-                          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${stageDotColor(days)}`} />
+                          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isWarn ? 'bg-error' : stageDotColor(days)}`} />
                           <span className="text-xs font-semibold text-text-primary truncate">
                             {c.fields?.company_name}
                           </span>
                         </div>
-                        <p className="text-[10px] text-text-muted mt-0.5 pl-3">{days}d</p>
+                        <p className="text-[10px] text-text-muted mt-0.5 pl-3">{days > 0 ? `${days}d` : 'today'}</p>
                       </div>
                     )
                   })}
@@ -367,13 +394,17 @@ export default function Dashboard() {
     ])
     setClients(c)
     setProspects(p)
-    setActionItems(a)
+    setActionItems([...OVERVIEW_ACTION_ITEMS, ...a])
     setWorkflows(mergeWorkflowData(wf))
     setTokenSavings(formatUSD(totalApiEquivalent(sessionsThisWeek(tl.sessions || tl))))
     setLoading(false)
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+    const id = setInterval(load, 60000)
+    return () => clearInterval(id)
+  }, [])
 
   return (
     <div className="flex flex-col flex-1">
