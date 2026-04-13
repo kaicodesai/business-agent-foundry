@@ -10,6 +10,7 @@ import {
 } from '../lib/airtable'
 import { fetchWorkflows, mergeWorkflowData, timeAgo } from '../lib/n8n'
 import { fetchTokenLog, sessionsThisWeek, totalApiEquivalent, formatUSD } from '../lib/tokenLog'
+import { fetchInProgressItems } from '../lib/projectOverview'
 
 // Real Airtable project_status values (from schema)
 const PIPELINE_STAGES = [
@@ -38,13 +39,76 @@ const STAGE_LABELS = {
 // Stages that need immediate attention (visual warning)
 const WARN_STAGES = new Set(['onboarding.stalled', 'build.blocked', 'qa.fail'])
 
-// Static action items from PROJECT_OVERVIEW.md "In Progress" section
-// Update this list each session to reflect current blockers
-const OVERVIEW_ACTION_ITEMS = [
-  { id: 'ov-1', label: 'Enable Instantly.ai campaign warmup manually', type: 'ops' },
-  { id: 'ov-2', label: 'Clean 19 duplicate leads in Instantly dashboard', type: 'ops' },
-  { id: 'ov-3', label: 'Invite Haris to n8n Cloud', type: 'ops' },
-  { id: 'ov-4', label: 'Switch GitHub default branch to main (Settings → Branches)', type: 'ops' },
+// ── System Test Checklist ────────────────────────────────────────────────────
+// Full end-to-end 3-layer OS validation — Kai reviews, Haris executes
+const SYSTEM_TEST_STEPS = [
+  {
+    id: 'st-01',
+    label: 'Website Chatbot — E2E tested, live on phoenixautomation.ai',
+    owner: 'both',
+    done: true,
+  },
+  {
+    id: 'st-02',
+    label: 'Typeform Lead Qualification — activate workflow, submit test form, verify scoring email to Kai',
+    owner: 'haris',
+  },
+  {
+    id: 'st-03',
+    label: "Outreach Agent — clean 19 Instantly duplicates, activate, verify branded HTML email send",
+    owner: 'haris',
+  },
+  {
+    id: 'st-04',
+    label: "Scoping Agent — trigger /scope-call with Sarah's Wellness Studio call notes",
+    owner: 'haris',
+  },
+  {
+    id: 'st-05',
+    label: 'Scope Approval — Kai approves scope via email link, verify proposal draft saved in Airtable',
+    owner: 'kai',
+  },
+  {
+    id: 'st-06',
+    label: 'Onboarding Automation — POST /payment-confirmed with test client, verify ClickUp project + welcome emails',
+    owner: 'haris',
+  },
+  {
+    id: 'st-07',
+    label: 'Credential Detector — set n8n_api_key in Airtable, verify auto-sets project_status = build.ready',
+    owner: 'haris',
+  },
+  {
+    id: 'st-08',
+    label: 'Workflow Builder Agent — activate, verify client workflows deployed to client n8n instance',
+    owner: 'haris',
+  },
+  {
+    id: 'st-09',
+    label: 'QA Agent — run full QA checklist on all deployed workflows, report pass/fail to Kai',
+    owner: 'haris',
+  },
+  {
+    id: 'st-10',
+    label: 'Kai reviews QA pass — activate workflows, set project_status = live in Airtable',
+    owner: 'kai',
+  },
+  {
+    id: 'st-11',
+    label: 'Status Update Agent — trigger manually, verify branded weekly status email delivered to client',
+    owner: 'haris',
+  },
+  {
+    id: 'st-12',
+    label: 'Reporting Agent — trigger monthly report, verify Claude generates summary + email delivered',
+    owner: 'haris',
+  },
+  {
+    id: 'st-13',
+    label: 'Referral Trigger Agent — E2E tested PASS (2026-03-27)',
+    owner: 'both',
+    done: true,
+  },
 ]
 
 function daysSince(isoString) {
@@ -135,6 +199,119 @@ function PipelineLane({ clients }) {
   )
 }
 
+// ── WHAT'S NEXT ─────────────────────────────────────────────────────────────
+
+const OWNER_COLOR = { kai: 'bg-primary', haris: 'bg-blue-400', both: 'bg-gray-400' }
+const OWNER_LABEL = { kai: 'Kai', haris: 'Haris', both: 'Both' }
+
+function WhatsNext() {
+  const [checked, setChecked] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('kai-system-test') || '{}')
+    } catch {
+      return {}
+    }
+  })
+
+  const isChecked = (step) => step.done || checked[step.id] || false
+
+  const toggle = (id) => {
+    setChecked((prev) => {
+      const next = { ...prev, [id]: !prev[id] }
+      localStorage.setItem('kai-system-test', JSON.stringify(next))
+      return next
+    })
+  }
+
+  const completedCount = SYSTEM_TEST_STEPS.filter((s) => isChecked(s)).length
+  const pct = Math.round((completedCount / SYSTEM_TEST_STEPS.length) * 100)
+
+  return (
+    <div className="card p-5">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-4 pb-3 border-b border-border">
+        <div>
+          <h2 className="font-heading font-semibold text-text-primary text-sm">
+            What's Next — Full System Test
+          </h2>
+          <p className="text-xs text-text-muted mt-0.5">
+            End-to-end 3-layer OS validation · {completedCount}/{SYSTEM_TEST_STEPS.length} steps complete
+          </p>
+        </div>
+        <div className="flex items-center gap-2 mt-0.5 flex-shrink-0 ml-4">
+          <div className="w-28 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-primary rounded-full transition-all duration-300"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+          <span className="text-xs font-semibold text-text-secondary w-8 text-right">{pct}%</span>
+        </div>
+      </div>
+
+      {/* Steps */}
+      <ul className="space-y-0">
+        {SYSTEM_TEST_STEPS.map((step) => {
+          const done = isChecked(step)
+          return (
+            <li
+              key={step.id}
+              className="flex items-start gap-3 py-2 border-b border-border last:border-0"
+            >
+              <button
+                onClick={() => !step.done && toggle(step.id)}
+                disabled={step.done}
+                aria-label={done ? 'Mark incomplete' : 'Mark complete'}
+                className={`mt-0.5 w-4 h-4 rounded border-2 flex-shrink-0 transition-colors ${
+                  done
+                    ? 'bg-success border-success cursor-default'
+                    : 'border-border hover:border-primary cursor-pointer bg-white'
+                }`}
+              >
+                {done && (
+                  <svg viewBox="0 0 12 12" className="w-3 h-3 mx-auto">
+                    <path
+                      d="M2 6L5 9 10 3"
+                      stroke="white"
+                      strokeWidth="1.5"
+                      fill="none"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                )}
+              </button>
+              <span
+                className={`text-sm leading-snug flex-1 ${
+                  done ? 'line-through text-text-muted' : 'text-text-primary'
+                }`}
+              >
+                {step.label}
+              </span>
+              <span
+                title={`Owner: ${OWNER_LABEL[step.owner]}`}
+                className={`flex-shrink-0 mt-1.5 px-1.5 py-0.5 rounded text-[10px] font-medium text-white ${OWNER_COLOR[step.owner]}`}
+              >
+                {OWNER_LABEL[step.owner]}
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+
+      {/* Legend */}
+      <div className="flex items-center gap-5 mt-4 pt-3 border-t border-border">
+        {Object.entries(OWNER_LABEL).map(([key, label]) => (
+          <div key={key} className="flex items-center gap-1.5 text-xs text-text-muted">
+            <span className={`w-2 h-2 rounded-full ${OWNER_COLOR[key]}`} />
+            {label}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ── KAI'S VIEW ─────────────────────────────────────────────────────────────
 
 function KaiView({ clients, prospects, actionItems, workflows, tokenSavings }) {
@@ -169,7 +346,7 @@ function KaiView({ clients, prospects, actionItems, workflows, tokenSavings }) {
 
       {/* Row 3 — Two columns */}
       <div className="grid md:grid-cols-2 gap-4">
-        {/* Needs Your Attention */}
+        {/* Needs Your Attention — live from PROJECT_OVERVIEW.md In Progress section */}
         <div className="card p-5">
           <h2 className="font-heading font-semibold text-text-primary text-sm mb-4">
             Needs Your Attention
@@ -217,6 +394,9 @@ function KaiView({ clients, prospects, actionItems, workflows, tokenSavings }) {
           </ul>
         </div>
       </div>
+
+      {/* Row 4 — What's Next system test checklist */}
+      <WhatsNext />
     </div>
   )
 }
@@ -385,16 +565,17 @@ export default function Dashboard() {
 
   const load = async () => {
     setLoading(true)
-    const [c, p, a, wf, tl] = await Promise.all([
+    const [c, p, a, wf, tl, overviewItems] = await Promise.all([
       fetchClients(),
       fetchProspects(),
       fetchActionItems(),
       fetchWorkflows(),
       fetchTokenLog(),
+      fetchInProgressItems(),
     ])
     setClients(c)
     setProspects(p)
-    setActionItems([...OVERVIEW_ACTION_ITEMS, ...a])
+    setActionItems([...overviewItems, ...a])
     setWorkflows(mergeWorkflowData(wf))
     setTokenSavings(formatUSD(totalApiEquivalent(sessionsThisWeek(tl.sessions || tl))))
     setLoading(false)

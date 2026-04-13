@@ -16,14 +16,7 @@ import {
   totalApiEquivalent,
   formatUSD,
 } from '../lib/tokenLog'
-
-// Keep in sync with Dashboard.jsx
-const OVERVIEW_ACTION_ITEMS = [
-  { id: 'ov-1', label: 'Enable Instantly.ai campaign warmup manually', type: 'ops' },
-  { id: 'ov-2', label: 'Clean 19 duplicate leads in Instantly dashboard', type: 'ops' },
-  { id: 'ov-3', label: 'Invite Haris to n8n Cloud', type: 'ops' },
-  { id: 'ov-4', label: 'Switch GitHub default branch to main (Settings → Branches)', type: 'ops' },
-]
+import { fetchInProgressItems } from '../lib/projectOverview'
 
 const STAGE_LABELS = {
   'lead':                   'Lead',
@@ -302,17 +295,18 @@ export default function Briefs() {
 
   const load = async () => {
     setLoading(true)
-    const [clients, prospects, airtableActions, wf, tokenLog] = await Promise.all([
+    const [clients, prospects, airtableActions, wf, tokenLog, overviewItems] = await Promise.all([
       fetchClients(),
       fetchProspects(),
       fetchActionItems(),
       fetchWorkflows(),
       fetchTokenLog(),
+      fetchInProgressItems(),
     ])
     setData({
       clients,
       prospects,
-      actionItems: [...OVERVIEW_ACTION_ITEMS, ...airtableActions],
+      actionItems: [...overviewItems, ...airtableActions],
       workflows:   mergeWorkflowData(wf),
       tokenLog,
     })
