@@ -5,3 +5,4 @@ tmp_*.js
 # Root-level build/test scripts contain hardcoded API keys — never commit
 rebuild_outreach.js
 test_outreach.js
+scripts/e2e_*.py
