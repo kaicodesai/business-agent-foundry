@@ -80,7 +80,7 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - **[PA] Onboarding Automation** (7RsRJIqBHFpWZoWM) — 24 nodes, tested, dual emails working
 - **[PA] Lead Generation** (YO3f5CL9bYbLTBgw) — 18 nodes, updated 2026-04-08 — Hunter.io domain-search replaces Apollo; Tavily Search (live web) runs 3 real-time Google searches per run → GPT-4o-mini extracts ICP company domains from live results; Normalize Leads filters to ICP titles + skips no-name/no-title contacts; source field set to `hunter`
 - **[PA] Outreach Agent** (Mib6RUtJ2IOaUZ4s) — updated 2026-04-08 — branded dark blue HTML email template (#1B2A4A) matching Status Update Agent; Build HTML Emails node added; return format fixed for runOnceForEachItem Code nodes
-- **[PA] Status Update Agent** (94DpGwRPWGRPqCVU) — 15 nodes, tested, branded emails working
+- **[PA] Status Update Agent** (94DpGwRPWGRPqCVU) — Langchain node replaced with HTTP Request node (Generate Email via Claude) 2026-04-16 — E2E tested PASS 2026-04-16 (execution 464, email delivered to ashleyedwards305@gmail.com, Airtable updated, ClickUp skip correct for mock client)
 - **[PA] Referral Trigger Agent** (ka6GesSfWVo2FZtU) — 15 nodes, built, E2E tested PASS 2026-03-27, updated 2026-04-01 — now uses pa-smtp directly (email_1 to client, email_2 draft + alert to Kai); Calendly URL live
 - **[PA] ClickUp Sync** (uiTwYIUk6nIFwLtX) — 18 nodes, built 2026-03-27, reads Airtable project_status and syncs ClickUp task statuses every 2 hours, inactive
 - **[PA] Reporting Agent** (scj61gBYYWpQydMC) — 16 nodes, built (date unknown — confirmed present 2026-03-31), monthly retainer reports via Claude → email → Airtable update, inactive, never run
@@ -118,6 +118,7 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - Haris needs n8n Cloud access (Kai to invite)
 - Outreach Agent HTML email E2E — Instantly has 19 old duplicate leads blocking personalization test; needs manual cleanup in Instantly dashboard then re-test
 - Instantly campaign is active (status confirmed) — warmup_status: 0, needs enabling manually in Instantly dashboard
+- **[E2E 2026-04-16 IN PROGRESS]** Referral Trigger Agent not yet run — mock client `acme-test-co` (recIn0wyE44pjUL4O) still live in Airtable, ready for test. Status Update Agent PASS. Cleanup + workflow activation pending Referral Trigger result.
 
 ## Not Started ❌
 - Stripe webhook integration — payment confirmation currently manual
@@ -908,6 +909,7 @@ business-agent-foundry/
 | `automations_delivered` field missing from Airtable | Low | ⏳ Referral Trigger uses `scope_of_work` as fallback — add dedicated field for cleaner output | Kai decision |
 | `onboarding_started_at` not written by Onboarding Automation | Low | ✅ RESOLVED 2026-03-26 — added to Node 21 (Update Airtable Record) jsonBody | Haris |
 | Brightline test records still live in Airtable (Clients + Prospects) | Low | ⏳ Clean up after Step 6 confirmed — see e2e-test-report.md | Kai/Haris |
+| Langchain nodes across all PA workflows reference stale/missing `anthropicApi` credential | High — all Langchain AI nodes fail with "Could not get parameter" | ✅ RESOLVED 2026-04-16 — Status Update Agent chainLlm replaced with HTTP Request node (Generate Email via Claude) using pa-anthropic HTTP Header Auth. Referral Trigger + Reporting Agent credential refs also patched. Same fix needed if other workflows use Langchain. | Kai |
 | project_status singleSelect missing 11 new values | Medium — ClickUp Sync won't email/sync for new statuses until added | ✅ RESOLVED 2026-03-27 — all 11 values added via Airtable Records API typecast:true | Haris |
 | Brightline + Meridian clickup_task_* fields are empty | Low — test records; won't affect real clients | ⏳ Expected: Onboarding was run before task ID fields existed. Real clients onboarded now will have all fields populated automatically. | — |
 | Status Update Agent + Referral Trigger Agent not API-executable | Low | Known — schedule-only workflows must be run from n8n editor | — |
@@ -1040,6 +1042,40 @@ business-agent-foundry/
 ### Files changed this session
 - 
 ```
+
+---
+
+## Session Handoff — 2026-04-16 (Session 12)
+**Worked by:** Kai + Claude (Claude Code web)
+
+### What was completed
+- **Root cause identified and fixed — Langchain credential mismatch:** All PA workflows built with Langchain (`chainLlm` + `lmChatAnthropic`) nodes were referencing a deleted/inaccessible `anthropicApi` credential (`fKRThaHCAxKe1JBQ`). Fix: replaced `chainLlm` + `lmChatAnthropic` in Status Update Agent with a single HTTP Request node (`Generate Email via Claude`) using `pa-anthropic` HTTP Header Auth. Credential refs also patched in Referral Trigger Agent + Reporting Agent via n8n API.
+- **Mock client created** — `acme-test-co` (`recIn0wyE44pjUL4O`), `project_status=live`, `project_launch_date` 31 days ago, `clickup_folder_id=90148144284` (Brightline test folder)
+- **[PA] Status Update Agent — E2E PASS** — execution 464, 8.1s, email "Acme Test Co — Project Update April 16, 2026" delivered to ashleyedwards305@gmail.com; Airtable updated; ClickUp task update correctly skipped (mock client has no clickup_task_* IDs — expected)
+
+### What is in progress (not finished)
+- **[PA] Referral Trigger Agent** — not yet run. Mock client is still live and ready (`recIn0wyE44pjUL4O`). Referral Trigger also has a Langchain node — same fix likely needed before it will run
+- Cleanup of mock Airtable record pending Referral Trigger result
+- Activation of 5 workflows pending cleanup
+
+### Blockers for next session
+- Referral Trigger Agent likely needs the same Langchain → HTTP Request fix (run it and check the error node)
+- Anthropic API key needed for `pa-anthropic` HTTP Header Auth credential — ensure it's set in n8n before running Referral Trigger
+
+### Next person should start with
+1. n8n → run **[PA] Referral Trigger Agent** manually → if it fails on a Langchain node, run the same HTTP Request replacement script targeting workflow `ka6GesSfWVo2FZtU`
+2. Verify `referral_sequence_sent=true` in Airtable for `recIn0wyE44pjUL4O` + check email
+3. Run cleanup + activate script (see scripts/e2e_cleanup_and_activate.py or inline commands in session transcript)
+4. Confirm all 5 workflows activated — system is ready for first real client
+
+### Files changed this session
+- `PROJECT_OVERVIEW.md` — v5.0, Status Update Agent E2E PASS, Langchain fix documented, session 12 handoff
+- `scripts/e2e_setup_mock_client.py` — field name fix (contact_email → email), gitignored
+- `scripts/e2e_verify.py` — new, gitignored
+- `scripts/e2e_cleanup_and_activate.py` — new, gitignored
+- `scripts/e2e_inspect_workflow.py` — new, gitignored
+- `.gitignore` — added `scripts/e2e_*.py` pattern
+- **n8n workflow updated (via local Python scripts):** `[PA] Status Update Agent` — chainLlm + lmChatAnthropic replaced with HTTP Request node; connections fixed; credential patched
 
 ---
 
