@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 4.8 — Last updated: 2026-04-20 — Updated by: Kai + Claude
+> **Version:** 4.9 — Last updated: 2026-04-20 — Updated by: Haris + Claude
 
 ---
 
@@ -287,15 +287,16 @@ claude
 | n8n workflow | `[PA] Typeform Lead Qualification` — ID: `kXxN7O77ongTMwKG` |
 
 ### Field IDs
-| Ref | Field ID | Type |
-|-----|----------|------|
-| `business_name` | `q9zgFI0gFUNw` | short_text |
-| `industry` | `8sox5Q0vDymK` | dropdown |
-| `team_size` | `k8ScFgIubR1C` | number |
-| `pain_point` | `jrxkugp0UdwT` | long_text |
-| `hours_lost` | `N0zSg93uiRme` | number |
-| `email` | `G3GmVcDig8e2` | short_text |
-| `thankyou` (screen) | `7wh9HcO9y3F8` | thankyou_screen |
+| Ref | Field ID | Type | Position |
+|-----|----------|------|----------|
+| `full_name` | — | short_text | 0 — added 2026-04-20 |
+| `business_name` | `q9zgFI0gFUNw` | short_text | 1 |
+| `industry` | `8sox5Q0vDymK` | dropdown | 2 |
+| `team_size` | `k8ScFgIubR1C` | number | 3 |
+| `pain_point` | `jrxkugp0UdwT` | long_text | 4 |
+| `hours_lost` | `N0zSg93uiRme` | number | 5 |
+| `email` | `G3GmVcDig8e2` | short_text | 6 |
+| `thankyou` (screen) | `7wh9HcO9y3F8` | thankyou_screen | — |
 
 > ⚠️ `show_typeform_branding: false` requires a paid Typeform plan — branding is currently visible (free tier). Upgrade to remove.
 > ⚠️ Calendly button URL is placeholder (`https://calendly.com/phoenixautomation/assessment`) — Kai must update to real URL via Typeform UI or API PATCH once Calendly is live.
@@ -464,7 +465,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 
 | Workflow | ID | Nodes | Trigger | Status |
 |---------|-----|-------|---------|--------|
-| [PA] Onboarding Automation | `7RsRJIqBHFpWZoWM` | 51 | POST /payment-confirmed webhook | 🟢 Active — last run 2026-03-25 (success) |
+| [PA] Onboarding Automation | `7RsRJIqBHFpWZoWM` | 55 | POST /payment-confirmed webhook | 🟢 Active — last run 2026-03-25 (success) |
 | [PA] Lead Generation | `YO3f5CL9bYbLTBgw` | 13 | Daily 06:45 + manual | 🟢 Active — running daily; last run 2026-04-20 (10 prospects enriched + written, PASS) |
 | [PA] Morning Brief Delivery | `EKKXeBCEiKXaYBCx` | — | Daily (morning) | 🟢 Active — confirmed 2026-04-20; node count TBC |
 | [PA] Status Update Agent | `94DpGwRPWGRPqCVU` | 20 | Monday 09:00 + manual | 🟢 Active — last run 2026-03-30 (success) |
@@ -483,7 +484,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 
 ## Workflow Node Summaries
 
-### [PA] Onboarding Automation (7RsRJIqBHFpWZoWM) — 51 nodes
+### [PA] Onboarding Automation (7RsRJIqBHFpWZoWM) — 55 nodes
 ```
 1.  Payment Confirmed Webhook (POST /payment-confirmed)
 2.  Normalize Payload (Code)
@@ -525,6 +526,10 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 49. Send Client Welcome Email (SMTP → client email)
 50. Mark Task: OB Welcome Complete (HTTP PUT → clickup_task_ob_welcome → "complete", pa-clickup)
 51. Stop — Invalid Payload (stopAndError)
+52. Fetch All Client Slugs (HTTP GET → Airtable Clients, fields: client_slug + project_status, continueOnFail, pa-airtable)
+53. Get Scoping Agent Workflow (HTTP GET → n8n API /workflows/E24KwVMam1e8bbjT, pa-n8n-api, continueOnFail)
+54. Build Updated Scope Form (Code — filters excluded statuses [test-complete, closed.*], sorts slugs, rebuilds Scope Call Form dropdown options, returns stripped PUT body)
+55. Update Scoping Form Slugs (HTTP PUT → n8n API /workflows/E24KwVMam1e8bbjT, pa-n8n-api, continueOnFail — auto-refreshes Client slug dropdown in Scoping Agent form after every new client onboard)
 ```
 
 ### [PA] Lead Generation (YO3f5CL9bYbLTBgw) — 11 nodes
