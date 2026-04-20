@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 4.7 — Last updated: 2026-04-10 — Updated by: Kai + Claude
+> **Version:** 4.8 — Last updated: 2026-04-20 — Updated by: Kai + Claude
 
 ---
 
@@ -78,7 +78,8 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - Airtable base structured — Clients + Prospects + automation_logs tables
 - All 6 n8n credentials added (pa-airtable, pa-n8n-api, pa-clickup, pa-smtp, pa-apollo-io, pa-anthropic)
 - **[PA] Onboarding Automation** (7RsRJIqBHFpWZoWM) — 24 nodes, tested, dual emails working
-- **[PA] Lead Generation** (YO3f5CL9bYbLTBgw) — 18 nodes, updated 2026-04-08 — Hunter.io domain-search replaces Apollo; Tavily Search (live web) runs 3 real-time Google searches per run → GPT-4o-mini extracts ICP company domains from live results; Normalize Leads filters to ICP titles + skips no-name/no-title contacts; source field set to `hunter`
+- **[PA] Lead Generation** (YO3f5CL9bYbLTBgw) — 13 nodes, reverted to Apollo.io (paid plan) — updated 2026-04-20; Apollo `/mixed_people/api_search` → Filter Candidates Code node → Enrich via Apollo HTTP Request (`/people/match`, reveal_personal_emails:true) → Normalize Enriched → dedup → write Prospects; `source: apollo`; running daily since 2026-04-20 (last run: 10 prospects enriched + written PASS)
+- **[PA] Morning Brief Delivery** (EKKXeBCEiKXaYBCx) — ACTIVE — daily morning brief workflow, confirmed active 2026-04-20
 - **[PA] Outreach Agent** (Mib6RUtJ2IOaUZ4s) — updated 2026-04-08 — branded dark blue HTML email template (#1B2A4A) matching Status Update Agent; Build HTML Emails node added; return format fixed for runOnceForEachItem Code nodes
 - **[PA] Status Update Agent** (94DpGwRPWGRPqCVU) — 15 nodes, tested, branded emails working
 - **[PA] Referral Trigger Agent** (ka6GesSfWVo2FZtU) — 15 nodes, built, E2E tested PASS 2026-03-27, updated 2026-04-01 — now uses pa-smtp directly (email_1 to client, email_2 draft + alert to Kai); Calendly URL live
@@ -115,13 +116,12 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 
 ## In Progress ⏳
 - Default GitHub branch needs switching from `claude/setup-blueprint-agent-YnHBF` to `main` (Kai → Settings → Branches)
-- Haris needs n8n Cloud access (Kai to invite)
-- Outreach Agent HTML email E2E — Instantly has 19 old duplicate leads blocking personalization test; needs manual cleanup in Instantly dashboard then re-test
-- Instantly campaign is active (status confirmed) — warmup_status: 0, needs enabling manually in Instantly dashboard
+- Outreach Agent HTML email E2E — Instantly duplicates cleaned up; re-test needed (run [PA] Outreach Agent manually, verify personalised HTML email sent)
+- Instantly campaign active — confirm warmup is enabled in Instantly dashboard (Settings → Email Accounts)
+- Airtable PAT `patIwbtd9ndSoj2fJ...` was in local git history (test_outreach.js, now deleted) — rotate this token in Airtable account settings
 
 ## Not Started ❌
 - Stripe webhook integration — payment confirmation currently manual
-- Apollo.io paid plan — deferred (Lead Gen now uses Hunter.io + AI Research Agent)
 
 ---
 
@@ -183,7 +183,7 @@ phoenix/[task]    ← all new work goes here, PR before merging to main
 | Node version | 20.20.1 |
 | Git version | 2.53.0 |
 | Claude Code version | 2.1.76 |
-| n8n access | ⏳ Pending n8n Cloud setup by Kai |
+| n8n access | ✅ kaiashley.app.n8n.cloud (confirmed 2026-04-20) |
 | Repo location | `D:\Projects\business-agent-foundry` |
 
 ## Session Startup Sequence (Kai)
@@ -465,20 +465,21 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | Workflow | ID | Nodes | Trigger | Status |
 |---------|-----|-------|---------|--------|
 | [PA] Onboarding Automation | `7RsRJIqBHFpWZoWM` | 51 | POST /payment-confirmed webhook | 🟢 Active — last run 2026-03-25 (success) |
-| [PA] Lead Generation | `YO3f5CL9bYbLTBgw` | 13 | Daily 06:45 + manual | 🟢 Active — running daily (last run 2026-03-31 success) |
+| [PA] Lead Generation | `YO3f5CL9bYbLTBgw` | 13 | Daily 06:45 + manual | 🟢 Active — running daily; last run 2026-04-20 (10 prospects enriched + written, PASS) |
+| [PA] Morning Brief Delivery | `EKKXeBCEiKXaYBCx` | — | Daily (morning) | 🟢 Active — confirmed 2026-04-20; node count TBC |
 | [PA] Status Update Agent | `94DpGwRPWGRPqCVU` | 20 | Monday 09:00 + manual | 🟢 Active — last run 2026-03-30 (success) |
-| [PA] Referral Trigger Agent | `ka6GesSfWVo2FZtU` | 15 | Daily 08:00 + manual | 🔴 Inactive — E2E tested PASS 2026-03-27; updated 2026-04-01 to use pa-smtp (email_1 sent directly, email_2 draft forwarded to Kai) — Kai activates |
-| [PA] ClickUp Sync | `uiTwYIUk6nIFwLtX` | 18 | Every 2 hours + manual | 🔴 Inactive — built 2026-03-27, never run — Kai activates |
-| [PA] Reporting Agent | `scj61gBYYWpQydMC` | 16 | Monthly 1st + manual | 🔴 Inactive — built, never run, not documented until 2026-03-31 audit |
-| [PA] Typeform Lead Qualification | `kXxN7O77ongTMwKG` | 13 | Typeform webhook (POST /typeform-intake) | 🔴 Inactive — built 2026-03-31, webhook registered with Typeform — Kai activates |
-| [PA] Credential Follow-Up | `uTnQAq5VlmsHYih4` | 11 | Daily 10:00 + manual | 🔴 Inactive — built 2026-03-31, alerts Kai when client stalls on credential submission — Kai activates |
-| [PA] Outreach Agent | `Mib6RUtJ2IOaUZ4s` | 12 | Daily 07:00 + manual | 🔴 Inactive — built 2026-04-01; campaign_id set 2026-04-01 (6817d31e-e8e6-4a09-87de-e3be8e7cfc4e) — ready for Kai activation |
-| [PA] Error Handler | `JByknkdAgxRmDKp3` | 4 | n8n Error Trigger | 🔴 Inactive — built 2026-04-01; connected to all 11 PA workflows as errorWorkflow — Kai activates |
-| [PA] Credential Detector | `hbtSbm2pzrHX1QTn` | 10 | Every 2 hours + manual | 🔴 Inactive — built 2026-04-03; polls for clients who submitted n8n credentials → auto-sets build.ready + alerts Kai — Kai activates |
+| [PA] Referral Trigger Agent | `ka6GesSfWVo2FZtU` | 15 | Daily 08:00 + manual | 🟢 Active — confirmed 2026-04-20; uses pa-smtp (email_1 direct, email_2 draft to Kai) |
+| [PA] ClickUp Sync | `uiTwYIUk6nIFwLtX` | 18 | Every 2 hours + manual | 🟢 Active — confirmed 2026-04-20 |
+| [PA] Reporting Agent | `scj61gBYYWpQydMC` | 16 | Monthly 1st + manual | 🔴 Inactive — built, never run; activate after first retainer client is live |
+| [PA] Typeform Lead Qualification | `kXxN7O77ongTMwKG` | 13 | Typeform webhook (POST /typeform-intake) | 🟢 Active — confirmed 2026-04-20 |
+| [PA] Credential Follow-Up | `uTnQAq5VlmsHYih4` | 11 | Daily 10:00 + manual | 🟢 Active — confirmed 2026-04-20 |
+| [PA] Outreach Agent | `Mib6RUtJ2IOaUZ4s` | 12 | Daily 07:00 + manual | 🟢 Active — confirmed 2026-04-20; campaign_id: 6817d31e-e8e6-4a09-87de-e3be8e7cfc4e |
+| [PA] Error Handler | `JByknkdAgxRmDKp3` | 4 | n8n Error Trigger | 🟢 Active — confirmed 2026-04-20 |
+| [PA] Credential Detector | `hbtSbm2pzrHX1QTn` | 10 | Every 2 hours + manual | 🟢 Active — confirmed 2026-04-20 |
 | [PA] Website Chatbot | `EPMCxdqKOuwc6hzB` | 15 | Webhook POST /website-chatbot | 🟢 Active — live on phoenixautomation.ai since 2026-04-10; 3-question qualifier → Claude HTTP scoring → hot: Airtable write + Calendly; cold: nurture; borderline: clarifying Q. E2E PASS (record recRypnI7vsMlisJR) |
-| [PA] Scoping Agent | `E24KwVMam1e8bbjT` | 15 | Webhook POST /scope-call + poll every 2h | 🔴 Inactive — built 2026-04-03; call notes → Claude scope → Airtable scope fields → email Kai for approval — Kai activates |
-| [PA] Scope Approval | `UB6ZdrnYpJlYfxD4` | 7 | GET /approve-scope?client_slug=X | 🔴 Inactive — built 2026-04-03; Kai clicks link in email → locks scope → generates proposal draft → emails Kai — Kai activates |
-| [PA] Workflow Builder Agent | `fy8OuUEGyyWhYzWC` | 15 | Poll hourly + manual | 🔴 Inactive — built 2026-04-03; reads build.ready clients → Claude generates workflow JSON → deploys to client n8n → emails Kai to review — Kai activates |
+| [PA] Scoping Agent | `E24KwVMam1e8bbjT` | 15 | Webhook POST /scope-call + poll every 2h | 🟢 Active — confirmed 2026-04-20 |
+| [PA] Scope Approval | `UB6ZdrnYpJlYfxD4` | 7 | GET /approve-scope?client_slug=X | 🔴 Inactive — built 2026-04-03; Kai clicks link in email → locks scope → generates proposal draft → emails Kai |
+| [PA] Workflow Builder Agent | `fy8OuUEGyyWhYzWC` | 15 | Poll hourly + manual | 🔴 Inactive — built 2026-04-03; reads build.ready clients → Claude generates workflow JSON → deploys to client n8n → emails Kai to review |
 
 ## Workflow Node Summaries
 
@@ -927,7 +928,9 @@ business-agent-foundry/
 | Hunter returns contacts with no name AND no job title | bro.man@domain.com style addresses slip through — unusable for personalized outreach | Normalize Leads kept no-title contacts by default | ✅ RESOLVED 2026-04-08 — skip leads where both prospect_name and job_title are empty | Haris |
 | Lovable website repo (kaicodesai/phoenixautomation) is private — no direct Claude/agent access | Medium — website changes require manual edits or GitHub token | ⏳ Options: (1) Add GitHub PAT scoped to phoenixautomation repo to session credentials, (2) Enable Lovable → GitHub sync and share PAT, (3) Make repo public temporarily for changes | Kai |
 | GitHub MCP tools scoped to business-agent-foundry only | Low — blocks direct pushes to phoenixautomation website repo | ⏳ Update MCP repo scope to include kaicodesai/phoenixautomation when access is needed | Kai/Haris |
-| Instantly 19 duplicate leads blocking HTML email test | personalization shows 0 chars despite successful exec | Instantly silently deduplicates on email; old test leads from same campaign cannot be deleted via API (returns count:0) | ⏳ Manual fix: delete duplicate leads in Instantly dashboard then re-run Outreach Agent | Kai |
+| Instantly duplicate leads blocking HTML email test | personalization shows 0 chars despite successful exec | Instantly silently deduplicates on email; old test leads from same campaign could not be deleted via API | ✅ RESOLVED 2026-04-20 — duplicates cleared manually in Instantly dashboard | Kai |
+| Lead Gen reverting to Apollo — enrichment Code node broken | Enrich Prospects Code node failed with `fetch is not defined` and `$http is not defined` | n8n Code node sandbox has no HTTP capability — must use HTTP Request node | ✅ RESOLVED 2026-04-20 — Kai rebuilt workflow with HTTP Request node for Apollo `/people/match` enrichment; 10 prospects enriched + written PASS | Kai |
+| Haris n8n Cloud access not confirmed | Blocked Haris from verifying workflow state | Pending invite from Kai | ✅ RESOLVED 2026-04-20 — Haris confirmed access to kaiashley.app.n8n.cloud | — |
 | Website chatbot not built | High — blueprint requires 24/7 AI qualifier before Typeform | ✅ RESOLVED 2026-04-03 — [PA] Website Chatbot built (EPMCxdqKOuwc6hzB, 15 nodes); embed widget at docs/website-chatbot-embed.html — Kai pastes snippet into website and activates workflow | Haris |
 | Website chatbot bot messages showing as empty grey circles | High — users saw no responses after each question | All n8n Set nodes (Greeting, Q2, Q3, Hot/Borderline/Cold Response Data) were completely empty — no fields configured. "Send Early Step Response" referenced `$json.message` which was undefined, returning `[{}]` | ✅ RESOLVED 2026-04-10 — all nodes configured with proper fields; Response Body set to `{{ JSON.stringify($json) }}` | Kai |
 | Website chatbot step 3 returning "Something went wrong" | High — leads couldn't complete qualification | "Score Lead via Claude" was a Langchain AI node requiring "Anthropic API" credential type; pa-anthropic is HTTP Header Auth — incompatible | ✅ RESOLVED 2026-04-10 — replaced with HTTP Request node calling Anthropic API directly; Parse Claude Score updated to read HTTP response format | Kai |
@@ -1112,6 +1115,37 @@ business-agent-foundry/
   - `[PA] Website Chatbot` (EPMCxdqKOuwc6hzB) — all Set nodes configured, Langchain→HTTP Request replacement, Parse Claude Score rewritten, Airtable node field names aligned
 - **phoenixautomation.ai (kaicodesai/phoenixautomation — private repo):**
   - `index.html` — 9 conversion optimisations + full chatbot widget embedded (edited manually by Kai in Lovable)
+
+---
+
+## Session Handoff — 2026-04-20 (Session 12)
+**Worked by:** Haris + Claude (Claude Code VSCode)
+
+### What was completed
+- **Lead Gen live test PASS** — execution 711 (2026-04-20 10:45): 10 prospects fully enriched via Apollo `/people/match` and written to Airtable with real names, companies, job titles, emails, LinkedIn URLs, `source: apollo`
+- **Lead Gen workflow documented** — reverted from Hunter/Tavily back to Apollo 13-node architecture; node count corrected (13, not 18)
+- **Morning Brief Delivery added to registry** — workflow EKKXeBCEiKXaYBCx confirmed ACTIVE; previously undocumented
+- **Workflow activation states corrected** — all 14 PA workflows audited via n8n API; 12 now confirmed ACTIVE, 2 remain inactive (Reporting Agent, Workflow Builder Agent, Scope Approval)
+- **Haris n8n access confirmed** — kaiashley.app.n8n.cloud; Haris machine table updated
+- **Instantly duplicates resolved** — 19 old duplicate leads cleared (Kai); Outreach E2E test re-test ready
+- **PROJECT_OVERVIEW.md updated to v4.8**
+
+### What is in progress (not finished)
+- Outreach Agent HTML email E2E — duplicates cleared, needs a manual test run to verify personalised HTML sends correctly
+- Morning Brief Delivery node count unknown — fetch from n8n to document
+
+### Blockers for next session
+- Default GitHub branch still set to `claude/setup-blueprint-agent-YnHBF` — Kai changes in GitHub Settings
+- Airtable PAT rotation pending (pat from deleted test_outreach.js was in git history)
+
+### Next person should start with
+1. `git pull origin main` then read PROJECT_OVERVIEW.md
+2. **Haris:** Run [PA] Outreach Agent manually from n8n editor → check Instantly for personalised HTML email delivery → verify `outreach_status=in_sequence` in Airtable Prospects
+3. **Haris:** Fetch Morning Brief Delivery (EKKXeBCEiKXaYBCx) node list + document node summary in this file
+4. **KAI:** Rotate Airtable PAT in account settings → update `pa-airtable` credential in n8n
+
+### Files changed this session
+- `PROJECT_OVERVIEW.md` — v4.8, Lead Gen corrected (Apollo 13-node), Morning Brief added, all workflow activation states updated, Haris n8n access confirmed, Known Issues updated
 
 ---
 
