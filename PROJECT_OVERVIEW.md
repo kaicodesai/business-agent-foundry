@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 4.9 — Last updated: 2026-04-20 — Updated by: Haris + Claude
+> **Version:** 5.0 — Last updated: 2026-04-21 — Updated by: Haris + Claude
 
 ---
 
@@ -80,7 +80,7 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - **[PA] Onboarding Automation** (7RsRJIqBHFpWZoWM) — 24 nodes, tested, dual emails working
 - **[PA] Lead Generation** (YO3f5CL9bYbLTBgw) — 13 nodes, reverted to Apollo.io (paid plan) — updated 2026-04-20; Apollo `/mixed_people/api_search` → Filter Candidates Code node → Enrich via Apollo HTTP Request (`/people/match`, reveal_personal_emails:true) → Normalize Enriched → dedup → write Prospects; `source: apollo`; running daily since 2026-04-20 (last run: 10 prospects enriched + written PASS)
 - **[PA] Morning Brief Delivery** (EKKXeBCEiKXaYBCx) — ACTIVE — daily morning brief workflow, confirmed active 2026-04-20
-- **[PA] Outreach Agent** (Mib6RUtJ2IOaUZ4s) — updated 2026-04-08 — branded dark blue HTML email template (#1B2A4A) matching Status Update Agent; Build HTML Emails node added; return format fixed for runOnceForEachItem Code nodes
+- **[PA] Outreach Agent** (Mib6RUtJ2IOaUZ4s) — fully rebuilt 2026-04-21 — 51 nodes; 5-branch multi-step sequence (Email 1 immediate → Email 2 after 1 day → Email 3 after 2 days → Complete after 7 days → IMAP reply detection); direct SMTP (no Instantly); ClickUp Outreach list (ID: 901415694346) for status tracking; Airtable fields: email_1_sent_at (fldAouPeSNvmkYKRY), email_2_sent_at (fldYVg7fK7zVHcMob), email_3_sent_at (fldNGPYLTiHNDgkCg), clickup_outreach_task_id (fldaofcgNiifxjNfh); reply blocks follow-ups; Kai notified on reply; ⚠️ INACTIVE — Kai must create pa-imap credential before activating
 - **[PA] Status Update Agent** (94DpGwRPWGRPqCVU) — 15 nodes, tested, branded emails working
 - **[PA] Referral Trigger Agent** (ka6GesSfWVo2FZtU) — 15 nodes, built, E2E tested PASS 2026-03-27, updated 2026-04-01 — now uses pa-smtp directly (email_1 to client, email_2 draft + alert to Kai); Calendly URL live
 - **[PA] ClickUp Sync** (uiTwYIUk6nIFwLtX) — 18 nodes, built 2026-03-27, reads Airtable project_status and syncs ClickUp task statuses every 2 hours, inactive
@@ -116,8 +116,7 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 
 ## In Progress ⏳
 - Default GitHub branch needs switching from `claude/setup-blueprint-agent-YnHBF` to `main` (Kai → Settings → Branches)
-- Outreach Agent HTML email E2E — Instantly duplicates cleaned up; re-test needed (run [PA] Outreach Agent manually, verify personalised HTML email sent)
-- Instantly campaign active — confirm warmup is enabled in Instantly dashboard (Settings → Email Accounts)
+- Outreach Agent rebuilt (51 nodes, SMTP, multi-step sequence) — INACTIVE pending pa-imap credential creation by Kai
 - Airtable PAT `patIwbtd9ndSoj2fJ...` was in local git history (test_outreach.js, now deleted) — rotate this token in Airtable account settings
 
 ## Not Started ❌
@@ -138,7 +137,7 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 | Project management | ClickUp | — | Client project tracking per engagement |
 | Email | Gmail SMTP | — | Onboarding emails, status updates |
 | Lead sourcing | Apollo.io | — | ICP-matched prospect sourcing |
-| Outreach sequencing | Instantly.ai | — | Cold email sequences — not yet set up |
+| Outreach sequencing | Direct SMTP (pa-smtp) | — | Multi-step cold email sequence — Instantly.ai replaced 2026-04-21 |
 | Version control | GitHub | — | All agent files, specs, SOPs, scopes |
 | IDE | VS Code + Claude Code | — | Primary development environment |
 
@@ -324,7 +323,8 @@ SPACE 90144568071 — Phoenix Automation
 │
 ├── [FOLDER] Internal                  90147969240
 │   ├── [LIST] Lead Management         901414699479
-│   └── [LIST] Operations              901414699480
+│   ├── [LIST] Operations              901414699480
+│   └── [LIST] Outreach                901415694346  ← statuses: Email 1 Sent / Email 2 Sent / Email 3 Sent / Replied / Error / Completed
 │
 ├── [FOLDER] brightline-property-management   90148144284  ← TEST (test-complete)
 │   ├── [LIST] Onboarding   901414908093
@@ -431,12 +431,16 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | team_size | number (integer) | |
 | email | email | |
 | linkedin_url | url | |
-| outreach_status | singleSelect: pending, in_sequence, replied, closed, error | pending = ready for outreach |
+| outreach_status | singleSelect: pending, email_1_sent, email_2_sent, email_3_sent, replied, completed, closed, error | pending = ready for outreach; updated by Outreach Agent branches |
 | source | singleLineText | apollo / hunter |
 | sourced_at | dateTime | ISO 8601 |
 | biggest_operational_pain | longText | Written by Website Chatbot — pain_description from step 3 — added 2026-04-10 |
 | lead_score_grade | singleLineText | Written by Website Chatbot — Claude scoring output (hot/borderline/cold) — added 2026-04-10 |
 | lead_source | singleLineText | Written by Website Chatbot — set to `website_chatbot` — added 2026-04-10 |
+| email_1_sent_at | dateTime | Outreach Agent Branch 1 — ISO 8601 UTC — added 2026-04-21 — field ID: fldAouPeSNvmkYKRY |
+| email_2_sent_at | dateTime | Outreach Agent Branch 2 — ISO 8601 UTC — added 2026-04-21 — field ID: fldYVg7fK7zVHcMob |
+| email_3_sent_at | dateTime | Outreach Agent Branch 3 — ISO 8601 UTC — added 2026-04-21 — field ID: fldNGPYLTiHNDgkCg |
+| clickup_outreach_task_id | singleLineText | Outreach Agent — stores ClickUp task ID in Outreach list 901415694346 — added 2026-04-21 — field ID: fldaofcgNiifxjNfh |
 
 ### Automation Logs Table — `tblL7tDAh1KTLtwpt`
 
@@ -474,7 +478,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | [PA] Reporting Agent | `scj61gBYYWpQydMC` | 16 | Monthly 1st + manual | 🔴 Inactive — built, never run; activate after first retainer client is live |
 | [PA] Typeform Lead Qualification | `kXxN7O77ongTMwKG` | 13 | Typeform webhook (POST /typeform-intake) | 🟢 Active — confirmed 2026-04-20 |
 | [PA] Credential Follow-Up | `uTnQAq5VlmsHYih4` | 11 | Daily 10:00 + manual | 🟢 Active — confirmed 2026-04-20 |
-| [PA] Outreach Agent | `Mib6RUtJ2IOaUZ4s` | 12 | Daily 07:00 + manual | 🟢 Active — confirmed 2026-04-20; campaign_id: 6817d31e-e8e6-4a09-87de-e3be8e7cfc4e |
+| [PA] Outreach Agent | `Mib6RUtJ2IOaUZ4s` | 51 | Daily 07:00 + manual | 🔴 Inactive — rebuilt 2026-04-21; 5-branch SMTP sequence; ⚠️ needs pa-imap credential before activation |
 | [PA] Error Handler | `JByknkdAgxRmDKp3` | 4 | n8n Error Trigger | 🟢 Active — confirmed 2026-04-20 |
 | [PA] Credential Detector | `hbtSbm2pzrHX1QTn` | 10 | Every 2 hours + manual | 🟢 Active — confirmed 2026-04-20 |
 | [PA] Website Chatbot | `EPMCxdqKOuwc6hzB` | 15 | Webhook POST /website-chatbot | 🟢 Active — live on phoenixautomation.ai since 2026-04-10; 3-question qualifier → Claude HTTP scoring → hot: Airtable write + Calendly; cold: nurture; borderline: clarifying Q. E2E PASS (record recRypnI7vsMlisJR) |
@@ -658,23 +662,61 @@ Typeform webhook: tag=pa-n8n-intake, secret=pa-typeform-2026, enabled=true
     → loops back to Node 7 (Loop Over Clients)
 ```
 
-### [PA] Outreach Agent (Mib6RUtJ2IOaUZ4s) — 12 nodes
+### [PA] Outreach Agent (Mib6RUtJ2IOaUZ4s) — 51 nodes (rebuilt 2026-04-21)
 ```
-1.  Schedule Trigger (daily 07:00)
-2.  Manual Trigger
-3.  Fetch Pending Prospects (HTTP GET → Airtable Prospects, filter: outreach_status="pending", maxRecords=50, pa-airtable)
-4.  IF Has Prospects (IF — records.length > 0)
-5.  Exit — No Pending Prospects (NoOp — FALSE branch)
-6.  Split Prospect Records (Code — flattens records array, extracts record_id + fields)
-7.  Loop Over Prospects (splitInBatches, batch=1)
-8.  Generate Email Sequence via Claude (HTTP POST → Anthropic API, pa-anthropic — generates email_1/2/3 as JSON)
-9.  Parse Email Sequence (Code — extracts email_1/2/3 from Claude JSON response, merges with prospect data)
-10. Add Lead to Instantly (HTTP POST → /api/v1/lead/add, pa-instantly — campaign_id="6817d31e-e8e6-4a09-87de-e3be8e7cfc4e", continueOnFail)
-11. Update Airtable Prospect (HTTP PATCH → outreach_status=in_sequence + outreach_started_at + instantly_campaign_id, pa-airtable, continueOnFail)
-12. Log Run Summary (HTTP POST → automation_logs, event=outreach_batch_sent, pa-airtable, continueOnFail)
-    → loops back to Node 7 (Loop Over Prospects)
+Trigger: Schedule (daily 07:00) + Manual Trigger → all 5 branches fire simultaneously
 
-campaign_id: 6817d31e-e8e6-4a09-87de-e3be8e7cfc4e (set 2026-04-01)
+BRANCH 1 — New outreach (outreach_status="pending"):
+1.  Schedule Trigger + 2. Manual Trigger
+3.  Fetch Pending Prospects (Airtable, filter: outreach_status="pending", pa-airtable)
+4.  IF Has Pending → 5. Exit (NoOp) / 6. Split Prospect Records (Code)
+7.  Loop Over Prospects (splitInBatches, batch=1)
+8.  Build HTML Emails (Code — generates email_1/2/3 plain text + HTML wrap via branded template)
+9.  Send Email 1 (SMTP → prospect email, pa-smtp, subject: "FirstName, quick question", continueOnFail)
+10. Create ClickUp Outreach Task (HTTP POST → ClickUp list 901415694346, pa-clickup, continueOnFail)
+11. Update Status — Email 1 Sent (Airtable PATCH → outreach_status=email_1_sent, email_1_sent_at=NOW(), clickup_outreach_task_id, pa-airtable)
+    → loops back to Node 7
+
+BRANCH 2 — Follow-up email 2 (email_1_sent, IS_BEFORE -1 day):
+12. Fetch F1 Prospects (Airtable, filter: outreach_status="email_1_sent" AND email_1_sent_at IS_BEFORE DATEADD(NOW(),-1,'days'))
+13. IF Has F1 → 14. Exit / 15. Split F1 Records → 16. Loop F1
+17. Build HTML Email 2 (Code)
+18. Send Email 2 (SMTP, pa-smtp, continueOnFail)
+19. Update ClickUp — Email 2 Sent (HTTP PUT → task status "Email 2 Sent", pa-clickup)
+20. Update Status — Email 2 Sent (Airtable PATCH → outreach_status=email_2_sent, email_2_sent_at=NOW())
+    → loops back to Node 16
+
+BRANCH 3 — Follow-up email 3 (email_2_sent, IS_BEFORE -2 days):
+21. Fetch F2 Prospects (filter: outreach_status="email_2_sent" AND email_2_sent_at IS_BEFORE DATEADD(NOW(),-2,'days'))
+22. IF Has F2 → 23. Exit / 24. Split F2 → 25. Loop F2
+26. Build HTML Email 3 (Code)
+27. Send Email 3 (SMTP, pa-smtp, continueOnFail)
+28. Update ClickUp — Email 3 Sent (HTTP PUT, pa-clickup)
+29. Update Status — Email 3 Sent (Airtable PATCH → outreach_status=email_3_sent, email_3_sent_at=NOW())
+    → loops back to Node 25
+
+BRANCH 4 — Complete (email_3_sent, IS_BEFORE -7 days):
+30. Fetch Completions (filter: outreach_status="email_3_sent" AND email_3_sent_at IS_BEFORE DATEADD(NOW(),-7,'days'))
+31. IF Has Completions → 32. Exit / 33. Split → 34. Loop Completions
+35. Update ClickUp — Completed (HTTP PUT → task status "Completed", pa-clickup)
+36. Update Status — Completed (Airtable PATCH → outreach_status=completed)
+    → loops back to Node 34
+
+BRANCH 5 — IMAP reply detection:
+37. Read Inbox (emailReadImap → IMAP, filter: UNSEEN + SINCE 1d — ⚠️ needs pa-imap credential)
+38. Filter Real Replies (Code — filters out: mailer-daemon, postmaster, no-reply, out-of-office keywords, auto-reply headers)
+39. Loop Replies (splitInBatches, batch=1)
+40. Lookup Prospect by Email (Airtable GET, filter: {email}="sender", pa-airtable)
+41. IF Prospect Match Found → 42. Exit Not Our Prospect / 43. Extract Reply Data (Code)
+44. Update Status — Replied (Airtable PATCH → outreach_status=replied, pa-airtable)
+45. Update ClickUp — Replied (HTTP PUT → task status "Replied", pa-clickup)
+46. Notify Kai — Reply Received (SMTP → lightofkai777@gmail.com, pa-smtp — subject: "Reply from [prospect_name]")
+    → loops back to Node 39
+
+ClickUp Outreach list ID: 901415694346 (statuses: Email 1 Sent / Email 2 Sent / Email 3 Sent / Replied / Error / Completed)
+Airtable new fields: email_1_sent_at (fldAouPeSNvmkYKRY), email_2_sent_at (fldYVg7fK7zVHcMob), email_3_sent_at (fldNGPYLTiHNDgkCg), clickup_outreach_task_id (fldaofcgNiifxjNfh)
+outreach_status values used: pending → email_1_sent → email_2_sent → email_3_sent → completed / replied
+⚠️ INACTIVE — Kai must create pa-imap credential (Google Workspace IMAP, imap.gmail.com:993 SSL, kai@phoenixautomation.ai, same app password as SMTP) before activating
 ```
 
 ### [PA] Error Handler (JByknkdAgxRmDKp3) — 4 nodes
@@ -811,8 +853,9 @@ business-agent-foundry/
 1. LEAD GENERATION (daily 06:45) ✅ LIVE
    Apollo.io → ICP filter → dedup → write Prospects (outreach_status: pending) → log
 
-2. OUTREACH (daily 07:00) ✅ BUILT (inactive — Kai activates after Instantly campaign created)
-   Read pending prospects → Claude generates 3-email sequence → Instantly.ai queue → update Airtable status
+2. OUTREACH (daily 07:00) ✅ REBUILT — 5-branch SMTP multi-step sequence (inactive — Kai creates pa-imap credential then activates)
+   pending → Email 1 (immediate) → Email 2 (after 1 day) → Email 3 (after 2 days) → Completed (after 7 days)
+   IMAP reply detection → blocks follow-ups on reply → notifies Kai → updates ClickUp Outreach list
 
 3. LEAD QUALIFICATION (inbound) ✅ BUILT (inactive — Kai activates)
    Typeform webhook → score via Claude → grade A/B = email Kai → write to Airtable Prospects
@@ -936,6 +979,7 @@ business-agent-foundry/
 | Instantly duplicate leads blocking HTML email test | personalization shows 0 chars despite successful exec | Instantly silently deduplicates on email; old test leads from same campaign could not be deleted via API | ✅ RESOLVED 2026-04-20 — duplicates cleared manually in Instantly dashboard | Kai |
 | Lead Gen reverting to Apollo — enrichment Code node broken | Enrich Prospects Code node failed with `fetch is not defined` and `$http is not defined` | n8n Code node sandbox has no HTTP capability — must use HTTP Request node | ✅ RESOLVED 2026-04-20 — Kai rebuilt workflow with HTTP Request node for Apollo `/people/match` enrichment; 10 prospects enriched + written PASS | Kai |
 | Haris n8n Cloud access not confirmed | Blocked Haris from verifying workflow state | Pending invite from Kai | ✅ RESOLVED 2026-04-20 — Haris confirmed access to kaiashley.app.n8n.cloud | — |
+| pa-imap credential missing | [PA] Outreach Agent Branch 5 (reply detection) cannot activate — IMAP_CREDENTIAL_ID placeholder used | IMAP credential not yet created in n8n | ⏳ Kai: add IMAP credential in n8n → type: IMAP, host: imap.gmail.com, port: 993, SSL, user: kai@phoenixautomation.ai, password: same app password as pa-smtp, name it `pa-imap` | Kai |
 | Website chatbot not built | High — blueprint requires 24/7 AI qualifier before Typeform | ✅ RESOLVED 2026-04-03 — [PA] Website Chatbot built (EPMCxdqKOuwc6hzB, 15 nodes); embed widget at docs/website-chatbot-embed.html — Kai pastes snippet into website and activates workflow | Haris |
 | Website chatbot bot messages showing as empty grey circles | High — users saw no responses after each question | All n8n Set nodes (Greeting, Q2, Q3, Hot/Borderline/Cold Response Data) were completely empty — no fields configured. "Send Early Step Response" referenced `$json.message` which was undefined, returning `[{}]` | ✅ RESOLVED 2026-04-10 — all nodes configured with proper fields; Response Body set to `{{ JSON.stringify($json) }}` | Kai |
 | Website chatbot step 3 returning "Something went wrong" | High — leads couldn't complete qualification | "Score Lead via Claude" was a Langchain AI node requiring "Anthropic API" credential type; pa-anthropic is HTTP Header Auth — incompatible | ✅ RESOLVED 2026-04-10 — replaced with HTTP Request node calling Anthropic API directly; Parse Claude Score updated to read HTTP response format | Kai |
@@ -989,13 +1033,13 @@ business-agent-foundry/
 - [x] ✅ **Haris:** Create pa-instantly credential in n8n (ID: xoSojCyLffw4nNe7) — 2026-04-01
 - [x] ✅ **Haris:** Build [PA] Outreach Agent (ID: Mib6RUtJ2IOaUZ4s, 12 nodes) — 2026-04-01
 - [x] ✅ **Haris:** Build [PA] Error Handler (ID: JByknkdAgxRmDKp3, 4 nodes) + connected to all 9 PA workflows — 2026-04-01
-- [ ] **KAI:** Create campaign in Instantly UI → copy campaign ID → update "Add Lead to Instantly" node in [PA] Outreach Agent
+- [x] ✅ **Haris:** Outreach Agent fully rebuilt — 51 nodes, SMTP multi-step sequence, ClickUp Outreach list, IMAP reply detection — 2026-04-21
 - [ ] **KAI:** Activate [PA] Error Handler (ID: JByknkdAgxRmDKp3) — no dependencies, safe to activate immediately
 - [ ] **KAI:** Activate [PA] Typeform Lead Qualification (ID: kXxN7O77ongTMwKG)
 - [ ] **KAI:** Activate [PA] Credential Follow-Up (ID: uTnQAq5VlmsHYih4) — daily stall alert, no dependencies
 - [ ] **KAI:** Activate [PA] Referral Trigger Agent (ID: ka6GesSfWVo2FZtU) — now uses pa-smtp directly (no Instantly dependency)
 - [ ] **KAI:** Activate [PA] ClickUp Sync (ID: uiTwYIUk6nIFwLtX) — ClickUp key already updated
-- [ ] **KAI:** Activate [PA] Outreach Agent (ID: Mib6RUtJ2IOaUZ4s) — after Instantly campaign created + email warmup complete
+- [ ] **KAI:** Create `pa-imap` credential in n8n (type: IMAP, host: imap.gmail.com, port: 993, SSL, kai@phoenixautomation.ai, same app password as pa-smtp) → then activate [PA] Outreach Agent (ID: Mib6RUtJ2IOaUZ4s)
 - [ ] **KAI:** Activate [PA] Reporting Agent (ID: scj61gBYYWpQydMC) — after first retainer client is live
 
 ## Short-term
@@ -1120,6 +1164,51 @@ business-agent-foundry/
   - `[PA] Website Chatbot` (EPMCxdqKOuwc6hzB) — all Set nodes configured, Langchain→HTTP Request replacement, Parse Claude Score rewritten, Airtable node field names aligned
 - **phoenixautomation.ai (kaicodesai/phoenixautomation — private repo):**
   - `index.html` — 9 conversion optimisations + full chatbot widget embedded (edited manually by Kai in Lovable)
+
+---
+
+## Session Handoff — 2026-04-21 (Session 13)
+**Worked by:** Haris + Claude (Claude Code VSCode)
+
+### What was completed
+- **[PA] Outreach Agent fully rebuilt** — 51 nodes (was 12); direct SMTP replaces Instantly.ai entirely; 5 parallel branches fire from single schedule + manual trigger:
+  - Branch 1: pending prospects → Email 1 sent immediately → ClickUp task created → status=email_1_sent
+  - Branch 2: email_1_sent + >1 day old → Email 2 → status=email_2_sent
+  - Branch 3: email_2_sent + >2 days old → Email 3 → status=email_3_sent
+  - Branch 4: email_3_sent + >7 days old → status=completed
+  - Branch 5: IMAP inbox poll → filter real replies (bounce/auto-reply exclusion) → lookup prospect → status=replied → ClickUp=Replied → Kai notification email; reply blocks all further follow-ups
+- **ClickUp Outreach list created** — ID: 901415694346; statuses: Email 1 Sent / Email 2 Sent / Email 3 Sent / Replied / Error / Completed
+- **4 new Airtable Prospects fields added** — email_1_sent_at, email_2_sent_at, email_3_sent_at, clickup_outreach_task_id
+- **Scoping Agent slug dropdown updated** — client_slug field changed from free-text to dropdown; Onboarding Automation extended to 55 nodes with auto-refresh of dropdown on every new onboard
+- **Typeform Lead Qualification updated** — full_name field added at position 0; prospect_name in Airtable now uses full_name instead of "BusinessName (owner)"
+- **PROJECT_OVERVIEW.md updated to v5.0**
+
+### What is in progress (not finished)
+- [PA] Outreach Agent is INACTIVE — waiting on Kai to create pa-imap credential
+
+### Blockers for next session
+- **Kai must create pa-imap credential** in n8n before Outreach Agent can be activated (type: IMAP, host: imap.gmail.com:993 SSL, kai@phoenixautomation.ai, same app password as pa-smtp, name: pa-imap)
+- Default GitHub branch still set to `claude/setup-blueprint-agent-YnHBF` — Kai changes in GitHub Settings
+- Airtable PAT rotation still pending
+
+### Next person should start with
+1. `git pull origin main` then read PROJECT_OVERVIEW.md
+2. **KAI:** In n8n → Credentials → New → IMAP → host: imap.gmail.com, port: 993, SSL, user: kai@phoenixautomation.ai, password: Google Workspace App Password → name it `pa-imap` → save; then activate [PA] Outreach Agent
+3. **Haris:** E2E test Outreach Agent — set one Airtable prospect to outreach_status=pending → run manually → verify Email 1 sent, ClickUp task created, status updated to email_1_sent
+4. **Haris:** Test Scoping Agent — submit /scope-call with Sarah's Wellness Studio slug (should appear in dropdown after Onboarding Automation ran)
+5. **KAI:** Activate remaining workflows: Error Handler, Typeform Lead Qualification, Credential Follow-Up, Referral Trigger Agent, ClickUp Sync
+
+### Files changed this session
+- `PROJECT_OVERVIEW.md` — v5.0, Outreach Agent rebuilt (51 nodes), ClickUp Outreach list added, 4 Prospects fields added, Scoping Agent dropdown documented, Typeform full_name field documented
+- **n8n workflows updated (via Node.js scripts — no repo file changes):**
+  - `[PA] Outreach Agent` (Mib6RUtJ2IOaUZ4s) — fully rebuilt, 51 nodes, SMTP multi-step sequence
+  - `[PA] Scoping Agent` (E24KwVMam1e8bbjT) — client_slug changed to dropdown
+  - `[PA] Onboarding Automation` (7RsRJIqBHFpWZoWM) — extended to 55 nodes with slug dropdown auto-refresh
+  - `[PA] Typeform Lead Qualification` (kXxN7O77ongTMwKG) — full_name field + Extract Answers + Write to Airtable updated
+- **Airtable changes:**
+  - Prospects table: 4 new fields added (email_1_sent_at, email_2_sent_at, email_3_sent_at, clickup_outreach_task_id)
+- **ClickUp changes:**
+  - New Outreach list (ID: 901415694346) created under Internal folder
 
 ---
 
