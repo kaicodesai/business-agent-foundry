@@ -2,6 +2,7 @@
 .mcp.json
 .claude/settings.local.json
 tmp_*.js
+*.local
 # Root-level build/test scripts contain hardcoded API keys — never commit
 rebuild_outreach.js
 test_outreach.js
