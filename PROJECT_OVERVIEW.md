@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 5.0 — Last updated: 2026-04-21 — Updated by: Haris + Claude
+> **Version:** 5.2 — Last updated: 2026-04-22 — Updated by: Haris + Claude
 
 ---
 
@@ -77,7 +77,7 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - Full local dev stack operational (Node 20, n8n 2.10.4, Claude Code 2.1.77, n8n-MCP)
 - Airtable base structured — Clients + Prospects + automation_logs tables
 - All 6 n8n credentials added (pa-airtable, pa-n8n-api, pa-clickup, pa-smtp, pa-apollo-io, pa-anthropic)
-- **[PA] Onboarding Automation** (7RsRJIqBHFpWZoWM) — 58 nodes, prospect→client copy logic added 2026-04-21 (Lookup Prospect by Email + Merge Prospect Context + Mark Prospect Converted)
+- **[PA] Onboarding Automation** (7RsRJIqBHFpWZoWM) — 58 nodes — rebuilt prospect→client flow 2026-04-22: on payment, looks up Prospect by email → creates NEW Clients record (copying all prospect + scope data) → continues onboarding. No longer looks up a pre-existing Clients record. Mark Prospect Converted fires at end.
 - **[PA] Lead Generation** (YO3f5CL9bYbLTBgw) — 13 nodes, reverted to Apollo.io (paid plan) — updated 2026-04-20; Apollo `/mixed_people/api_search` → Filter Candidates Code node → Enrich via Apollo HTTP Request (`/people/match`, reveal_personal_emails:true) → Normalize Enriched → dedup → write Prospects; `source: apollo`; running daily since 2026-04-20 (last run: 10 prospects enriched + written PASS)
 - **[PA] Morning Brief Delivery** (EKKXeBCEiKXaYBCx) — ACTIVE — daily morning brief workflow, confirmed active 2026-04-20
 - **[PA] Outreach Agent** (Mib6RUtJ2IOaUZ4s) — fully rebuilt 2026-04-21 — 51 nodes; 5-branch multi-step sequence (Email 1 immediate → Email 2 after 1 day → Email 3 after 2 days → Complete after 7 days → IMAP reply detection); direct SMTP (no Instantly); ClickUp Outreach list (ID: 901415694346) for status tracking; Airtable fields: email_1_sent_at (fldAouPeSNvmkYKRY), email_2_sent_at (fldYVg7fK7zVHcMob), email_3_sent_at (fldNGPYLTiHNDgkCg), clickup_outreach_task_id (fldaofcgNiifxjNfh); reply blocks follow-ups; Kai notified on reply; ⚠️ INACTIVE — Kai must create pa-imap credential before activating
@@ -90,8 +90,8 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - **[PA] Credential Detector** (hbtSbm2pzrHX1QTn) — 10 nodes, built 2026-04-03, every 2h + manual → fetches onboarding.in_progress clients whose n8n_api_key is now populated → auto-sets project_status=build.ready → alerts Kai to start workflow build → logs to automation_logs, inactive
 - **[PA] Website Chatbot** (EPMCxdqKOuwc6hzB) — 15 nodes, built 2026-04-03, fully operational 2026-04-10 — webhook POST /website-chatbot → stateless 3-question chatbot → Claude scores lead (HTTP Request node, not Langchain) → hot: writes Airtable Prospect + returns Calendly link; cold: returns nurture message; borderline: asks clarifying question. Live on phoenixautomation.ai with auto-popup (7s teaser, 13s auto-open). End-to-end verified: hot lead record recRypnI7vsMlisJR created in Airtable Prospects.
 - **3 new Airtable Prospects fields added** — `biggest_operational_pain` (long text), `lead_score_grade` (text), `lead_source` (text) — 2026-04-10; field names aligned to chatbot n8n node output
-- **[PA] Scoping Agent** (E24KwVMam1e8bbjT) — 15 nodes, built 2026-04-03, webhook POST /scope-call + polls call_complete clients → Claude generates scope (automation_1/2/3, tools, tier) → writes all scope fields to Airtable → emails Kai with Approve button, inactive
-- **[PA] Scope Approval** (UB6ZdrnYpJlYfxD4) — 7 nodes, built 2026-04-03, GET /approve-scope?client_slug=X → locks scope_locked_at → Claude generates proposal draft → saves to Airtable proposal_draft field → emails Kai → shows success page, inactive
+- **[PA] Scoping Agent** (E24KwVMam1e8bbjT) — 17 nodes, updated 2026-04-22 — now reads from and writes to **Prospects table** (was Clients). Polls `project_status=call_complete` in Prospects; writes scope_of_work, scope_summary, service_tier, automation_1/2/3, tools_required back to Prospects record; sets `project_status=scope_review`.
+- **[PA] Scope Approval** (UB6ZdrnYpJlYfxD4) — 7 nodes, updated 2026-04-22 — now reads from and writes to **Prospects table** (was Clients). GET /approve-scope?client_slug=X → fetches Prospect by client_slug → locks scope_locked_at + sets proposal_sent in Prospects → generates proposal draft via Claude → saves to Prospects.proposal_draft → emails Kai. Inactive.
 - **[PA] Workflow Builder Agent** (fy8OuUEGyyWhYzWC) — 15 nodes, built 2026-04-03, polls build.ready clients hourly → reads scope from Airtable → Claude generates n8n workflow JSON per automation → deploys to client's n8n via their API key → sets build_review + emails Kai review links, inactive
 - **15 new Airtable Clients fields added** — call_notes, scope_summary, automation_count, automation_1/2/3_name, automation_1/2/3_description, scope_locked_at, proposal_draft, workflows_deployed, build_review_url — 2026-04-03
 - **5 new project_status values added** — call_complete, scoping, scope_review, building, build_review — 2026-04-03
@@ -423,6 +423,8 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 
 ### Prospects Table — `tbluEsKoQ2p49ktVq`
 
+> This table is the single source of truth for all pre-payment data. A prospect record travels through outreach → qualification → assessment → scoping → proposal. On payment, Onboarding Automation copies the full record into the Clients table and marks the prospect `outreach_status=completed`.
+
 | Field | Type | Notes |
 |-------|------|-------|
 | prospect_name | singleLineText | Primary |
@@ -432,16 +434,39 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | team_size | number (integer) | |
 | email | email | |
 | linkedin_url | url | |
-| outreach_status | singleSelect: pending, email_1_sent, email_2_sent, email_3_sent, replied, completed, closed, error | pending = ready for outreach; updated by Outreach Agent branches |
-| source | singleLineText | apollo / hunter |
+| source | singleLineText | apollo / hunter / website_chatbot |
 | sourced_at | dateTime | ISO 8601 |
-| biggest_operational_pain | longText | Written by Website Chatbot — pain_description from step 3 — added 2026-04-10 |
-| lead_score_grade | singleLineText | Written by Website Chatbot — Claude scoring output (hot/borderline/cold) — added 2026-04-10 |
-| lead_source | singleLineText | Written by Website Chatbot — set to `website_chatbot` — added 2026-04-10 |
-| email_1_sent_at | dateTime | Outreach Agent Branch 1 — ISO 8601 UTC — added 2026-04-21 — field ID: fldAouPeSNvmkYKRY |
-| email_2_sent_at | dateTime | Outreach Agent Branch 2 — ISO 8601 UTC — added 2026-04-21 — field ID: fldYVg7fK7zVHcMob |
-| email_3_sent_at | dateTime | Outreach Agent Branch 3 — ISO 8601 UTC — added 2026-04-21 — field ID: fldNGPYLTiHNDgkCg |
-| clickup_outreach_task_id | singleLineText | Outreach Agent — stores ClickUp task ID in Outreach list 901415694346 — added 2026-04-21 — field ID: fldaofcgNiifxjNfh |
+| outreach_status | singleSelect: pending, email_1_sent, email_2_sent, email_3_sent, replied, completed, closed, error | pending = ready for outreach; completed = converted to client |
+| outreach_error | multilineText | |
+| email_1_text | multilineText | Pre-generated by AI for cost saving |
+| email_2_text | multilineText | |
+| email_3_text | multilineText | |
+| email_1_sent_at | dateTime | Outreach Agent Branch 1 — field ID: fldAouPeSNvmkYKRY |
+| email_2_sent_at | dateTime | Outreach Agent Branch 2 — field ID: fldYVg7fK7zVHcMob |
+| email_3_sent_at | dateTime | Outreach Agent Branch 3 — field ID: fldNGPYLTiHNDgkCg |
+| clickup_outreach_task_id | singleLineText | Outreach Agent — ClickUp Outreach list 901415694346 — field ID: fldaofcgNiifxjNfh |
+| biggest_operational_pain | multilineText | Website Chatbot — step 3 pain description — added 2026-04-10 |
+| lead_score_grade | singleLineText | Chatbot / Typeform — A/B/C/D or hot/borderline/cold |
+| lead_source | singleLineText | website_chatbot / typeform / outreach |
+| Precall Brief | multilineText | Written by Typeform Lead Qualification agent (Claude) — note: field has capital P and space |
+| lead_score_total | number | Typeform 0–8 score |
+| **— Assessment & Scoping (written by Scoping Agent) —** | | |
+| client_slug | singleLineText | Set by Kai when triggering Scoping Agent (e.g. acme-corp) — used for Scope Approval webhook |
+| call_notes | singleLineText | Assessment call notes — Scoping Agent input |
+| project_status | singleSelect: call_complete, scoping, scope_review, proposal_sent, won, lost | Set by Scoping Agent and Scope Approval; Onboarding polls for call_complete |
+| scope_of_work | multilineText | Generated by Scoping Agent |
+| scope_summary | multilineText | Generated by Scoping Agent |
+| service_tier | singleSelect: starter-build, growth-package, scale-retainer | Generated by Scoping Agent |
+| tools_required | multilineText | Generated by Scoping Agent (comma-separated) |
+| automation_count | number | Generated by Scoping Agent — field ID: fldvkmErwVz4bAMDO |
+| automation_1_name | singleLineText | Generated by Scoping Agent |
+| automation_1_description | multilineText | Generated by Scoping Agent |
+| automation_2_name | singleLineText | Generated by Scoping Agent |
+| automation_2_description | multilineText | Generated by Scoping Agent |
+| automation_3_name | singleLineText | Generated by Scoping Agent |
+| automation_3_description | multilineText | Generated by Scoping Agent |
+| proposal_draft | multilineText | Generated by Claude in Scope Approval workflow |
+| scope_locked_at | dateTime | Set by Scope Approval when Kai clicks approve |
 
 ### Automation Logs Table — `tblL7tDAh1KTLtwpt`
 
@@ -470,7 +495,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 
 | Workflow | ID | Nodes | Trigger | Status |
 |---------|-----|-------|---------|--------|
-| [PA] Onboarding Automation | `7RsRJIqBHFpWZoWM` | 58 | POST /payment-confirmed webhook | 🟢 Active — last run 2026-03-25 (success) |
+| [PA] Onboarding Automation | `7RsRJIqBHFpWZoWM` | 58 | POST /payment-confirmed webhook | 🟢 Active — rebuilt 2026-04-22: Lookup Prospect → Create Client record → onboard |
 | [PA] Lead Generation | `YO3f5CL9bYbLTBgw` | 13 | Daily 06:45 + manual | 🟢 Active — running daily; last run 2026-04-20 (10 prospects enriched + written, PASS) |
 | [PA] Morning Brief Delivery | `EKKXeBCEiKXaYBCx` | — | Daily (morning) | 🟢 Active — confirmed 2026-04-20; node count TBC |
 | [PA] Status Update Agent | `94DpGwRPWGRPqCVU` | 20 | Monday 09:00 + manual | 🟢 Active — last run 2026-03-30 (success) |
@@ -483,61 +508,75 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | [PA] Error Handler | `JByknkdAgxRmDKp3` | 4 | n8n Error Trigger | 🟢 Active — confirmed 2026-04-20 |
 | [PA] Credential Detector | `hbtSbm2pzrHX1QTn` | 10 | Every 2 hours + manual | 🟢 Active — confirmed 2026-04-20 |
 | [PA] Website Chatbot | `EPMCxdqKOuwc6hzB` | 15 | Webhook POST /website-chatbot | 🟢 Active — live on phoenixautomation.ai since 2026-04-10; 3-question qualifier → Claude HTTP scoring → hot: Airtable write + Calendly; cold: nurture; borderline: clarifying Q. E2E PASS (record recRypnI7vsMlisJR) |
-| [PA] Scoping Agent | `E24KwVMam1e8bbjT` | 15 | Webhook POST /scope-call + poll every 2h | 🟢 Active — confirmed 2026-04-20 |
-| [PA] Scope Approval | `UB6ZdrnYpJlYfxD4` | 7 | GET /approve-scope?client_slug=X | 🔴 Inactive — built 2026-04-03; Kai clicks link in email → locks scope → generates proposal draft → emails Kai |
+| [PA] Scoping Agent | `E24KwVMam1e8bbjT` | 17 | Webhook POST /scope-call + poll every 2h | 🟢 Active — updated 2026-04-22: reads/writes Prospects table (was Clients) |
+| [PA] Scope Approval | `UB6ZdrnYpJlYfxD4` | 7 | GET /approve-scope?client_slug=X | 🔴 Inactive — updated 2026-04-22: reads/writes Prospects table (was Clients); Kai clicks approve link → locks scope → generates proposal → emails Kai |
 | [PA] Workflow Builder Agent | `fy8OuUEGyyWhYzWC` | 15 | Poll hourly + manual | 🔴 Inactive — built 2026-04-03; reads build.ready clients → Claude generates workflow JSON → deploys to client n8n → emails Kai to review |
 
 ## Workflow Node Summaries
 
 ### [PA] Onboarding Automation (7RsRJIqBHFpWZoWM) — 58 nodes
 ```
+FLOW: Payment → look up Prospect → create new Client record → workspace → ClickUp → emails → convert Prospect
+
 1.  Payment Confirmed Webhook (POST /payment-confirmed)
 2.  Normalize Payload (Code)
 3.  Validate Payload (IF)
-4.  Derive Client Slug (Code)
-5.  Airtable — Lookup Client (HTTP GET)
-6.  Merge Airtable Context (Code)
-7.  Create n8n Workspace (Code — stubbed)
-8.  Extract Workspace ID (Code)
-9.  Read Scope of Work (HTTP GET Airtable)
-10. Extract Tools Required (Code)
-11. Create Credentials Template (Code)
-12. Extract Template ID (Code)
-13. Create Client ClickUp Folder (HTTP POST /api/v2/space/90144568071/folder — ⚠️ space root only)
-14. Extract Folder ID (Code)
-15. Create List — Onboarding (HTTP POST)
-16. Create List — Build (HTTP POST)
-17. Create List — QA (HTTP POST)
-18. Create List — Live (HTTP POST)
-19–25. Seed 7 Onboarding Tasks: "Welcome email sent to client", "Internal summary email sent to Kai",
+4.  Derive Client Slug (Code — slugifies company_name)
+5.  Lookup Prospect (HTTP GET → Airtable Prospects tbluEsKoQ2p49ktVq,
+    filterByFormula={email}="client_email", maxRecords=1 — finds the prospect record)
+6.  Merge Airtable Context (Code — extracts ALL prospect fields: lead_score_grade, pre_call_brief,
+    industry, prospect_record_id, scope_of_work, scope_summary, service_tier, tools_required,
+    automation_count, automation_1/2/3 name+description, call_notes — merges with payment payload)
+7.  Create Airtable Client Record (HTTP POST → Airtable Clients tblfvqqyYukRJQYmQ,
+    typecast:true — creates NEW Clients record with all prospect + scope data copied across,
+    project_status="onboarding". Fields: contact_name, email, company_name, client_slug,
+    service_tier, lead_score_grade, pre_call_brief, industry, scope_of_work, scope_summary,
+    tools_required, automation_count, automation_1/2/3, call_notes)
+8.  Extract Client Record ID (Code — extracts airtable_record_id from POST response,
+    merges with all prior data — this ID is used by all downstream PATCH nodes)
+9.  Create n8n Workspace (Code — stubbed; returns workspace_name = "[PA] {client_slug}")
+10. Extract Workspace ID (Code — references Extract Client Record ID for airtable_record_id)
+11. Read Scope of Work (HTTP GET Airtable Clients — reads scope_of_work from newly created record)
+12. Extract Tools Required (Code)
+13. Create Credentials Template (Code)
+14. Extract Template ID (Code)
+15. Create Client ClickUp Folder (HTTP POST /api/v2/space/90144568071/folder — ⚠️ space root only)
+16. Extract Folder ID (Code)
+17. Create List — Onboarding (HTTP POST)
+18. Create List — Build (HTTP POST)
+19. Create List — QA (HTTP POST)
+20. Create List — Live (HTTP POST)
+21–27. Seed 7 Onboarding Tasks: "Welcome email sent to client", "Internal summary email sent to Kai",
        "Airtable record updated", "Credential setup instructions sent to client",
        "Client connects all tools in n8n", "All credentials tested green",
        "Onboarding complete — build ready"
-26–29. Seed 4 Build Tasks: "Build started", "Error handling configured",
+28–31. Seed 4 Build Tasks: "Build started", "Error handling configured",
        "Build log written", "Owner review requested"
-30–34. Seed 5 QA Tasks: "QA checklist run", "QA report written", "QA verdict recorded",
+32–36. Seed 5 QA Tasks: "QA checklist run", "QA report written", "QA verdict recorded",
        "Conditional fixes verified", "Owner activation checklist reviewed"
-35–41. Seed 7 Live Tasks: "Workflows activated in n8n", "Airtable project_status set to live",
+37–43. Seed 7 Live Tasks: "Workflows activated in n8n", "Airtable project_status set to live",
        "project_launch_date recorded in Airtable", "Client notified — project is live",
        "Status update agent confirmed running", "Test records cleaned up",
        "n8n_workflow_ids added to Airtable"
-42. Extract All Task IDs (Code — maps all 23 task creation responses to clickup_task_* field names)
-43. Merge ClickUp Folder ID (Code — adds folder_id + 4 list IDs to priorData)
-44. Log ClickUp Error — Continue (Code — error branch, nulls all IDs)
-45. Update Airtable Record (HTTP PATCH — writes project_status + all IDs + all 21 clickup_task_* fields + lead_score_grade + pre_call_brief from prospect lookup)
-46. Mark Task: OB Airtable Complete (HTTP PUT → clickup_task_ob_airtable → "complete", pa-clickup)
-47. Send Onboarding Summary Email (SMTP → lightofkai777@gmail.com)
-48. Mark Task: OB Internal Complete (HTTP PUT → clickup_task_ob_internal → "complete", pa-clickup)
-49. Send Client Welcome Email (SMTP → client email)
-50. Mark Task: OB Welcome Complete (HTTP PUT → clickup_task_ob_welcome → "complete", pa-clickup)
-51. Stop — Invalid Payload (stopAndError)
-52. Lookup Prospect by Email (HTTP GET → Airtable Prospects tbluEsKoQ2p49ktVq, filterByFormula={email}="{email}", maxRecords=1, pa-airtable, continueOnFail — finds matching prospect record)
-53. Merge Prospect Context (Code — runOnceForAllItems; merges lead_score_grade + pre_call_brief + prospect_record_id from Prospects lookup into client payload; graceful if no match)
-54. Fetch All Client Slugs (HTTP GET → Airtable Clients, fields: client_slug + project_status, continueOnFail, pa-airtable)
-55. Get Scoping Agent Workflow (HTTP GET → n8n API /workflows/E24KwVMam1e8bbjT, pa-n8n-api, continueOnFail)
-56. Build Updated Scope Form (Code — filters excluded statuses [test-complete, closed.*], sorts slugs, rebuilds Scope Call Form dropdown options, returns stripped PUT body)
-57. Update Scoping Form Slugs (HTTP PUT → n8n API /workflows/E24KwVMam1e8bbjT, pa-n8n-api, continueOnFail — auto-refreshes Client slug dropdown in Scoping Agent form after every new client onboard)
-58. Mark Prospect Converted (HTTP PATCH → Airtable Prospects, prospect_record_id from json, outreach_status=completed, pa-airtable, continueOnFail — fires after OB Welcome sent; placed between Mark Task: OB Welcome Complete and Fetch All Client Slugs)
+44. Extract All Task IDs (Code — maps all 23 task creation responses to clickup_task_* field names)
+45. Merge ClickUp Folder ID (Code — adds folder_id + 4 list IDs to priorData)
+46. Log ClickUp Error — Continue (Code — error branch, nulls all IDs)
+47. Update Airtable Record (HTTP PATCH → Clients record — writes project_status=onboarding.in_progress
+    + workspace_id + credentials_template_id + all clickup_* IDs + onboarding_started_at
+    + lead_score_grade + pre_call_brief)
+48. Mark Task: OB Airtable Complete (HTTP PUT → clickup_task_ob_airtable → "complete", pa-clickup)
+49. Send Onboarding Summary Email (SMTP → lightofkai777@gmail.com)
+50. Mark Task: OB Internal Complete (HTTP PUT → clickup_task_ob_internal → "complete", pa-clickup)
+51. Send Client Welcome Email (SMTP → client email)
+52. Mark Task: OB Welcome Complete (HTTP PUT → clickup_task_ob_welcome → "complete", pa-clickup)
+    → Mark Prospect Converted
+53. Stop — Invalid Payload (stopAndError)
+54. Mark Prospect Converted (HTTP PATCH → Airtable Prospects, prospect_record_id from
+    $('Merge Airtable Context').first().json, outreach_status=completed — fires after OB Welcome)
+55. Fetch All Client Slugs (HTTP GET → Airtable Clients, fields: client_slug + project_status)
+56. Get Scoping Agent Workflow (HTTP GET → n8n API /workflows/E24KwVMam1e8bbjT)
+57. Build Updated Scope Form (Code — rebuilds client_slug dropdown for Scoping Agent form)
+58. Update Scoping Form Slugs (HTTP PUT → n8n API /workflows/E24KwVMam1e8bbjT)
 ```
 
 ### [PA] Lead Generation (YO3f5CL9bYbLTBgw) — 11 nodes
@@ -865,16 +904,23 @@ business-agent-foundry/
    Typeform webhook → score via Claude → grade A/B = email Kai → write to Airtable Prospects
 
 4. ASSESSMENT + PROCESS MAPPING (owner)
-   Owner call → process-mapping-agent → docs/clients/[slug]/process-map.md
+   Owner call → Kai sets Prospect project_status=call_complete + fills call_notes field in Airtable
 
-5. SCOPING + PROPOSAL (owner triggers)
-   automation-scoping-agent → pricing tree → scope-of-work.md + proposal-draft.md → owner sends
+5. SCOPING + PROPOSAL ✅ UPDATED 2026-04-22
+   Scoping Agent polls Prospects for project_status=call_complete → Claude generates scope →
+   writes scope_of_work, scope_summary, service_tier, automation_1/2/3, tools_required to **Prospects** →
+   sets project_status=scope_review → emails Kai with Approve button
+   Kai clicks approve → Scope Approval reads/writes **Prospects** → locks scope_locked_at →
+   Claude generates proposal_draft → saves to Prospects → emails Kai → project_status=proposal_sent
 
-6. PAYMENT → ONBOARDING ✅ LIVE
+6. PAYMENT → ONBOARDING ✅ REBUILT 2026-04-22
    Stripe webhook → [PA] Onboarding Automation
-   → validate → slug → Airtable Clients lookup → **Prospect lookup by email → merge lead_score_grade + pre_call_brief**
-   → workspace stub → credentials checklist → ClickUp project → update Airtable (with prospect fields)
-   → owner summary email + client welcome email → **mark Prospect outreach_status=completed**
+   → validate → slug
+   → **Lookup Prospect by email** (gets ALL data: qualification + scope + proposal)
+   → **Create NEW Clients record** (copies all prospect + scope fields across, project_status=onboarding)
+   → workspace stub → credentials checklist → ClickUp project → update Airtable (workspace/ClickUp IDs)
+   → owner summary email + client welcome email
+   → **mark Prospect outreach_status=completed** (prospect_record_id from Merge Airtable Context)
    → refresh Scoping Agent slug dropdown
 
 7. BUILD (owner triggers)
@@ -1170,6 +1216,58 @@ business-agent-foundry/
   - `[PA] Website Chatbot` (EPMCxdqKOuwc6hzB) — all Set nodes configured, Langchain→HTTP Request replacement, Parse Claude Score rewritten, Airtable node field names aligned
 - **phoenixautomation.ai (kaicodesai/phoenixautomation — private repo):**
   - `index.html` — 9 conversion optimisations + full chatbot widget embedded (edited manually by Kai in Lovable)
+
+---
+
+## Session Handoff — 2026-04-22 (Session 14)
+**Worked by:** Haris + Claude (Claude Code VSCode)
+
+### What was completed
+- **Prospect→Client architecture redesigned (Option A)** — full pipeline restructured so all pre-payment data lives in the Prospects table and the Clients table is only populated on payment:
+  - **Scoping Agent** updated: now reads `project_status=call_complete` from Prospects table (was Clients); writes all scope fields (scope_of_work, scope_summary, service_tier, automation_1/2/3, tools_required) back to Prospects; sets Prospects.project_status=scope_review
+  - **Scope Approval** updated: now reads/writes Prospects table (was Clients); saves scope_locked_at + proposal_draft to Prospects; sets project_status=proposal_sent
+  - **Onboarding Automation** rebuilt (nodes 5–8 redesigned):
+    - Node 5: "Lookup Prospect" — HTTP GET Prospects table by email (was: Airtable lookup Clients)
+    - Node 6: "Merge Airtable Context" — extracts ALL prospect + scope fields (lead_score_grade, pre_call_brief, industry, all scope/automation fields, call_notes, prospect_record_id)
+    - Node 7: "Create Airtable Client Record" — HTTP POST creates NEW Clients record with all data copied from prospect (was: old "Lookup Prospect by Email" — redundant lookup node)
+    - Node 8: "Extract Client Record ID" — extracts airtable_record_id from POST response (was: "Merge Prospect Context" — now redundant)
+    - Node 10: "Extract Workspace ID" updated to reference "Extract Client Record ID"
+    - "Mark Prospect Converted" URL fixed to explicit node reference `$('Merge Airtable Context').first().json.prospect_record_id`
+- **16 scope fields added to Prospects table** (most were pre-existing; automation_count created via Metadata API — field ID: fldvkmErwVz4bAMDO): client_slug, call_notes, project_status, scope_of_work, scope_summary, service_tier, tools_required, automation_count, automation_1/2/3 name+description, proposal_draft, scope_locked_at
+- **field name bug fixed** — Prospects field is `Precall Brief` (capital P, space); Onboarding was reading `prospect.pre_call_brief` (null). Fixed to `prospect['Precall Brief']`
+- **field name bug fixed** — Create Client Record was sending `client_name` (wrong); fixed to `contact_name`. Was sending `package` (no such Clients field); fixed to `service_tier`
+- **Onboarding Automation flow verified** — connection chain confirmed: Derive Client Slug → Lookup Prospect → Merge Airtable Context → Create Airtable Client Record → Extract Client Record ID → Create n8n Workspace
+- **Execution #829 diagnosed** — test payload (Muneeb Fiaz / Test Co) from Postman; flow stopped at Airtable lookup because test client didn't exist — expected behaviour, not a bug
+
+### What is in progress (not finished)
+- [PA] Outreach Agent is INACTIVE — waiting on Kai to create pa-imap credential
+- No E2E test of the new Onboarding flow yet — needs a real Prospect record with scope data populated
+
+### Blockers for next session
+- **Kai must create pa-imap credential** before Outreach Agent can activate
+- To test Onboarding: need a Prospect record in Airtable with email + scope fields populated + a payment webhook sent with that email
+- Default GitHub branch still set to `claude/setup-blueprint-agent-YnHBF`
+- Airtable PAT rotation still pending
+
+### Next person should start with
+1. `git pull origin main` then read PROJECT_OVERVIEW.md
+2. **To test the full pipeline end-to-end:**
+   a. Create/find a Prospect record in Airtable with email + call_notes filled in
+   b. Set Prospects.project_status = call_complete
+   c. Trigger Scoping Agent via /scope-call webhook with that client_slug → verify scope fields written to Prospects
+   d. Click the approve link in email → verify Scope Approval writes proposal_draft + scope_locked_at to Prospects
+   e. POST to /payment-confirmed with that email → verify new Clients record created with all data, ClickUp project seeded, emails sent
+3. **KAI:** Create pa-imap credential → activate [PA] Outreach Agent
+4. **KAI:** Change default GitHub branch to main (GitHub Settings → Branches)
+
+### Files changed this session
+- `PROJECT_OVERVIEW.md` — v5.2, Option A architecture documented, Prospects schema fully expanded, Onboarding node summary rewritten
+- **n8n workflows updated (via Node.js scripts — no repo file changes):**
+  - `[PA] Onboarding Automation` (7RsRJIqBHFpWZoWM) — nodes 5–8 redesigned for prospect→client copy
+  - `[PA] Scoping Agent` (E24KwVMam1e8bbjT) — 4 nodes switched from Clients to Prospects table
+  - `[PA] Scope Approval` (UB6ZdrnYpJlYfxD4) — 3 nodes switched from Clients to Prospects table
+- **Airtable changes:**
+  - Prospects table: `automation_count` field created (field ID: fldvkmErwVz4bAMDO); all other scope fields were pre-existing
 
 ---
 
