@@ -77,7 +77,7 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - Full local dev stack operational (Node 20, n8n 2.10.4, Claude Code 2.1.77, n8n-MCP)
 - Airtable base structured — Clients + Prospects + automation_logs tables
 - All 6 n8n credentials added (pa-airtable, pa-n8n-api, pa-clickup, pa-smtp, pa-apollo-io, pa-anthropic)
-- **[PA] Onboarding Automation** (7RsRJIqBHFpWZoWM) — 24 nodes, tested, dual emails working
+- **[PA] Onboarding Automation** (7RsRJIqBHFpWZoWM) — 58 nodes, prospect→client copy logic added 2026-04-21 (Lookup Prospect by Email + Merge Prospect Context + Mark Prospect Converted)
 - **[PA] Lead Generation** (YO3f5CL9bYbLTBgw) — 13 nodes, reverted to Apollo.io (paid plan) — updated 2026-04-20; Apollo `/mixed_people/api_search` → Filter Candidates Code node → Enrich via Apollo HTTP Request (`/people/match`, reveal_personal_emails:true) → Normalize Enriched → dedup → write Prospects; `source: apollo`; running daily since 2026-04-20 (last run: 10 prospects enriched + written PASS)
 - **[PA] Morning Brief Delivery** (EKKXeBCEiKXaYBCx) — ACTIVE — daily morning brief workflow, confirmed active 2026-04-20
 - **[PA] Outreach Agent** (Mib6RUtJ2IOaUZ4s) — fully rebuilt 2026-04-21 — 51 nodes; 5-branch multi-step sequence (Email 1 immediate → Email 2 after 1 day → Email 3 after 2 days → Complete after 7 days → IMAP reply detection); direct SMTP (no Instantly); ClickUp Outreach list (ID: 901415694346) for status tracking; Airtable fields: email_1_sent_at (fldAouPeSNvmkYKRY), email_2_sent_at (fldYVg7fK7zVHcMob), email_3_sent_at (fldNGPYLTiHNDgkCg), clickup_outreach_task_id (fldaofcgNiifxjNfh); reply blocks follow-ups; Kai notified on reply; ⚠️ INACTIVE — Kai must create pa-imap credential before activating
@@ -236,6 +236,7 @@ claude
 | `pa-apollo-io` | HTTP Header Auth | `x-api-key` | ✅ Active |
 | `pa-anthropic` | HTTP Header Auth | `x-api-key` | ✅ Active |
 | `pa-instantly` | HTTP Header Auth | `Authorization: Bearer` | ✅ Active — ID: xoSojCyLffw4nNe7 |
+| `pa-imap` (IMAP account) | IMAP | imap.gmail.com:993 SSL, kai@phoenixautomation.ai | ✅ Active — ID: 8MxHTFkPLgLLUO1U — added 2026-04-21 |
 | `pa-tavily` | Hardcoded in Lead Gen Code node | — | ✅ Active — key: `tvly-dev-ytdoA-...` (stored in Tavily Search node jsCode) |
 
 ## Email Addresses
@@ -469,7 +470,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 
 | Workflow | ID | Nodes | Trigger | Status |
 |---------|-----|-------|---------|--------|
-| [PA] Onboarding Automation | `7RsRJIqBHFpWZoWM` | 55 | POST /payment-confirmed webhook | 🟢 Active — last run 2026-03-25 (success) |
+| [PA] Onboarding Automation | `7RsRJIqBHFpWZoWM` | 58 | POST /payment-confirmed webhook | 🟢 Active — last run 2026-03-25 (success) |
 | [PA] Lead Generation | `YO3f5CL9bYbLTBgw` | 13 | Daily 06:45 + manual | 🟢 Active — running daily; last run 2026-04-20 (10 prospects enriched + written, PASS) |
 | [PA] Morning Brief Delivery | `EKKXeBCEiKXaYBCx` | — | Daily (morning) | 🟢 Active — confirmed 2026-04-20; node count TBC |
 | [PA] Status Update Agent | `94DpGwRPWGRPqCVU` | 20 | Monday 09:00 + manual | 🟢 Active — last run 2026-03-30 (success) |
@@ -488,7 +489,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 
 ## Workflow Node Summaries
 
-### [PA] Onboarding Automation (7RsRJIqBHFpWZoWM) — 55 nodes
+### [PA] Onboarding Automation (7RsRJIqBHFpWZoWM) — 58 nodes
 ```
 1.  Payment Confirmed Webhook (POST /payment-confirmed)
 2.  Normalize Payload (Code)
@@ -523,17 +524,20 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 42. Extract All Task IDs (Code — maps all 23 task creation responses to clickup_task_* field names)
 43. Merge ClickUp Folder ID (Code — adds folder_id + 4 list IDs to priorData)
 44. Log ClickUp Error — Continue (Code — error branch, nulls all IDs)
-45. Update Airtable Record (HTTP PATCH — writes project_status + all IDs + all 21 clickup_task_* fields)
+45. Update Airtable Record (HTTP PATCH — writes project_status + all IDs + all 21 clickup_task_* fields + lead_score_grade + pre_call_brief from prospect lookup)
 46. Mark Task: OB Airtable Complete (HTTP PUT → clickup_task_ob_airtable → "complete", pa-clickup)
 47. Send Onboarding Summary Email (SMTP → lightofkai777@gmail.com)
 48. Mark Task: OB Internal Complete (HTTP PUT → clickup_task_ob_internal → "complete", pa-clickup)
 49. Send Client Welcome Email (SMTP → client email)
 50. Mark Task: OB Welcome Complete (HTTP PUT → clickup_task_ob_welcome → "complete", pa-clickup)
 51. Stop — Invalid Payload (stopAndError)
-52. Fetch All Client Slugs (HTTP GET → Airtable Clients, fields: client_slug + project_status, continueOnFail, pa-airtable)
-53. Get Scoping Agent Workflow (HTTP GET → n8n API /workflows/E24KwVMam1e8bbjT, pa-n8n-api, continueOnFail)
-54. Build Updated Scope Form (Code — filters excluded statuses [test-complete, closed.*], sorts slugs, rebuilds Scope Call Form dropdown options, returns stripped PUT body)
-55. Update Scoping Form Slugs (HTTP PUT → n8n API /workflows/E24KwVMam1e8bbjT, pa-n8n-api, continueOnFail — auto-refreshes Client slug dropdown in Scoping Agent form after every new client onboard)
+52. Lookup Prospect by Email (HTTP GET → Airtable Prospects tbluEsKoQ2p49ktVq, filterByFormula={email}="{email}", maxRecords=1, pa-airtable, continueOnFail — finds matching prospect record)
+53. Merge Prospect Context (Code — runOnceForAllItems; merges lead_score_grade + pre_call_brief + prospect_record_id from Prospects lookup into client payload; graceful if no match)
+54. Fetch All Client Slugs (HTTP GET → Airtable Clients, fields: client_slug + project_status, continueOnFail, pa-airtable)
+55. Get Scoping Agent Workflow (HTTP GET → n8n API /workflows/E24KwVMam1e8bbjT, pa-n8n-api, continueOnFail)
+56. Build Updated Scope Form (Code — filters excluded statuses [test-complete, closed.*], sorts slugs, rebuilds Scope Call Form dropdown options, returns stripped PUT body)
+57. Update Scoping Form Slugs (HTTP PUT → n8n API /workflows/E24KwVMam1e8bbjT, pa-n8n-api, continueOnFail — auto-refreshes Client slug dropdown in Scoping Agent form after every new client onboard)
+58. Mark Prospect Converted (HTTP PATCH → Airtable Prospects, prospect_record_id from json, outreach_status=completed, pa-airtable, continueOnFail — fires after OB Welcome sent; placed between Mark Task: OB Welcome Complete and Fetch All Client Slugs)
 ```
 
 ### [PA] Lead Generation (YO3f5CL9bYbLTBgw) — 11 nodes
@@ -868,8 +872,10 @@ business-agent-foundry/
 
 6. PAYMENT → ONBOARDING ✅ LIVE
    Stripe webhook → [PA] Onboarding Automation
-   → validate → slug → Airtable lookup → workspace name → credentials checklist
-   → ClickUp project → update Airtable → owner summary email + client welcome email
+   → validate → slug → Airtable Clients lookup → **Prospect lookup by email → merge lead_score_grade + pre_call_brief**
+   → workspace stub → credentials checklist → ClickUp project → update Airtable (with prospect fields)
+   → owner summary email + client welcome email → **mark Prospect outreach_status=completed**
+   → refresh Scoping Agent slug dropdown
 
 7. BUILD (owner triggers)
    workflow-builder-agent + n8n-MCP → builds client's automations in n8n
