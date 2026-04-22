@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 5.2 — Last updated: 2026-04-22 — Updated by: Haris + Claude
+> **Version:** 5.3 — Last updated: 2026-04-22 — Updated by: Haris + Claude
 
 ---
 
@@ -80,7 +80,7 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - **[PA] Onboarding Automation** (7RsRJIqBHFpWZoWM) — 58 nodes — rebuilt prospect→client flow 2026-04-22: on payment, looks up Prospect by email → creates NEW Clients record (copying all prospect + scope data) → continues onboarding. No longer looks up a pre-existing Clients record. Mark Prospect Converted fires at end.
 - **[PA] Lead Generation** (YO3f5CL9bYbLTBgw) — 13 nodes, reverted to Apollo.io (paid plan) — updated 2026-04-20; Apollo `/mixed_people/api_search` → Filter Candidates Code node → Enrich via Apollo HTTP Request (`/people/match`, reveal_personal_emails:true) → Normalize Enriched → dedup → write Prospects; `source: apollo`; running daily since 2026-04-20 (last run: 10 prospects enriched + written PASS)
 - **[PA] Morning Brief Delivery** (EKKXeBCEiKXaYBCx) — ACTIVE — daily morning brief workflow, confirmed active 2026-04-20
-- **[PA] Outreach Agent** (Mib6RUtJ2IOaUZ4s) — fully rebuilt 2026-04-21 — 51 nodes; 5-branch multi-step sequence (Email 1 immediate → Email 2 after 1 day → Email 3 after 2 days → Complete after 7 days → IMAP reply detection); direct SMTP (no Instantly); ClickUp Outreach list (ID: 901415694346) for status tracking; Airtable fields: email_1_sent_at (fldAouPeSNvmkYKRY), email_2_sent_at (fldYVg7fK7zVHcMob), email_3_sent_at (fldNGPYLTiHNDgkCg), clickup_outreach_task_id (fldaofcgNiifxjNfh); reply blocks follow-ups; Kai notified on reply; ⚠️ INACTIVE — Kai must create pa-imap credential before activating
+- **[PA] Outreach Agent** (Mib6RUtJ2IOaUZ4s) — fully rebuilt 2026-04-21, activated 2026-04-22 — 51 nodes; 5-branch multi-step sequence (Email 1 immediate → Email 2 after 1 day → Email 3 after 2 days → Complete after 7 days → IMAP reply detection); direct SMTP (no Instantly); ClickUp Outreach list (ID: 901415694346) for status tracking; Airtable fields: email_1_sent_at (fldAouPeSNvmkYKRY), email_2_sent_at (fldYVg7fK7zVHcMob), email_3_sent_at (fldNGPYLTiHNDgkCg), clickup_outreach_task_id (fldaofcgNiifxjNfh); reply blocks follow-ups; Kai notified on reply; pa-imap credential added 2026-04-22 (ID: 8MxHTFkPLgLLUO1U)
 - **[PA] Status Update Agent** (94DpGwRPWGRPqCVU) — 15 nodes, tested, branded emails working
 - **[PA] Referral Trigger Agent** (ka6GesSfWVo2FZtU) — 15 nodes, built, E2E tested PASS 2026-03-27, updated 2026-04-01 — now uses pa-smtp directly (email_1 to client, email_2 draft + alert to Kai); Calendly URL live
 - **[PA] ClickUp Sync** (uiTwYIUk6nIFwLtX) — 18 nodes, built 2026-03-27, reads Airtable project_status and syncs ClickUp task statuses every 2 hours, inactive
@@ -93,6 +93,7 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - **[PA] Scoping Agent** (E24KwVMam1e8bbjT) — 17 nodes, updated 2026-04-22 — now reads from and writes to **Prospects table** (was Clients). Polls `project_status=call_complete` in Prospects; writes scope_of_work, scope_summary, service_tier, automation_1/2/3, tools_required back to Prospects record; sets `project_status=scope_review`.
 - **[PA] Scope Approval** (UB6ZdrnYpJlYfxD4) — 7 nodes, updated 2026-04-22 — now reads from and writes to **Prospects table** (was Clients). GET /approve-scope?client_slug=X → fetches Prospect by client_slug → locks scope_locked_at + sets proposal_sent in Prospects → generates proposal draft via Claude → saves to Prospects.proposal_draft → emails Kai. Inactive.
 - **[PA] Workflow Builder Agent** (fy8OuUEGyyWhYzWC) — 15 nodes, built 2026-04-03, polls build.ready clients hourly → reads scope from Airtable → Claude generates n8n workflow JSON per automation → deploys to client's n8n via their API key → sets build_review + emails Kai review links, inactive
+- **[PA] Scoping Notifier** (nXXsF4E1BPWIS62r) — 14 nodes, built 2026-04-22 — Path A: polls every 5 min for `project_status=call_complete AND scoping_notified_at="" AND call_notes!=""` → sends Kai branded email with all prospect details (name/company/industry/grade/slug/Precall Brief/call_notes) + "Start Scoping Now" button → marks `scoping_notified_at=now` (prevents duplicate sends); Path B: GET `/webhook/trigger-scoping?client_slug=X` → fetches Prospect from Airtable → POSTs to Scoping Agent `/webhook/scope-call` → responds with branded HTML success page. Also created `scoping_notified_at` dateTime field in Prospects table (ID: flde95Hj9sw6YsCBo). ACTIVE.
 - **15 new Airtable Clients fields added** — call_notes, scope_summary, automation_count, automation_1/2/3_name, automation_1/2/3_description, scope_locked_at, proposal_draft, workflows_deployed, build_review_url — 2026-04-03
 - **5 new project_status values added** — call_complete, scoping, scope_review, building, build_review — 2026-04-03
 - **Mock client created** — docs/clients/sarahs-wellness-studio/ (process-map.md + scope-of-work.md) — Typeform program admission use case, ready for workflow-builder-agent test run
@@ -116,7 +117,6 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 
 ## In Progress ⏳
 - Default GitHub branch needs switching from `claude/setup-blueprint-agent-YnHBF` to `main` (Kai → Settings → Branches)
-- Outreach Agent rebuilt (51 nodes, SMTP, multi-step sequence) — INACTIVE pending pa-imap credential creation by Kai
 - Airtable PAT `patIwbtd9ndSoj2fJ...` was in local git history (test_outreach.js, now deleted) — rotate this token in Airtable account settings
 
 ## Not Started ❌
@@ -236,7 +236,7 @@ claude
 | `pa-apollo-io` | HTTP Header Auth | `x-api-key` | ✅ Active |
 | `pa-anthropic` | HTTP Header Auth | `x-api-key` | ✅ Active |
 | `pa-instantly` | HTTP Header Auth | `Authorization: Bearer` | ✅ Active — ID: xoSojCyLffw4nNe7 |
-| `pa-imap` (IMAP account) | IMAP | imap.gmail.com:993 SSL, kai@phoenixautomation.ai | ✅ Active — ID: 8MxHTFkPLgLLUO1U — added 2026-04-21 |
+| `pa-imap` (IMAP account) | IMAP | imap.gmail.com:993 SSL, kai@phoenixautomation.ai | ✅ Active — ID: 8MxHTFkPLgLLUO1U — created 2026-04-22 |
 | `pa-tavily` | Hardcoded in Lead Gen Code node | — | ✅ Active — key: `tvly-dev-ytdoA-...` (stored in Tavily Search node jsCode) |
 
 ## Email Addresses
@@ -467,6 +467,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | automation_3_description | multilineText | Generated by Scoping Agent |
 | proposal_draft | multilineText | Generated by Claude in Scope Approval workflow |
 | scope_locked_at | dateTime | Set by Scope Approval when Kai clicks approve |
+| scoping_notified_at | dateTime | Set by Scoping Notifier when email sent to Kai — prevents duplicate notifications — field ID: flde95Hj9sw6YsCBo |
 
 ### Automation Logs Table — `tblL7tDAh1KTLtwpt`
 
@@ -504,7 +505,8 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | [PA] Reporting Agent | `scj61gBYYWpQydMC` | 16 | Monthly 1st + manual | 🔴 Inactive — built, never run; activate after first retainer client is live |
 | [PA] Typeform Lead Qualification | `kXxN7O77ongTMwKG` | 13 | Typeform webhook (POST /typeform-intake) | 🟢 Active — confirmed 2026-04-20 |
 | [PA] Credential Follow-Up | `uTnQAq5VlmsHYih4` | 11 | Daily 10:00 + manual | 🟢 Active — confirmed 2026-04-20 |
-| [PA] Outreach Agent | `Mib6RUtJ2IOaUZ4s` | 51 | Daily 07:00 + manual | 🔴 Inactive — rebuilt 2026-04-21; 5-branch SMTP sequence; ⚠️ needs pa-imap credential before activation |
+| [PA] Outreach Agent | `Mib6RUtJ2IOaUZ4s` | 51 | Daily 07:00 + manual | 🟢 Active — rebuilt 2026-04-21, activated 2026-04-22; 5-branch SMTP sequence; IMAP reply detection via pa-imap |
+| [PA] Scoping Notifier | `nXXsF4E1BPWIS62r` | 14 | Every 5 min + GET webhook /trigger-scoping | 🟢 Active — built 2026-04-22; polls call_complete prospects → emails Kai with "Start Scoping Now" button; webhook path triggers Scoping Agent on click |
 | [PA] Error Handler | `JByknkdAgxRmDKp3` | 4 | n8n Error Trigger | 🟢 Active — confirmed 2026-04-20 |
 | [PA] Credential Detector | `hbtSbm2pzrHX1QTn` | 10 | Every 2 hours + manual | 🟢 Active — confirmed 2026-04-20 |
 | [PA] Website Chatbot | `EPMCxdqKOuwc6hzB` | 15 | Webhook POST /website-chatbot | 🟢 Active — live on phoenixautomation.ai since 2026-04-10; 3-question qualifier → Claude HTTP scoring → hot: Airtable write + Calendly; cold: nurture; borderline: clarifying Q. E2E PASS (record recRypnI7vsMlisJR) |
@@ -825,6 +827,33 @@ Website widget features (live on phoenixautomation.ai):
 - Calendly links made clickable automatically
 ```
 
+### [PA] Scoping Notifier (nXXsF4E1BPWIS62r) — 14 nodes
+```
+Two independent paths in one workflow:
+
+PATH A — Poll every 5 min (email Kai when call is complete):
+1.  Poll Every 5 Minutes (Schedule Trigger — */5 * * * *)
+2.  Manual Trigger
+3.  Fetch call_complete Prospects (HTTP GET → Airtable Prospects, filter: project_status=call_complete
+    AND scoping_notified_at="" AND call_notes!="", maxRecords=10, pa-airtable)
+4.  IF Has Prospects (IF — records.length > 0)
+5.  Exit — No Pending (NoOp — FALSE branch)
+6.  Split Prospect Records (Code — flattens records array, one item per prospect)
+7.  Loop Over Prospects (splitInBatches, batch=1)
+8.  Send Scoping Ready Email (emailSend → lightofkai777@gmail.com, pa-smtp — branded HTML with
+    company/contact/email/industry/lead_grade/slug/Precall Brief/call_notes excerpt +
+    "Start Scoping Now" button linking to /webhook/trigger-scoping?client_slug={slug})
+9.  Mark Notified (HTTP PATCH → Airtable Prospects record, scoping_notified_at=now, pa-airtable)
+    → loops back to Node 7
+
+PATH B — One-click trigger (Kai clicks button → Claude scopes automatically):
+10. Trigger Scoping Webhook (Webhook — GET /trigger-scoping?client_slug=X, responseMode: responseNode)
+11. Fetch Prospect by Slug (HTTP GET → Airtable Prospects, filterByFormula={client_slug}="X", pa-airtable)
+12. Extract Prospect (Code — extracts record_id, company_name, client_slug, industry, call_notes, prospect_name)
+13. Trigger Scope-Call Webhook (HTTP POST → /webhook/scope-call with all prospect data)
+14. Respond — Scoping Started (respondToWebhook → branded HTML success page "✅ Scoping Started for [Company]")
+```
+
 ---
 
 # Agent Registry
@@ -896,7 +925,7 @@ business-agent-foundry/
 1. LEAD GENERATION (daily 06:45) ✅ LIVE
    Apollo.io → ICP filter → dedup → write Prospects (outreach_status: pending) → log
 
-2. OUTREACH (daily 07:00) ✅ REBUILT — 5-branch SMTP multi-step sequence (inactive — Kai creates pa-imap credential then activates)
+2. OUTREACH (daily 07:00) ✅ ACTIVE — 5-branch SMTP multi-step sequence
    pending → Email 1 (immediate) → Email 2 (after 1 day) → Email 3 (after 2 days) → Completed (after 7 days)
    IMAP reply detection → blocks follow-ups on reply → notifies Kai → updates ClickUp Outreach list
 
@@ -905,6 +934,7 @@ business-agent-foundry/
 
 4. ASSESSMENT + PROCESS MAPPING (owner)
    Owner call → Kai sets Prospect project_status=call_complete + fills call_notes field in Airtable
+   → [PA] Scoping Notifier detects within 5 min → emails Kai with prospect details + "Start Scoping Now" button
 
 5. SCOPING + PROPOSAL ✅ UPDATED 2026-04-22
    Scoping Agent polls Prospects for project_status=call_complete → Claude generates scope →
@@ -1031,7 +1061,7 @@ business-agent-foundry/
 | Instantly duplicate leads blocking HTML email test | personalization shows 0 chars despite successful exec | Instantly silently deduplicates on email; old test leads from same campaign could not be deleted via API | ✅ RESOLVED 2026-04-20 — duplicates cleared manually in Instantly dashboard | Kai |
 | Lead Gen reverting to Apollo — enrichment Code node broken | Enrich Prospects Code node failed with `fetch is not defined` and `$http is not defined` | n8n Code node sandbox has no HTTP capability — must use HTTP Request node | ✅ RESOLVED 2026-04-20 — Kai rebuilt workflow with HTTP Request node for Apollo `/people/match` enrichment; 10 prospects enriched + written PASS | Kai |
 | Haris n8n Cloud access not confirmed | Blocked Haris from verifying workflow state | Pending invite from Kai | ✅ RESOLVED 2026-04-20 — Haris confirmed access to kaiashley.app.n8n.cloud | — |
-| pa-imap credential missing | [PA] Outreach Agent Branch 5 (reply detection) cannot activate — IMAP_CREDENTIAL_ID placeholder used | IMAP credential not yet created in n8n | ⏳ Kai: add IMAP credential in n8n → type: IMAP, host: imap.gmail.com, port: 993, SSL, user: kai@phoenixautomation.ai, password: same app password as pa-smtp, name it `pa-imap` | Kai |
+| pa-imap credential missing | [PA] Outreach Agent Branch 5 (reply detection) cannot activate — IMAP_CREDENTIAL_ID placeholder used | IMAP credential not yet created in n8n | ✅ RESOLVED 2026-04-22 — pa-imap created (ID: 8MxHTFkPLgLLUO1U); [PA] Outreach Agent activated | Kai |
 | Website chatbot not built | High — blueprint requires 24/7 AI qualifier before Typeform | ✅ RESOLVED 2026-04-03 — [PA] Website Chatbot built (EPMCxdqKOuwc6hzB, 15 nodes); embed widget at docs/website-chatbot-embed.html — Kai pastes snippet into website and activates workflow | Haris |
 | Website chatbot bot messages showing as empty grey circles | High — users saw no responses after each question | All n8n Set nodes (Greeting, Q2, Q3, Hot/Borderline/Cold Response Data) were completely empty — no fields configured. "Send Early Step Response" referenced `$json.message` which was undefined, returning `[{}]` | ✅ RESOLVED 2026-04-10 — all nodes configured with proper fields; Response Body set to `{{ JSON.stringify($json) }}` | Kai |
 | Website chatbot step 3 returning "Something went wrong" | High — leads couldn't complete qualification | "Score Lead via Claude" was a Langchain AI node requiring "Anthropic API" credential type; pa-anthropic is HTTP Header Auth — incompatible | ✅ RESOLVED 2026-04-10 — replaced with HTTP Request node calling Anthropic API directly; Parse Claude Score updated to read HTTP response format | Kai |
@@ -1091,7 +1121,7 @@ business-agent-foundry/
 - [ ] **KAI:** Activate [PA] Credential Follow-Up (ID: uTnQAq5VlmsHYih4) — daily stall alert, no dependencies
 - [ ] **KAI:** Activate [PA] Referral Trigger Agent (ID: ka6GesSfWVo2FZtU) — now uses pa-smtp directly (no Instantly dependency)
 - [ ] **KAI:** Activate [PA] ClickUp Sync (ID: uiTwYIUk6nIFwLtX) — ClickUp key already updated
-- [ ] **KAI:** Create `pa-imap` credential in n8n (type: IMAP, host: imap.gmail.com, port: 993, SSL, kai@phoenixautomation.ai, same app password as pa-smtp) → then activate [PA] Outreach Agent (ID: Mib6RUtJ2IOaUZ4s)
+- [x] ✅ **KAI:** Created `pa-imap` credential (ID: 8MxHTFkPLgLLUO1U) + activated [PA] Outreach Agent (ID: Mib6RUtJ2IOaUZ4s) — 2026-04-22
 - [ ] **KAI:** Activate [PA] Reporting Agent (ID: scj61gBYYWpQydMC) — after first retainer client is live
 
 ## Short-term
@@ -1216,6 +1246,42 @@ business-agent-foundry/
   - `[PA] Website Chatbot` (EPMCxdqKOuwc6hzB) — all Set nodes configured, Langchain→HTTP Request replacement, Parse Claude Score rewritten, Airtable node field names aligned
 - **phoenixautomation.ai (kaicodesai/phoenixautomation — private repo):**
   - `index.html` — 9 conversion optimisations + full chatbot widget embedded (edited manually by Kai in Lovable)
+
+---
+
+## Session Handoff — 2026-04-22 (Session 15)
+**Worked by:** Haris + Claude (Claude Code VSCode)
+
+### What was completed
+- **[PA] Scoping Notifier built and activated** (nXXsF4E1BPWIS62r, 14 nodes) — when Kai marks a Prospect `project_status=call_complete`, within 5 min she receives a branded email with full prospect details + "Start Scoping Now" button; clicking the button fires the Scoping Agent automatically via GET webhook (no form, no copy-paste). `scoping_notified_at` field added to Prospects table (ID: flde95Hj9sw6YsCBo) to prevent duplicate notifications.
+- **[PA] Outreach Agent activated** — pa-imap credential created by Kai (ID: 8MxHTFkPLgLLUO1U); Outreach Agent now fully live including IMAP reply detection (Branch 5).
+- **Prospects table updated** — `scoping_notified_at` field added (dateTime).
+- **`client_slug` auto-derivation added to all 3 prospect creation paths** — Lead Gen (Write New Prospect1), Website Chatbot (Write Hot Prospect to Airtable), Typeform Lead Qualification (Write to Airtable) all now compute client_slug from company_name on write.
+
+### What is in progress (not finished)
+- No E2E test of the new Onboarding flow yet — needs a real Prospect record with scope data + payment webhook
+
+### Blockers for next session
+- Default GitHub branch still set to `claude/setup-blueprint-agent-YnHBF`
+- Airtable PAT rotation still pending
+- Onboarding E2E test pending (real Prospect + scope + payment webhook)
+
+### Next person should start with
+1. `git pull origin main` then read PROJECT_OVERVIEW.md
+2. **To test the full pipeline end-to-end:**
+   a. Find a Prospect record in Airtable with email + call_notes filled in; set project_status=call_complete
+   b. Within 5 min: check lightofkai777@gmail.com for Scoping Notifier email
+   c. Click "Start Scoping Now" → check Scoping Agent writes scope to Prospects + sets scope_review
+   d. Click approve link → verify Scope Approval writes proposal_draft + scope_locked_at to Prospects
+   e. POST to /payment-confirmed with that email → verify new Clients record created, ClickUp seeded, emails sent
+3. **KAI:** Change default GitHub branch to main (GitHub Settings → Branches)
+
+### Files changed this session
+- `PROJECT_OVERVIEW.md` — v5.3, Outreach Agent activated, Scoping Notifier documented, Prospects schema updated
+- **n8n workflows built/updated (via Node.js scripts — no repo file changes):**
+  - `[PA] Scoping Notifier` (nXXsF4E1BPWIS62r) — created new, 14 nodes, active
+- **Airtable changes:**
+  - Prospects table: `scoping_notified_at` dateTime field created (ID: flde95Hj9sw6YsCBo)
 
 ---
 
