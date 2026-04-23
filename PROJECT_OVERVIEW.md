@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 5.3 — Last updated: 2026-04-22 — Updated by: Haris + Claude
+> **Version:** 5.4 — Last updated: 2026-04-23 — Updated by: Haris + Claude
 
 ---
 
@@ -232,7 +232,7 @@ claude
 | `pa-airtable` | Airtable Access Token | — | ✅ Active |
 | `pa-n8n-api` | HTTP Header Auth | `X-N8N-API-KEY` | ✅ Active |
 | `pa-clickup` | ClickUp API | — | ✅ Active |
-| `pa-smtp` | SMTP | Gmail, port 465, SSL | ✅ Active |
+| `pa-smtp` | SMTP | Gmail, port 465, SSL | ✅ Active — n8n credential name: "SMTP account 2", ID: BMlj5xK8OMFXYMzw — use this ID in all emailSend nodes; "SMTP account" (bDfSSn7mCBqpvb2Y) does NOT exist |
 | `pa-apollo-io` | HTTP Header Auth | `x-api-key` | ✅ Active |
 | `pa-anthropic` | HTTP Header Auth | `x-api-key` | ✅ Active |
 | `pa-instantly` | HTTP Header Auth | `Authorization: Bearer` | ✅ Active — ID: xoSojCyLffw4nNe7 |
@@ -505,13 +505,13 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | [PA] Reporting Agent | `scj61gBYYWpQydMC` | 16 | Monthly 1st + manual | 🔴 Inactive — built, never run; activate after first retainer client is live |
 | [PA] Typeform Lead Qualification | `kXxN7O77ongTMwKG` | 13 | Typeform webhook (POST /typeform-intake) | 🟢 Active — confirmed 2026-04-20 |
 | [PA] Credential Follow-Up | `uTnQAq5VlmsHYih4` | 11 | Daily 10:00 + manual | 🟢 Active — confirmed 2026-04-20 |
-| [PA] Outreach Agent | `Mib6RUtJ2IOaUZ4s` | 51 | Daily 07:00 + manual | 🟢 Active — rebuilt 2026-04-21, activated 2026-04-22; 5-branch SMTP sequence; IMAP reply detection via pa-imap |
-| [PA] Scoping Notifier | `nXXsF4E1BPWIS62r` | 14 | Every 5 min + GET webhook /trigger-scoping | 🟢 Active — built 2026-04-22; polls call_complete prospects → emails Kai with "Start Scoping Now" button; webhook path triggers Scoping Agent on click |
+| [PA] Outreach Agent | `Mib6RUtJ2IOaUZ4s` | 51 | Daily 07:00 + manual | 🟢 Active — rebuilt 2026-04-21, activated 2026-04-22; 5-branch SMTP sequence; IMAP reply detection via pa-imap; Merge Email Paths node removed 2026-04-23 (was blocking when all prospects hit same Switch branch) |
+| [PA] Scoping Notifier | `nXXsF4E1BPWIS62r` | 14 | Every 5 min + GET webhook /trigger-scoping | 🟢 Active — built 2026-04-22; fixed 2026-04-23: SMTP credential corrected (BMlj5xK8OMFXYMzw), Mark Notified specifyBody+record_id fixed; E2E email confirmed delivered |
 | [PA] Error Handler | `JByknkdAgxRmDKp3` | 4 | n8n Error Trigger | 🟢 Active — confirmed 2026-04-20 |
 | [PA] Credential Detector | `hbtSbm2pzrHX1QTn` | 10 | Every 2 hours + manual | 🟢 Active — confirmed 2026-04-20 |
 | [PA] Website Chatbot | `EPMCxdqKOuwc6hzB` | 15 | Webhook POST /website-chatbot | 🟢 Active — live on phoenixautomation.ai since 2026-04-10; 3-question qualifier → Claude HTTP scoring → hot: Airtable write + Calendly; cold: nurture; borderline: clarifying Q. E2E PASS (record recRypnI7vsMlisJR) |
-| [PA] Scoping Agent | `E24KwVMam1e8bbjT` | 17 | Webhook POST /scope-call + poll every 2h | 🟢 Active — updated 2026-04-22: reads/writes Prospects table (was Clients) |
-| [PA] Scope Approval | `UB6ZdrnYpJlYfxD4` | 7 | GET /approve-scope?client_slug=X | 🔴 Inactive — updated 2026-04-22: reads/writes Prospects table (was Clients); Kai clicks approve link → locks scope → generates proposal → emails Kai |
+| [PA] Scoping Agent | `E24KwVMam1e8bbjT` | 17 | Webhook POST /scope-call + poll every 2h | 🟢 Active — updated 2026-04-22: reads/writes Prospects table; email expressions fixed 2026-04-23 (={{ }} → {{ }}) |
+| [PA] Scope Approval | `UB6ZdrnYpJlYfxD4` | 7 | GET /approve-scope?client_slug=X | 🟢 Active — fixed 2026-04-23: webhook responseMode → responseNode; Respond to Browser HTML body added; email credential fixed (pa-smtp); email expressions fixed |
 | [PA] Workflow Builder Agent | `fy8OuUEGyyWhYzWC` | 15 | Poll hourly + manual | 🔴 Inactive — built 2026-04-03; reads build.ready clients → Claude generates workflow JSON → deploys to client n8n → emails Kai to review |
 
 ## Workflow Node Summaries
@@ -992,6 +992,9 @@ business-agent-foundry/
 | ClickUp nested folder creation fails | `Cannot POST /api/v2/folder/{id}/folder` | ClickUp v2 API does not support sub-folder creation — folders can only be created at space root | Always use `POST /api/v2/space/{space_id}/folder` — the Client Projects folder (90147969224) is a manual UI container only, not a parent via API |
 | Langchain AI node fails with HTTP Header Auth credential | `Credentials of type anthropicApi are not supported` | n8n Langchain AI nodes require "Anthropic API" credential type. `pa-anthropic` is "HTTP Header Auth" — works for HTTP Request nodes but NOT Langchain nodes | Replace Langchain AI nodes with HTTP Request nodes pointing to `https://api.anthropic.com/v1/messages` with `pa-anthropic` credential. Parse response via `$input.first().json.content?.[0]?.text` |
 | Remote Claude Code session blocks n8n API calls | n8n API calls time out or fail silently | Claude Code web/remote sessions run behind an egress proxy that only allows specific domains. `kaiashley.app.n8n.cloud` is not in the allowlist | All n8n workflow changes must be made via Python scripts run locally in Kai's VS Code terminal |
+| Email HTML expressions render as literal text | Email body shows `={{ $("Node").item.json.field }}` as plain text | Two causes: (1) HTML field starts with `=` (expression mode) but contains `={{ }}` inline — the `=` inside is literal; (2) Fixed mode HTML with `={{ }}` — `=` is always literal text. n8n expression syntax inside HTML should be `{{ expr }}` only, never `={{ expr }}` | Strip `=` from HTML field start (use Fixed mode) and replace all `={{ ` with `{{ ` inside the HTML body |
+| Merge node blocks when one upstream branch has 0 items | Workflow hangs indefinitely; downstream nodes never run | n8n Merge node waits for input from ALL connected upstreams. If a Switch/IF routes all items to one path, the other path produces 0 items and Merge never fires | Remove the Merge node. Connect all upstream paths directly to the first downstream node (a Code/HTTP node runs independently for each upstream that has items) |
+| emailSend output replaces $json — upstream data lost | `$json.record_id` undefined after email node; PATCH URL resolves to `/undefined` | emailSend node outputs SMTP response (envelope, accepted, messageId etc.) as `$json` — any prior item fields are gone | Reference upstream node directly: `$('Loop Node Name').item.json.record_id` or `$('Code Node').item.json.field` |
 
 ---
 
@@ -1062,6 +1065,12 @@ business-agent-foundry/
 | Lead Gen reverting to Apollo — enrichment Code node broken | Enrich Prospects Code node failed with `fetch is not defined` and `$http is not defined` | n8n Code node sandbox has no HTTP capability — must use HTTP Request node | ✅ RESOLVED 2026-04-20 — Kai rebuilt workflow with HTTP Request node for Apollo `/people/match` enrichment; 10 prospects enriched + written PASS | Kai |
 | Haris n8n Cloud access not confirmed | Blocked Haris from verifying workflow state | Pending invite from Kai | ✅ RESOLVED 2026-04-20 — Haris confirmed access to kaiashley.app.n8n.cloud | — |
 | pa-imap credential missing | [PA] Outreach Agent Branch 5 (reply detection) cannot activate — IMAP_CREDENTIAL_ID placeholder used | IMAP credential not yet created in n8n | ✅ RESOLVED 2026-04-22 — pa-imap created (ID: 8MxHTFkPLgLLUO1U); [PA] Outreach Agent activated | Kai |
+| Scoping Notifier SMTP credential invalid | Send Scoping Ready Email showed "No credentials yet" | Credential ID bDfSSn7mCBqpvb2Y does not exist in n8n — correct ID is BMlj5xK8OMFXYMzw (SMTP account 2) | ✅ RESOLVED 2026-04-23 — credential updated in Scoping Notifier and Scope Approval | Haris |
+| Scoping Notifier Mark Notified node broken | scoping_notified_at never written; wrong record always PATCHed | specifyBody missing (showed "Using Fields Below" with empty params); URL used $json.record_id which is undefined after emailSend (SMTP output replaces $json) | ✅ RESOLVED 2026-04-23 — specifyBody:json added; URL fixed to $('Loop Over Prospects').item.json.record_id | Haris |
+| Scoping Agent + Error Handler emails rendered raw expressions | Email body showed ={{ $("Node").item.json.field }} as literal text | HTML expressions used ={{ }} format: = prefix is literal text in Fixed mode, and HTML field in expression mode ignores inline {{ }} | ✅ RESOLVED 2026-04-23 — stripped = prefix from HTML field value and all ={{ → {{ throughout both email bodies | Haris |
+| Scope Approval Approve button returned raw JSON | Browser showed {"code":0,"message":"Unused Respond to Webhook node found"} | Webhook trigger responseMode was lastNode — n8n responded with last node's SMTP output, Respond to Webhook node was ignored | ✅ RESOLVED 2026-04-23 — responseMode changed to responseNode; Respond to Browser body added (branded success HTML) | Haris |
+| Outreach Agent Merge Email Paths blocked when one Switch branch empty | Workflow hung when all prospects had emails pre-saved or all needed AI generation | n8n Merge node waits for all inputs; if Switch routes everything to one output the other Merge input never fires | ✅ RESOLVED 2026-04-23 — Merge node removed; both Switch outputs now connect directly to Build HTML Emails (Code node runs independently per path) | Haris |
+| Onboarding Automation Airtable write nodes failing | Workflow executes but errors silently on Airtable PATCH/POST nodes | Under investigation — likely field name mismatch or missing required fields in Create Client Record / Update Airtable Record nodes | ⏳ IN PROGRESS — Haris investigating 2026-04-23 | Haris |
 | Website chatbot not built | High — blueprint requires 24/7 AI qualifier before Typeform | ✅ RESOLVED 2026-04-03 — [PA] Website Chatbot built (EPMCxdqKOuwc6hzB, 15 nodes); embed widget at docs/website-chatbot-embed.html — Kai pastes snippet into website and activates workflow | Haris |
 | Website chatbot bot messages showing as empty grey circles | High — users saw no responses after each question | All n8n Set nodes (Greeting, Q2, Q3, Hot/Borderline/Cold Response Data) were completely empty — no fields configured. "Send Early Step Response" referenced `$json.message` which was undefined, returning `[{}]` | ✅ RESOLVED 2026-04-10 — all nodes configured with proper fields; Response Body set to `{{ JSON.stringify($json) }}` | Kai |
 | Website chatbot step 3 returning "Something went wrong" | High — leads couldn't complete qualification | "Score Lead via Claude" was a Langchain AI node requiring "Anthropic API" credential type; pa-anthropic is HTTP Header Auth — incompatible | ✅ RESOLVED 2026-04-10 — replaced with HTTP Request node calling Anthropic API directly; Parse Claude Score updated to read HTTP response format | Kai |
@@ -1246,6 +1255,49 @@ business-agent-foundry/
   - `[PA] Website Chatbot` (EPMCxdqKOuwc6hzB) — all Set nodes configured, Langchain→HTTP Request replacement, Parse Claude Score rewritten, Airtable node field names aligned
 - **phoenixautomation.ai (kaicodesai/phoenixautomation — private repo):**
   - `index.html` — 9 conversion optimisations + full chatbot widget embedded (edited manually by Kai in Lovable)
+
+---
+
+## Session Handoff — 2026-04-23 (Session 16)
+**Worked by:** Haris + Claude (Claude Code VSCode)
+
+### What was completed
+- **[PA] Scoping Notifier** — full end-to-end fix and confirmed working (email delivered to lightofkai777@gmail.com):
+  - SMTP credential corrected: `bDfSSn7mCBqpvb2Y` (non-existent) → `BMlj5xK8OMFXYMzw` ("SMTP account 2")
+  - `Mark Notified` node: added `specifyBody:json`; fixed `jsonBody` to write `scoping_notified_at`; fixed URL from `$json.record_id` (undefined after emailSend) to `$('Loop Over Prospects').item.json.record_id`
+  - Cleared `scoping_notified_at` for Muneeb (test-co) so it re-triggered; added `client_slug=test-co`
+- **[PA] Scoping Agent** — email expressions fixed: HTML field was in expression mode (`=` prefix) with `={{ }}` inline; stripped `=` prefix and replaced all `={{ ` → `{{ ` throughout HTML body
+- **[PA] Error Handler** — same expression fix applied: `={{ }}` → `{{ }}` in Alert Kai email body
+- **[PA] Scope Approval** — three fixes:
+  - Webhook trigger `responseMode`: `lastNode` → `responseNode` (was sending SMTP JSON to browser)
+  - `Respond to Browser`: added branded success HTML ("✅ Scope Approved — proposal arriving in inbox")
+  - Email credential + expression format fixed (same `bDfSSn7mCBqpvb2Y` → `BMlj5xK8OMFXYMzw`; `={{ }}` → `{{ }}`)
+  - `Save Proposal to Airtable` / `Email Proposal to Kai`: fixed field reference from `$json.content[0].text` → `$('Claude — Proposal').item.json.output` (chainLlm format); added `specifyBody:json`
+- **[PA] Outreach Agent** — `Merge Email Paths` node removed; both Switch outputs now connect directly to `Build HTML Emails` — eliminates hang when all prospects go through one branch
+- **pa-smtp canonical credential documented**: `BMlj5xK8OMFXYMzw` ("SMTP account 2") is the correct ID for all emailSend nodes; `bDfSSn7mCBqpvb2Y` does not exist
+- **Recurring Bugs updated** — 3 new entries: `={{ }}` expression bug, Merge blocking bug, emailSend overwriting `$json`
+
+### What is in progress (not finished)
+- **Onboarding Automation Airtable write errors** — nodes that write to Airtable (Create Client Record / Update Airtable Record) are failing but `continueOnFail` means the workflow executes anyway without writing data. Root cause under investigation — likely field name mismatch or missing typecast.
+
+### Blockers for next session
+- Onboarding Automation fix needed before first real client can be onboarded end-to-end
+- Default GitHub branch still needs switching (`claude/setup-blueprint-agent-YnHBF` → `main`)
+- Airtable PAT rotation still pending
+
+### Next person should start with
+1. `git pull origin main` then read PROJECT_OVERVIEW.md
+2. **Fix Onboarding Automation**: open n8n → run [PA] Onboarding Automation with test payload → check which Airtable nodes fail → look at error details → fix field names or body format
+3. **Test full scope pipeline**: set a Prospect to `project_status=call_complete` + `call_notes` filled → wait for Scoping Notifier email → click "Start Scoping Now" → verify Scoping Agent writes scope to Prospects → click Approve Scope link → verify success page + proposal email arrives
+
+### Files changed this session
+- `PROJECT_OVERVIEW.md` — v5.4, all session fixes documented, Known Issues + Recurring Bugs updated
+- **n8n workflows updated (via Node.js scripts):**
+  - `[PA] Scoping Notifier` (nXXsF4E1BPWIS62r) — SMTP credential, Mark Notified body+URL
+  - `[PA] Scoping Agent` (E24KwVMam1e8bbjT) — email HTML expression format
+  - `[PA] Error Handler` (JByknkdAgxRmDKp3) — email HTML expression format
+  - `[PA] Scope Approval` (UB6ZdrnYpJlYfxD4) — webhook responseMode, Respond to Browser HTML, email credential + expressions, Save Proposal field ref
+  - `[PA] Outreach Agent` (Mib6RUtJ2IOaUZ4s) — Merge Email Paths node removed
 
 ---
 
