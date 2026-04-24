@@ -1,6 +1,6 @@
 # ClickUp Structure — Phoenix Automation
-**Version:** 1.2
-**Last updated:** 2026-03-22
+**Version:** 1.3
+**Last updated:** 2026-04-24
 **Team ID:** `90141018999`
 **Space ID:** `90144568071`
 **Space Name:** Phoenix Automation
@@ -37,7 +37,7 @@ Space: Phoenix Automation (90144568071)
 ### Per-Client Folder
 
 **Format:** `[client-slug]` (e.g. `meridian-consulting-group`)
-**Created by:** [PA] Onboarding Automation — n8n workflow `Ro9IkQBlNaUxKR6B`
+**Created by:** [PA] Onboarding Automation — n8n workflow `7RsRJIqBHFpWZoWM`
 **Created when:** Payment webhook fires and payload validates
 **API endpoint:** `POST /api/v2/space/90144568071/folder`
 
@@ -156,44 +156,27 @@ Space: Phoenix Automation (90144568071)
 
 ## Section 3 — What Onboarding Automation Creates
 
-### Current behaviour (as-built)
-- Creates **one folderless list** at space level
-- List name: `[PA] [company_name]` (e.g. `[PA] Meridian Consulting Group`)
-- No tasks pre-populated
-- Writes the ClickUp list ID to Airtable `clickup_project_id`
+### Current behaviour (as-built and audited 2026-04-24)
+- Creates a **folder** named `[client-slug]` at space level.
+- Creates **4 lists** inside that folder: `Onboarding`, `Build`, `QA`, `Live`.
+- Seeds project tasks across those lists and stores folder/list/task IDs in Airtable.
+- Writes the folder ID to Airtable `clickup_folder_id`; status/update workflows read from folder/list/task IDs, not a legacy folderless list.
+- Live ClickUp audit found **no folderless lists** in the Phoenix Automation space.
 
-### Target behaviour (this blueprint)
-- Creates a **folder** named `[client-slug]` inside the existing `[PA] Client Projects` folder
-- Creates **4 lists** inside that folder: `Onboarding`, `Build`, `QA`, `Live`
-- Pre-populates the **Onboarding list** with Tasks 1–3 as auto-completed (agent-verified) and Tasks 4–9 as open (owner action required)
-- Writes the **Onboarding list ID** to Airtable `clickup_project_id` (primary reference)
-- status-update-agent reads `clickup_project_id` to fetch tasks — it should read from all 4 lists, not just Onboarding
-
-### Changes required to onboarding automation to implement target behaviour
-
-| Change | Node | What to change |
-|--------|------|---------------|
-| Create client folder | New node after node 12 | `POST /api/v2/folder/{folderless_list_folder_id}/list` → `POST /api/v2/folder/{client_projects_folder_id}/folder` to create `[client-slug]` folder |
-| Create 4 lists | 4 new nodes | `POST /api/v2/folder/{new_client_folder_id}/list` × 4 (Onboarding, Build, QA, Live) |
-| Pre-populate Onboarding tasks | Additional nodes | `POST /api/v2/list/{onboarding_list_id}/task` × 3 for auto-completed agent tasks |
-| Update Airtable field | Node 15 | Store primary list ID (Onboarding list) in `clickup_project_id` |
-
-> **Decision for Kai:** This is a meaningful change to the onboarding automation. Recommend doing it before the first real client, not during. Estimated build time: 30–45 minutes with workflow-builder-agent. The existing workflow (ID: `Ro9IkQBlNaUxKR6B`) would be modified in place.
+### Current implementation notes
+- Client folders are created at space root because ClickUp API v2 does not support nested folders.
+- `[PA] Client Projects` remains a manual reference folder containing `[PA] Client Template`.
+- Internal currently has `Lead Management`, `Operations`, and `Outreach` lists.
+- Live audit 2026-04-24: Lead Management has 3 tasks, Operations has 3 tasks, Outreach has 0 tasks.
 
 ---
 
 ## Section 4 — status-update-agent and ClickUp
 
-The status-update-agent (workflow ID: `VhqfzN6afzpNDTu1`) currently:
-- Reads `clickup_project_id` from Airtable
-- Fetches tasks from that single list via `GET /api/v2/list/{id}/task?include_closed=true`
-- Categorises tasks as completed / in_progress / blocked
-
-**With the new structure**, the agent should fetch tasks from all 4 lists (Onboarding, Build, QA, Live) to give the client a complete picture. This requires either:
-- Storing all 4 list IDs in Airtable (e.g. `clickup_onboarding_list_id`, `clickup_build_list_id` etc.), or
-- Using the folder ID and listing all lists within it via `GET /api/v2/folder/{id}/list`
-
-> **Decision for Kai:** Recommendation is to store the **folder ID** in `clickup_project_id` (not the list ID) and update status-update-agent to list all folder lists, then fetch tasks from each. This is cleaner than storing 4 separate IDs.
+The status-update-agent (workflow ID: `94DpGwRPWGRPqCVU`) currently:
+- Reads `clickup_folder_id` and `clickup_task_*` fields from Airtable.
+- Fetches tasks by folder via ClickUp API.
+- Sends branded client status emails and marks/comments relevant ClickUp tasks.
 
 ---
 
@@ -215,8 +198,8 @@ The status-update-agent (workflow ID: `VhqfzN6afzpNDTu1`) currently:
 
 | # | Decision | Resolution |
 |---|---------|-----------|
-| 1 | Switch onboarding automation from folderless lists to folder+4-lists structure? | ✅ **DONE 2026-03-22** — Ro9IkQBlNaUxKR6B updated to 24 nodes |
-| 2 | Update status-update-agent to read from folder (not single list ID)? | ✅ **DONE 2026-03-22** — VhqfzN6afzpNDTu1 updated, reads all folder tasks via team API |
+| 1 | Switch onboarding automation from folderless lists to folder+4-lists structure? | ✅ **DONE** — current live workflow `7RsRJIqBHFpWZoWM` creates folder + 4 lists at space level |
+| 2 | Update status-update-agent to read from folder (not single list ID)? | ✅ **DONE** — current workflow `94DpGwRPWGRPqCVU` reads folder/list/task IDs |
 | 3 | Store folder ID or Onboarding list ID in Airtable `clickup_project_id`? | ✅ **Folder ID stored** — field renamed to `clickup_folder_id` (fld9PdwZetXwjENmb) |
 | 4 | Pre-populate Build, QA, and Live lists with template tasks at onboarding time? | **No (for now)** — only Onboarding tasks pre-populated. Build/QA/Live tasks added by Haris during those phases |
 | 5 | Create Internal folder and lists now (manually) before onboarding automation is updated? | ✅ **DONE 2026-03-20** — Internal folder (90147969240), Lead Management (901414699479), Operations (901414699480) created |
