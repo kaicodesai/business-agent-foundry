@@ -1,0 +1,807 @@
+[
+  {
+    "id": "7RsRJIqBHFpWZoWM",
+    "label": "Onboarding Automation",
+    "liveName": "[PA] Onboarding Automation",
+    "active": true,
+    "nodeCount": 58,
+    "findings": [
+      {
+        "severity": "watch",
+        "node": "Fetch All Client Slugs",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      },
+      {
+        "severity": "watch",
+        "node": "Fetch All Client Slugs",
+        "issue": "Airtable URL uses fields[] restrictions. These are fragile in n8n and should be avoided unless every field is verified."
+      },
+      {
+        "severity": "watch",
+        "node": "Mark Prospect Converted",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      }
+    ],
+    "recentExecutions": [
+      {
+        "id": "1236",
+        "status": "error",
+        "finished": false,
+        "mode": "webhook",
+        "startedAt": "2026-04-23T18:38:53.811Z",
+        "stoppedAt": "2026-04-23T18:39:25.688Z"
+      },
+      {
+        "id": "839",
+        "status": "success",
+        "finished": true,
+        "mode": "webhook",
+        "startedAt": "2026-04-22T17:16:11.357Z",
+        "stoppedAt": "2026-04-22T17:16:25.101Z"
+      },
+      {
+        "id": "838",
+        "status": "success",
+        "finished": true,
+        "mode": "webhook",
+        "startedAt": "2026-04-22T17:06:50.347Z",
+        "stoppedAt": "2026-04-22T17:06:53.367Z"
+      },
+      {
+        "id": "837",
+        "status": "success",
+        "finished": true,
+        "mode": "webhook",
+        "startedAt": "2026-04-22T16:44:34.401Z",
+        "stoppedAt": "2026-04-22T16:44:37.310Z"
+      },
+      {
+        "id": "835",
+        "status": "error",
+        "finished": false,
+        "mode": "webhook",
+        "startedAt": "2026-04-22T16:42:24.366Z",
+        "stoppedAt": "2026-04-22T16:42:27.765Z"
+      }
+    ]
+  },
+  {
+    "id": "YO3f5CL9bYbLTBgw",
+    "label": "Lead Generation",
+    "liveName": "[PA] Lead Generation",
+    "active": true,
+    "nodeCount": 13,
+    "findings": [],
+    "recentExecutions": [
+      {
+        "id": "1459",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-24T10:45:00.080Z",
+        "stoppedAt": "2026-04-24T10:45:04.935Z"
+      },
+      {
+        "id": "1069",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-23T10:45:00.053Z",
+        "stoppedAt": "2026-04-23T10:45:05.684Z"
+      },
+      {
+        "id": "817",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-22T10:45:00.110Z",
+        "stoppedAt": "2026-04-22T10:45:07.326Z"
+      },
+      {
+        "id": "759",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-21T10:45:00.227Z",
+        "stoppedAt": "2026-04-21T10:45:07.437Z"
+      },
+      {
+        "id": "711",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-20T10:45:00.118Z",
+        "stoppedAt": "2026-04-20T10:45:08.323Z"
+      }
+    ]
+  },
+  {
+    "id": "Mib6RUtJ2IOaUZ4s",
+    "label": "Outreach Agent",
+    "liveName": "[PA] Outreach Agent",
+    "active": true,
+    "nodeCount": 52,
+    "findings": [
+      {
+        "severity": "watch",
+        "node": "Fetch Pending Prospects",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      },
+      {
+        "severity": "watch",
+        "node": "Update Airtable Prospect Emails",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      },
+      {
+        "severity": "watch",
+        "node": "Update Status — Email 1 Sent",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      },
+      {
+        "severity": "watch",
+        "node": "Fetch Email 1 Sent",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      },
+      {
+        "severity": "watch",
+        "node": "Update Status — Email 2 Sent",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      },
+      {
+        "severity": "watch",
+        "node": "Fetch Email 2 Sent",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      },
+      {
+        "severity": "watch",
+        "node": "Update Status — Email 3 Sent",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      },
+      {
+        "severity": "watch",
+        "node": "Fetch Email 3 Sent — Expired",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      },
+      {
+        "severity": "watch",
+        "node": "Update Status — Completed",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      },
+      {
+        "severity": "watch",
+        "node": "Lookup Prospect by Email",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      },
+      {
+        "severity": "watch",
+        "node": "Update Status — Replied",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      }
+    ],
+    "recentExecutions": [
+      {
+        "id": "1543",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-24T16:46:23.873Z",
+        "stoppedAt": "2026-04-24T16:46:25.400Z"
+      },
+      {
+        "id": "1409",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-24T07:12:51.914Z",
+        "stoppedAt": "2026-04-24T07:12:53.220Z"
+      },
+      {
+        "id": "1365",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-24T04:00:24.083Z",
+        "stoppedAt": "2026-04-24T04:00:27.374Z"
+      },
+      {
+        "id": "1175",
+        "status": "success",
+        "finished": true,
+        "mode": "manual",
+        "startedAt": "2026-04-23T17:16:17.174Z",
+        "stoppedAt": "2026-04-23T19:02:29.184Z"
+      },
+      {
+        "id": "1162",
+        "status": "success",
+        "finished": true,
+        "mode": "manual",
+        "startedAt": "2026-04-23T16:46:57.281Z",
+        "stoppedAt": "2026-04-24T13:01:46.973Z"
+      }
+    ]
+  },
+  {
+    "id": "94DpGwRPWGRPqCVU",
+    "label": "Status Update Agent",
+    "liveName": "[PA] Status Update Agent",
+    "active": true,
+    "nodeCount": 20,
+    "findings": [],
+    "recentExecutions": [
+      {
+        "id": "716",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-20T13:00:18.110Z",
+        "stoppedAt": "2026-04-20T13:00:42.234Z"
+      }
+    ]
+  },
+  {
+    "id": "ka6GesSfWVo2FZtU",
+    "label": "Referral Trigger Agent",
+    "liveName": "[PA] Referral Trigger Agent",
+    "active": true,
+    "nodeCount": 16,
+    "findings": [
+      {
+        "severity": "watch",
+        "node": "Log Referral Sent",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      }
+    ],
+    "recentExecutions": [
+      {
+        "id": "1477",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-24T12:00:13.044Z",
+        "stoppedAt": "2026-04-24T12:00:13.645Z"
+      },
+      {
+        "id": "1087",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-23T12:00:13.044Z",
+        "stoppedAt": "2026-04-23T12:00:13.679Z"
+      },
+      {
+        "id": "820",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-22T12:00:23.095Z",
+        "stoppedAt": "2026-04-22T12:00:23.672Z"
+      },
+      {
+        "id": "762",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-21T12:00:23.087Z",
+        "stoppedAt": "2026-04-21T12:00:23.735Z"
+      },
+      {
+        "id": "714",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-20T12:00:23.100Z",
+        "stoppedAt": "2026-04-20T12:00:23.712Z"
+      }
+    ]
+  },
+  {
+    "id": "uiTwYIUk6nIFwLtX",
+    "label": "ClickUp Sync",
+    "liveName": "[PA] ClickUp Sync",
+    "active": true,
+    "nodeCount": 18,
+    "findings": [
+      {
+        "severity": "watch",
+        "node": "Log Sync Summary",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      }
+    ],
+    "recentExecutions": [
+      {
+        "id": "1531",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-24T16:00:00.451Z",
+        "stoppedAt": "2026-04-24T16:00:03.025Z"
+      },
+      {
+        "id": "1503",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-24T14:00:00.124Z",
+        "stoppedAt": "2026-04-24T14:00:02.982Z"
+      },
+      {
+        "id": "1475",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-24T12:00:00.142Z",
+        "stoppedAt": "2026-04-24T12:00:03.127Z"
+      },
+      {
+        "id": "1448",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-24T10:00:00.310Z",
+        "stoppedAt": "2026-04-24T10:00:03.034Z"
+      },
+      {
+        "id": "1421",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-24T08:00:00.516Z",
+        "stoppedAt": "2026-04-24T08:00:03.043Z"
+      }
+    ]
+  },
+  {
+    "id": "scj61gBYYWpQydMC",
+    "label": "Reporting Agent",
+    "liveName": "[PA] Reporting Agent",
+    "active": false,
+    "nodeCount": 17,
+    "findings": [],
+    "recentExecutions": []
+  },
+  {
+    "id": "kXxN7O77ongTMwKG",
+    "label": "Typeform Lead Qualification",
+    "liveName": "[PA] Typeform Lead Qualification",
+    "active": true,
+    "nodeCount": 14,
+    "findings": [
+      {
+        "severity": "watch",
+        "node": "Check Duplicate",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      },
+      {
+        "severity": "watch",
+        "node": "Write to Airtable",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      },
+      {
+        "severity": "watch",
+        "node": "Update Airtable Score",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      },
+      {
+        "severity": "watch",
+        "node": "Log to Automation Logs",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      }
+    ],
+    "recentExecutions": [
+      {
+        "id": "600",
+        "status": "success",
+        "finished": true,
+        "mode": "manual",
+        "startedAt": "2026-04-17T18:18:06.335Z",
+        "stoppedAt": "2026-04-17T18:18:07.955Z"
+      },
+      {
+        "id": "599",
+        "status": "success",
+        "finished": true,
+        "mode": "manual",
+        "startedAt": "2026-04-17T18:17:57.384Z",
+        "stoppedAt": "2026-04-17T18:18:00.176Z"
+      },
+      {
+        "id": "598",
+        "status": "success",
+        "finished": true,
+        "mode": "webhook",
+        "startedAt": "2026-04-17T18:11:21.330Z",
+        "stoppedAt": "2026-04-17T18:11:37.327Z"
+      },
+      {
+        "id": "597",
+        "status": "success",
+        "finished": true,
+        "mode": "manual",
+        "startedAt": "2026-04-17T18:10:00.880Z",
+        "stoppedAt": "2026-04-17T18:10:01.457Z"
+      },
+      {
+        "id": "596",
+        "status": "success",
+        "finished": true,
+        "mode": "manual",
+        "startedAt": "2026-04-17T18:02:58.252Z",
+        "stoppedAt": "2026-04-17T18:03:20.993Z"
+      }
+    ]
+  },
+  {
+    "id": "uTnQAq5VlmsHYih4",
+    "label": "Credential Follow-Up",
+    "liveName": "[PA] Credential Follow-Up",
+    "active": true,
+    "nodeCount": 11,
+    "findings": [
+      {
+        "severity": "watch",
+        "node": "Fetch Stalled Clients",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      },
+      {
+        "severity": "watch",
+        "node": "Update overdue_flagged_at",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      },
+      {
+        "severity": "watch",
+        "node": "Log to Automation Logs",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      }
+    ],
+    "recentExecutions": [
+      {
+        "id": "1367",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-24T04:00:53.074Z",
+        "stoppedAt": "2026-04-24T04:00:53.254Z"
+      },
+      {
+        "id": "979",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-23T04:00:53.075Z",
+        "stoppedAt": "2026-04-23T04:00:53.113Z"
+      },
+      {
+        "id": "806",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-22T04:00:33.090Z",
+        "stoppedAt": "2026-04-22T04:00:33.136Z"
+      },
+      {
+        "id": "748",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-21T04:00:33.106Z",
+        "stoppedAt": "2026-04-21T04:00:33.139Z"
+      },
+      {
+        "id": "700",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-20T04:00:33.106Z",
+        "stoppedAt": "2026-04-20T04:00:33.153Z"
+      }
+    ]
+  },
+  {
+    "id": "hbtSbm2pzrHX1QTn",
+    "label": "Credential Detector",
+    "liveName": "[PA] Credential Detector",
+    "active": true,
+    "nodeCount": 10,
+    "findings": [
+      {
+        "severity": "watch",
+        "node": "Set Status to build.ready",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      },
+      {
+        "severity": "watch",
+        "node": "Log to Automation Logs",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      }
+    ],
+    "recentExecutions": [
+      {
+        "id": "1533",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-24T16:00:51.082Z",
+        "stoppedAt": "2026-04-24T16:00:51.628Z"
+      },
+      {
+        "id": "1506",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-24T14:00:51.092Z",
+        "stoppedAt": "2026-04-24T14:00:51.682Z"
+      },
+      {
+        "id": "1479",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-24T12:00:51.083Z",
+        "stoppedAt": "2026-04-24T12:00:51.674Z"
+      },
+      {
+        "id": "1450",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-24T10:00:51.087Z",
+        "stoppedAt": "2026-04-24T10:00:51.678Z"
+      },
+      {
+        "id": "1423",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-24T08:00:51.133Z",
+        "stoppedAt": "2026-04-24T08:00:51.777Z"
+      }
+    ]
+  },
+  {
+    "id": "EPMCxdqKOuwc6hzB",
+    "label": "Website Chatbot",
+    "liveName": "[PA] Website Chatbot",
+    "active": true,
+    "nodeCount": 15,
+    "findings": [
+      {
+        "severity": "watch",
+        "node": "Write Hot Prospect to Airtable",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      }
+    ],
+    "recentExecutions": []
+  },
+  {
+    "id": "E24KwVMam1e8bbjT",
+    "label": "Scoping Agent",
+    "liveName": "[PA] Scoping Agent",
+    "active": true,
+    "nodeCount": 17,
+    "findings": [
+      {
+        "severity": "watch",
+        "node": "Fetch call_complete Clients",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      },
+      {
+        "severity": "watch",
+        "node": "Fetch Full Client Record",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      },
+      {
+        "severity": "watch",
+        "node": "Set Status to Scoping",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      },
+      {
+        "severity": "watch",
+        "node": "Write Scope to Airtable",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      },
+      {
+        "severity": "watch",
+        "node": "Log to Automation Logs",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      }
+    ],
+    "recentExecutions": [
+      {
+        "id": "1532",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-24T16:00:20.074Z",
+        "stoppedAt": "2026-04-24T16:00:20.685Z"
+      },
+      {
+        "id": "1505",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-24T14:00:20.085Z",
+        "stoppedAt": "2026-04-24T14:00:20.669Z"
+      },
+      {
+        "id": "1478",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-24T12:00:20.087Z",
+        "stoppedAt": "2026-04-24T12:00:20.667Z"
+      },
+      {
+        "id": "1449",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-24T10:00:20.084Z",
+        "stoppedAt": "2026-04-24T10:00:20.715Z"
+      },
+      {
+        "id": "1422",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-24T08:00:20.073Z",
+        "stoppedAt": "2026-04-24T08:00:20.693Z"
+      }
+    ]
+  },
+  {
+    "id": "UB6ZdrnYpJlYfxD4",
+    "label": "Scope Approval",
+    "liveName": "[PA] Scope Approval",
+    "active": true,
+    "nodeCount": 9,
+    "findings": [
+      {
+        "severity": "watch",
+        "node": "Fetch Client by Slug",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      },
+      {
+        "severity": "watch",
+        "node": "Lock Scope in Airtable",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      },
+      {
+        "severity": "watch",
+        "node": "Save Proposal to Airtable",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      }
+    ],
+    "recentExecutions": [
+      {
+        "id": "1413",
+        "status": "success",
+        "finished": true,
+        "mode": "webhook",
+        "startedAt": "2026-04-24T07:27:35.685Z",
+        "stoppedAt": "2026-04-24T07:28:42.885Z"
+      },
+      {
+        "id": "1234",
+        "status": "success",
+        "finished": true,
+        "mode": "manual",
+        "startedAt": "2026-04-23T18:34:11.242Z",
+        "stoppedAt": "2026-04-23T18:34:12.056Z"
+      },
+      {
+        "id": "1233",
+        "status": "success",
+        "finished": true,
+        "mode": "manual",
+        "startedAt": "2026-04-23T18:32:51.911Z",
+        "stoppedAt": "2026-04-23T18:32:52.725Z"
+      },
+      {
+        "id": "1232",
+        "status": "success",
+        "finished": true,
+        "mode": "manual",
+        "startedAt": "2026-04-23T18:32:35.870Z",
+        "stoppedAt": "2026-04-23T18:32:36.654Z"
+      },
+      {
+        "id": "1231",
+        "status": "success",
+        "finished": true,
+        "mode": "manual",
+        "startedAt": "2026-04-23T18:31:48.676Z",
+        "stoppedAt": "2026-04-23T18:31:48.742Z"
+      }
+    ]
+  },
+  {
+    "id": "fy8OuUEGyyWhYzWC",
+    "label": "Workflow Builder Agent",
+    "liveName": "[PA] Workflow Builder Agent",
+    "active": false,
+    "nodeCount": 21,
+    "findings": [
+      {
+        "severity": "watch",
+        "node": "Fetch build.ready Clients",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      },
+      {
+        "severity": "watch",
+        "node": "Set Status to Building",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      },
+      {
+        "severity": "watch",
+        "node": "Update Airtable — Build Review",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      },
+      {
+        "severity": "watch",
+        "node": "Log Build Complete",
+        "issue": "Airtable HTTP node has continueOnFail enabled; API/schema errors may appear as successful workflow executions."
+      }
+    ],
+    "recentExecutions": []
+  },
+  {
+    "id": "nXXsF4E1BPWIS62r",
+    "label": "Scoping Notifier",
+    "liveName": "[PA] Scoping Notifier",
+    "active": true,
+    "nodeCount": 13,
+    "findings": [],
+    "recentExecutions": [
+      {
+        "id": "1544",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-24T16:50:00.092Z",
+        "stoppedAt": "2026-04-24T16:50:00.695Z"
+      },
+      {
+        "id": "1542",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-24T16:45:00.063Z",
+        "stoppedAt": "2026-04-24T16:45:00.691Z"
+      },
+      {
+        "id": "1541",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-24T16:40:00.048Z",
+        "stoppedAt": "2026-04-24T16:40:00.727Z"
+      },
+      {
+        "id": "1540",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-24T16:35:00.044Z",
+        "stoppedAt": "2026-04-24T16:35:00.718Z"
+      },
+      {
+        "id": "1539",
+        "status": "success",
+        "finished": true,
+        "mode": "trigger",
+        "startedAt": "2026-04-24T16:30:00.057Z",
+        "stoppedAt": "2026-04-24T16:30:00.693Z"
+      }
+    ]
+  },
+  {
+    "id": "EKKXeBCEiKXaYBCx",
+    "label": "Morning Brief Delivery",
+    "liveName": "[PA] Morning Brief Delivery",
+    "active": true,
+    "nodeCount": 4,
+    "findings": [],
+    "recentExecutions": []
+  }
+]

@@ -1,0 +1,106 @@
+{
+  "qa": {
+    "company": "QA Smoke mod6au75",
+    "slug": "qa-smoke-mod6au75",
+    "email": "qa-smoke-mod6au75@example.com",
+    "typeformEmail": "qa-typeform-mod6au75@example.com",
+    "chatbotEmail": "qa-chatbot-mod6au75@example.com"
+  },
+  "results": [
+    {
+      "name": "Production eligibility preflight",
+      "status": "pass",
+      "note": "{\"outreachPending\":3,\"outreachEmail2\":33,\"outreachEmail3\":0,\"outreachComplete\":0,\"liveClients\":1,\"stalledCredentials\":0,\"buildReady\":0,\"retainerClients\":0}"
+    },
+    {
+      "name": "Lead Generation recent scheduled/manual execution",
+      "status": "pass",
+      "note": "latest 1459"
+    },
+    {
+      "name": "Outreach Agent recent scheduled/manual execution",
+      "status": "pass",
+      "note": "latest 1590"
+    },
+    {
+      "name": "Status Update Agent recent scheduled/manual execution",
+      "status": "pass",
+      "note": "latest 716"
+    },
+    {
+      "name": "Referral Trigger Agent recent scheduled/manual execution",
+      "status": "pass",
+      "note": "latest 1477"
+    },
+    {
+      "name": "ClickUp Sync recent scheduled/manual execution",
+      "status": "pass",
+      "note": "latest 1531"
+    },
+    {
+      "name": "Credential Follow-Up recent scheduled/manual execution",
+      "status": "pass",
+      "note": "latest 1367"
+    },
+    {
+      "name": "Credential Detector recent scheduled/manual execution",
+      "status": "pass",
+      "note": "latest 1533"
+    },
+    {
+      "name": "Scoping Notifier recent scheduled/manual execution",
+      "status": "pass",
+      "note": "latest 1591"
+    },
+    {
+      "name": "Reporting Agent static readiness",
+      "status": "pass",
+      "note": "inactive, 17 nodes fetched"
+    },
+    {
+      "name": "Workflow Builder Agent static readiness",
+      "status": "pass",
+      "note": "inactive, 21 nodes fetched"
+    },
+    {
+      "name": "Morning Brief Delivery static readiness",
+      "status": "pass",
+      "note": "active, 4 nodes fetched"
+    },
+    {
+      "name": "Error Handler static readiness",
+      "status": "pass",
+      "note": "active, 4 nodes fetched"
+    },
+    {
+      "name": "Website Chatbot early-step webhook flow",
+      "status": "pass",
+      "note": "steps 0-2 returned valid JSON and next_step progression"
+    },
+    {
+      "name": "Typeform Lead Qualification webhook",
+      "status": "pass",
+      "note": "execution 1595; prospect reckNZzCFke4a7qwH"
+    },
+    {
+      "name": "Airtable test prospect setup",
+      "status": "pass",
+      "note": "recl0ZUYy59TmmHur"
+    },
+    {
+      "name": "Scoping Agent webhook",
+      "status": "pass",
+      "note": "execution 1596; scope_review written"
+    },
+    {
+      "name": "Scope Approval webhook",
+      "status": "pass",
+      "note": "execution 1598; response Submitted"
+    },
+    {
+      "name": "Onboarding Automation webhook",
+      "status": "pass",
+      "note": "execution 1599; client recBZSa9WsYabJawm; folder 90148889216"
+    }
+  ]
+}

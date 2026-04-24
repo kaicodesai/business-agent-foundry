@@ -3,7 +3,7 @@
 **Client:** Phoenix Automation (owner-operated internal account)
 **Project type:** Internal agency infrastructure
 **Agreed date:** 2026-03-16
-**Owner:** Kai Edwards (lightofkai777@gmail.com)
+**Owner:** Kai Edwards (kai@phoenixautomation.ai)
 
 ---
 
@@ -47,7 +47,7 @@ Per owner decision on 2026-03-16, the following values are hardcoded directly in
 | PA_AIRTABLE_CLIENTS_TABLE_ID | `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` | Airtable Lookup, Read Scope, Update Record |
 | PA_CLICKUP_TEAM_ID | `90141018999` | Create ClickUp Project |
 | PA_CLICKUP_SPACE_ID | `90144568071` | Create ClickUp Project |
-| PA_OWNER_EMAIL | `lightofkai777@gmail.com` | Send Onboarding Summary Email |
+| PA_OWNER_EMAIL | `kai@phoenixautomation.ai` | Send Onboarding Summary Email |
 
 ### Constraints and deferrals
 - **Error workflow:** To be built as a follow-on task after core pipeline is validated. `settings.errorWorkflow` is intentionally empty until then.

@@ -172,7 +172,7 @@ The workflow:
 3. Writes new prospects to Airtable Prospects table
 4. Scores lead via Claude (0–8, grade A/B/C/D)
 5. Updates Airtable with `lead_score_total`, `lead_score_grade`, `pre_call_brief`
-6. If Grade A or B: emails Kai at lightofkai777@gmail.com with pre_call_brief
+6. If Grade A or B: emails Kai at kai@phoenixautomation.ai with pre_call_brief
 7. Logs to automation_logs
 
 **⚠️ Note:** Workflow must be **active** in n8n for the webhook to respond. If inactive, Typeform disables the webhook after failures.

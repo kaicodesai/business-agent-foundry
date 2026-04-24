@@ -1,0 +1,539 @@
+{
+  "workflows": [
+    {
+      "id": "7RsRJIqBHFpWZoWM",
+      "label": "Onboarding Automation",
+      "liveName": "[PA] Onboarding Automation",
+      "active": true,
+      "nodeCount": 58,
+      "emails": [
+        {
+          "node": "Send Onboarding Summary Email",
+          "fromEmail": "Kai Edwards | Phoenix Automation <kai@phoenixautomation.ai>",
+          "toEmail": "kai@phoenixautomation.ai",
+          "subject": "={{ '[PA] Onboarding Started — ' + $('Normalize Payload').first().json.client_name }}",
+          "credential": "SMTP account 2"
+        },
+        {
+          "node": "Send Client Welcome Email",
+          "fromEmail": "Kai Edwards | Phoenix Automation <kai@phoenixautomation.ai>",
+          "toEmail": "={{ $('Extract Template ID').first().json.client_email }}",
+          "subject": "=Welcome to Phoenix Automation — action required before we can start",
+          "credential": "SMTP account 2"
+        }
+      ],
+      "staleAddressHits": [],
+      "loops": []
+    },
+    {
+      "id": "YO3f5CL9bYbLTBgw",
+      "label": "Lead Generation",
+      "liveName": "[PA] Lead Generation",
+      "active": true,
+      "nodeCount": 13,
+      "emails": [],
+      "staleAddressHits": [],
+      "loops": []
+    },
+    {
+      "id": "Mib6RUtJ2IOaUZ4s",
+      "label": "Outreach Agent",
+      "liveName": "[PA] Outreach Agent",
+      "active": true,
+      "nodeCount": 52,
+      "emails": [
+        {
+          "node": "Send Email 1",
+          "fromEmail": "Kai Edwards | Phoenix Automation <kai@phoenixautomation.ai>",
+          "toEmail": "={{ $('Build HTML Emails').item.json.email }}",
+          "subject": "={{ $('Build HTML Emails').item.json.prospect_name.split(' ')[0] + ', quick question' }}",
+          "credential": "SMTP account 2"
+        },
+        {
+          "node": "Send Email 2",
+          "fromEmail": "Kai Edwards | Phoenix Automation <kai@phoenixautomation.ai>",
+          "toEmail": "={{ $json.email }}",
+          "subject": "={{ $json.prospect_name.split(' ')[0] + ', following up' }}",
+          "credential": "SMTP account 2"
+        },
+        {
+          "node": "Send Email 3",
+          "fromEmail": "Kai Edwards | Phoenix Automation <kai@phoenixautomation.ai>",
+          "toEmail": "={{ $json.email }}",
+          "subject": "={{ 'Last note — ' + $json.company_name }}",
+          "credential": "SMTP account 2"
+        },
+        {
+          "node": "Notify Kai — Reply Received",
+          "fromEmail": "Kai Edwards | Phoenix Automation <kai@phoenixautomation.ai>",
+          "toEmail": "kai@phoenixautomation.ai",
+          "subject": "={{ 'Reply - ' + $('Extract Reply Data').item.json.prospect_name + ' at ' + $('Extract Reply Data').item.json.company_name }}",
+          "credential": "SMTP account 2"
+        }
+      ],
+      "staleAddressHits": [],
+      "loops": [
+        {
+          "name": "Loop F1",
+          "incoming": 2,
+          "outgoing": 1,
+          "batchSize": 1,
+          "note": "loop-back pattern present"
+        },
+        {
+          "name": "Loop F2",
+          "incoming": 2,
+          "outgoing": 1,
+          "batchSize": 1,
+          "note": "loop-back pattern present"
+        },
+        {
+          "name": "Loop Completions",
+          "incoming": 2,
+          "outgoing": 1,
+          "batchSize": 1,
+          "note": "loop-back pattern present"
+        },
+        {
+          "name": "Loop Replies",
+          "incoming": 2,
+          "outgoing": 1,
+          "batchSize": 1,
+          "note": "loop-back pattern present"
+        }
+      ]
+    },
+    {
+      "id": "94DpGwRPWGRPqCVU",
+      "label": "Status Update Agent",
+      "liveName": "[PA] Status Update Agent",
+      "active": true,
+      "nodeCount": 20,
+      "emails": [
+        {
+          "node": "Send Status Email",
+          "fromEmail": "Kai Edwards | Phoenix Automation <kai@phoenixautomation.ai>",
+          "toEmail": "={{ $json.client_email }}",
+          "subject": "={{ $json.email_subject }}",
+          "credential": "SMTP account 2"
+        }
+      ],
+      "staleAddressHits": [],
+      "loops": []
+    },
+    {
+      "id": "ka6GesSfWVo2FZtU",
+      "label": "Referral Trigger Agent",
+      "liveName": "[PA] Referral Trigger Agent",
+      "active": true,
+      "nodeCount": 16,
+      "emails": [
+        {
+          "node": "Send Referral Email 1 to Client",
+          "fromEmail": "Kai Edwards | Phoenix Automation <kai@phoenixautomation.ai>",
+          "toEmail": "={{ $json.email }}",
+          "subject": "=A quick thought — {{ $json.company_name }}",
+          "credential": "SMTP account 2"
+        },
+        {
+          "node": "Notify Kai — Day 7 Draft",
+          "fromEmail": "Kai Edwards | Phoenix Automation <kai@phoenixautomation.ai>",
+          "toEmail": "kai@phoenixautomation.ai",
+          "subject": "=[PA] Referral sent to {{ $json.company_name }} — Day 7 follow-up draft inside",
+          "credential": "SMTP account 2"
+        }
+      ],
+      "staleAddressHits": [],
+      "loops": []
+    },
+    {
+      "id": "uiTwYIUk6nIFwLtX",
+      "label": "ClickUp Sync",
+      "liveName": "[PA] ClickUp Sync",
+      "active": true,
+      "nodeCount": 18,
+      "emails": [
+        {
+          "node": "Send Notification Email",
+          "fromEmail": "Kai Edwards | Phoenix Automation <kai@phoenixautomation.ai>",
+          "toEmail": "kai@phoenixautomation.ai",
+          "subject": "={{ $json.sync_actions.email.subject }}",
+          "credential": "SMTP account 2"
+        }
+      ],
+      "staleAddressHits": [],
+      "loops": [
+        {
+          "name": "Loop Over Clients",
+          "incoming": 3,
+          "outgoing": 2,
+          "batchSize": 1,
+          "note": "loop-back pattern present"
+        },
+        {
+          "name": "Loop Task Updates",
+          "incoming": 2,
+          "outgoing": 2,
+          "batchSize": 1,
+          "note": "loop-back pattern present"
+        }
+      ]
+    },
+    {
+      "id": "scj61gBYYWpQydMC",
+      "label": "Reporting Agent",
+      "liveName": "[PA] Reporting Agent",
+      "active": false,
+      "nodeCount": 17,
+      "emails": [
+        {
+          "node": "Send Report Email",
+          "fromEmail": "Kai Edwards | Phoenix Automation <kai@phoenixautomation.ai>",
+          "toEmail": "={{ $json.client_email }}",
+          "subject": "={{ $json.email_subject }}",
+          "credential": "SMTP account 2"
+        }
+      ],
+      "staleAddressHits": [],
+      "loops": []
+    },
+    {
+      "id": "kXxN7O77ongTMwKG",
+      "label": "Typeform Lead Qualification",
+      "liveName": "[PA] Typeform Lead Qualification",
+      "active": true,
+      "nodeCount": 14,
+      "emails": [
+        {
+          "node": "Email Kai — High Grade Lead",
+          "fromEmail": "Kai Edwards | Phoenix Automation <kai@phoenixautomation.ai>",
+          "toEmail": "kai@phoenixautomation.ai",
+          "subject": "=🔥 Grade {{ $json.score_grade }} lead — {{ $json.business_name }}",
+          "credential": "SMTP account 2"
+        }
+      ],
+      "staleAddressHits": [],
+      "loops": []
+    },
+    {
+      "id": "uTnQAq5VlmsHYih4",
+      "label": "Credential Follow-Up",
+      "liveName": "[PA] Credential Follow-Up",
+      "active": true,
+      "nodeCount": 11,
+      "emails": [
+        {
+          "node": "Send Follow-Up Alert to Kai",
+          "fromEmail": "Kai Edwards | Phoenix Automation <kai@phoenixautomation.ai>",
+          "toEmail": "kai@phoenixautomation.ai",
+          "subject": "=[PA] Credential Follow-Up — {{ $json.company_name }} has not submitted credentials",
+          "credential": "SMTP account 2"
+        }
+      ],
+      "staleAddressHits": [],
+      "loops": [
+        {
+          "name": "Loop Over Clients",
+          "incoming": 2,
+          "outgoing": 1,
+          "batchSize": 1,
+          "note": "loop-back pattern present"
+        }
+      ]
+    },
+    {
+      "id": "hbtSbm2pzrHX1QTn",
+      "label": "Credential Detector",
+      "liveName": "[PA] Credential Detector",
+      "active": true,
+      "nodeCount": 10,
+      "emails": [
+        {
+          "node": "Alert Kai — Build Ready",
+          "fromEmail": "Kai Edwards | Phoenix Automation <kai@phoenixautomation.ai>",
+          "toEmail": "kai@phoenixautomation.ai",
+          "subject": "={{ 'Build Ready: ' + $('Loop Over Clients').item.json.client_name + ' has submitted credentials' }}",
+          "credential": "SMTP account 2"
+        }
+      ],
+      "staleAddressHits": [],
+      "loops": [
+        {
+          "name": "Loop Over Clients",
+          "incoming": 2,
+          "outgoing": 1,
+          "batchSize": 1,
+          "note": "loop-back pattern present"
+        }
+      ]
+    },
+    {
+      "id": "EPMCxdqKOuwc6hzB",
+      "label": "Website Chatbot",
+      "liveName": "[PA] Website Chatbot",
+      "active": true,
+      "nodeCount": 15,
+      "emails": [],
+      "staleAddressHits": [],
+      "loops": []
+    },
+    {
+      "id": "E24KwVMam1e8bbjT",
+      "label": "Scoping Agent",
+      "liveName": "[PA] Scoping Agent",
+      "active": true,
+      "nodeCount": 17,
+      "emails": [
+        {
+          "node": "Email Kai for Approval",
+          "fromEmail": "Kai Edwards | Phoenix Automation <kai@phoenixautomation.ai>",
+          "toEmail": "kai@phoenixautomation.ai",
+          "subject": "=📋 Scope ready for review: {{ $(\"Parse Scope JSON\").item.json.company_name }}",
+          "credential": "SMTP account 2"
+        }
+      ],
+      "staleAddressHits": [],
+      "loops": [
+        {
+          "name": "Loop Over Clients",
+          "incoming": 2,
+          "outgoing": 1,
+          "batchSize": 1,
+          "note": "loop-back pattern present"
+        }
+      ]
+    },
+    {
+      "id": "UB6ZdrnYpJlYfxD4",
+      "label": "Scope Approval",
+      "liveName": "[PA] Scope Approval",
+      "active": true,
+      "nodeCount": 9,
+      "emails": [
+        {
+          "node": "Email Proposal to Kai",
+          "fromEmail": "Kai Edwards | Phoenix Automation <kai@phoenixautomation.ai>",
+          "toEmail": "kai@phoenixautomation.ai",
+          "subject": "=📄 Proposal draft ready — {{ ($(\"Fetch Client by Slug\").item.json.records||[])[0]?.fields?.company_name || \"client\" }}",
+          "credential": "SMTP account 2"
+        }
+      ],
+      "staleAddressHits": [],
+      "loops": []
+    },
+    {
+      "id": "fy8OuUEGyyWhYzWC",
+      "label": "Workflow Builder Agent",
+      "liveName": "[PA] Workflow Builder Agent",
+      "active": false,
+      "nodeCount": 21,
+      "emails": [
+        {
+          "node": "Email Kai — Review Workflows",
+          "fromEmail": "Kai Edwards | Phoenix Automation <kai@phoenixautomation.ai>",
+          "toEmail": "kai@phoenixautomation.ai",
+          "subject": "=🔧 Build complete — review workflows for {{ $(\"Collect Deployment Results\").item.json.company_name }}",
+          "credential": "SMTP account 2"
+        }
+      ],
+      "staleAddressHits": [],
+      "loops": [
+        {
+          "name": "Loop Over Clients",
+          "incoming": 2,
+          "outgoing": 1,
+          "batchSize": 1,
+          "note": "loop-back pattern present"
+        }
+      ]
+    },
+    {
+      "id": "nXXsF4E1BPWIS62r",
+      "label": "Scoping Notifier",
+      "liveName": "[PA] Scoping Notifier",
+      "active": true,
+      "nodeCount": 13,
+      "emails": [
+        {
+          "node": "Send Scoping Ready Email",
+          "fromEmail": "Kai Edwards | Phoenix Automation <kai@phoenixautomation.ai>",
+          "toEmail": "kai@phoenixautomation.ai",
+          "subject": "=📋 Ready to scope: {{ $json.company_name }}",
+          "credential": "SMTP account 2"
+        }
+      ],
+      "staleAddressHits": [],
+      "loops": []
+    },
+    {
+      "id": "EKKXeBCEiKXaYBCx",
+      "label": "Morning Brief Delivery",
+      "liveName": "[PA] Morning Brief Delivery",
+      "active": true,
+      "nodeCount": 4,
+      "emails": [
+        {
+          "node": "Email Kai",
+          "fromEmail": "kai@phoenixautomation.ai",
+          "toEmail": "kai@phoenixautomation.ai",
+          "subject": "=☀️ KAI OS Morning Brief — {{ $json.date }}",
+          "credential": "SMTP account 3"
+        },
+        {
+          "node": "Email Howard",
+          "fromEmail": "kai@phoenixautomation.ai",
+          "toEmail": "jack@phoenixautomation.ai",
+          "subject": "=☀️ Good morning Howard — {{ $json.date }}",
+          "credential": "SMTP account 3"
+        }
+      ],
+      "staleAddressHits": [],
+      "loops": []
+    },
+    {
+      "id": "JByknkdAgxRmDKp3",
+      "label": "Error Handler",
+      "liveName": "[PA] Error Handler",
+      "active": true,
+      "nodeCount": 4,
+      "emails": [
+        {
+          "node": "Alert Kai",
+          "fromEmail": "Kai Edwards | Phoenix Automation <kai@phoenixautomation.ai>",
+          "toEmail": "kai@phoenixautomation.ai",
+          "subject": "=🚨 Workflow error — {{ $json.workflow_name }}",
+          "credential": "SMTP account 2"
+        }
+      ],
+      "staleAddressHits": [],
+      "loops": []
+    }
+  ],
+  "clickup": {
+    "space": {
+      "id": "90144568071",
+      "name": "Phoenix Automation"
+    },
+    "folders": [
+      {
+        "id": "90147969224",
+        "name": "Client Projects",
+        "lists": [
+          {
+            "id": "901414699447",
+            "name": "[PA] Client Template",
+            "task_count": 7
+          }
+        ]
+      },
+      {
+        "id": "90147969240",
+        "name": "Internal",
+        "lists": [
+          {
+            "id": "901414699479",
+            "name": "Lead Management",
+            "task_count": 3
+          },
+          {
+            "id": "901414699480",
+            "name": "Operations",
+            "task_count": 3
+          },
+          {
+            "id": "901415694346",
+            "name": "Outreach",
+            "task_count": 0
+          }
+        ]
+      },
+      {
+        "id": "90148144284",
+        "name": "brightline-property-management",
+        "lists": [
+          {
+            "id": "901414908093",
+            "name": "Onboarding",
+            "task_count": 1
+          },
+          {
+            "id": "901414908094",
+            "name": "Build",
+            "task_count": 2
+          },
+          {
+            "id": "901414908096",
+            "name": "QA",
+            "task_count": 2
+          },
+          {
+            "id": "901414908097",
+            "name": "Live",
+            "task_count": 2
+          }
+        ]
+      },
+      {
+        "id": "90148144286",
+        "name": "meridian-consulting-group",
+        "lists": [
+          {
+            "id": "901414908100",
+            "name": "Onboarding",
+            "task_count": 1
+          },
+          {
+            "id": "901414908103",
+            "name": "Build",
+            "task_count": 2
+          },
+          {
+            "id": "901414908104",
+            "name": "QA",
+            "task_count": 2
+          },
+          {
+            "id": "901414908105",
+            "name": "Live",
+            "task_count": 2
+          }
+        ]
+      }
+    ],
+    "folderlessLists": [],
+    "leadManagementTasks": [
+      {
+        "id": "86b8zy7zq",
+        "name": "Follow up on outstanding credentials",
+        "status": "to do"
+      },
+      {
+        "id": "86b8zy7zd",
+        "name": "Send proposals pending review",
+        "status": "to do"
+      },
+      {
+        "id": "86b8zy7yt",
+        "name": "Review Apollo prospects weekly",
+        "status": "to do"
+      }
+    ],
+    "operationsTasks": [
+      {
+        "id": "86b8zy81f",
+        "name": "Check QA queue before end of week",
+        "status": "to do"
+      },
+      {
+        "id": "86b8zy812",
+        "name": "Monthly: confirm reporting agent ran for all retainer clients",
+        "status": "to do"
+      },
+      {
+        "id": "86b8zy808",
+        "name": "Weekly: check all active client statuses",
+        "status": "to do"
+      }
+    ]
+  }
+}

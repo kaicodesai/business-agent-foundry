@@ -45,7 +45,7 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 **Team:**
 | Person | Role | Contact |
 |--------|------|---------|
-| Kai Edwards | Founder — reviews, approves, activates | lightofkai777@gmail.com |
+| Kai Edwards | Founder — reviews, approves, activates | kai@phoenixautomation.ai |
 | Haris | VA — builds and tests under Kai's direction | — |
 
 ---
@@ -242,7 +242,7 @@ claude
 ## Email Addresses
 | Purpose | Address |
 |---------|---------|
-| Owner (Kai) | lightofkai777@gmail.com |
+| Owner (Kai) | kai@phoenixautomation.ai |
 | Test / staging emails | ashleyedwards305@gmail.com |
 | SMTP sender | kai@phoenixautomation.ai (Google Workspace, App Password) |
 
@@ -519,7 +519,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 44. Log ClickUp Error — Continue (Code — error branch, nulls all IDs)
 45. Update Airtable Record (HTTP PATCH — writes project_status + all IDs + all 21 clickup_task_* fields)
 46. Mark Task: OB Airtable Complete (HTTP PUT → clickup_task_ob_airtable → "complete", pa-clickup)
-47. Send Onboarding Summary Email (SMTP → lightofkai777@gmail.com)
+47. Send Onboarding Summary Email (SMTP → kai@phoenixautomation.ai)
 48. Mark Task: OB Internal Complete (HTTP PUT → clickup_task_ob_internal → "complete", pa-clickup)
 49. Send Client Welcome Email (SMTP → client email)
 50. Mark Task: OB Welcome Complete (HTTP PUT → clickup_task_ob_welcome → "complete", pa-clickup)
@@ -581,7 +581,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 12. PUT ClickUp Task Status (HTTP PUT → /api/v2/task/{task_id}, pa-clickup, continueOnFail=true)
 13. Continue After Task Loop (Code — pass-through)
 14. IF Send Notification Email (IF — checks sync_actions.email)
-15. Send Notification Email (emailSend → lightofkai777@gmail.com, pa-smtp)
+15. Send Notification Email (emailSend → kai@phoenixautomation.ai, pa-smtp)
 16. IF Update Airtable (IF — checks sync_actions.airtable_update)
 17. PATCH Airtable — Overdue Flag (HTTP PATCH → overdue_flagged_at, pa-airtable)
 18. Log Sync Summary (Code)
@@ -626,7 +626,7 @@ Status cases handled: onboarding.in_progress (overdue check + email), build.read
 11. IF Grade A or B (IF — ["A","B"].includes(score_grade))
     TRUE  → 12
     FALSE → 13
-12. Email Kai — High Grade Lead (emailSend → lightofkai777@gmail.com, pa-smtp, with pre_call_brief, continueOnFail)
+12. Email Kai — High Grade Lead (emailSend → kai@phoenixautomation.ai, pa-smtp, with pre_call_brief, continueOnFail)
 13. Log to Automation Logs (HTTP POST → tblL7tDAh1KTLtwpt, pa-airtable, continueOnFail)
 
 Typeform webhook: tag=pa-n8n-intake, secret=pa-typeform-2026, enabled=true
@@ -646,7 +646,7 @@ Typeform webhook: tag=pa-n8n-intake, secret=pa-typeform-2026, enabled=true
 8.  IF Already Flagged Today (IF — overdue_flagged_at not empty AND <24h ago)
     TRUE  → skip (already alerted within 24h)
     FALSE → 9 (send alert)
-9.  Send Follow-Up Alert to Kai (emailSend → lightofkai777@gmail.com, pa-smtp, continueOnFail — includes company, contact, hours overdue, action prompt)
+9.  Send Follow-Up Alert to Kai (emailSend → kai@phoenixautomation.ai, pa-smtp, continueOnFail — includes company, contact, hours overdue, action prompt)
 10. Update overdue_flagged_at (HTTP PATCH → Airtable Clients record, pa-airtable, continueOnFail)
 11. Log to Automation Logs (HTTP POST → tblL7tDAh1KTLtwpt, event=credential_followup_alert_sent, pa-airtable, continueOnFail)
     → loops back to Node 7 (Loop Over Clients)
@@ -676,7 +676,7 @@ campaign_id: 6817d31e-e8e6-4a09-87de-e3be8e7cfc4e (set 2026-04-01)
 1.  Error Trigger (n8n Error Trigger — fires when any connected workflow fails)
 2.  Format Error (Code — extracts workflow_name, workflow_id, node_name, error_message, execution_id, timestamp)
 3.  Log to Airtable (HTTP POST → automation_logs, event=workflow_error, pa-airtable, continueOnFail)
-4.  Alert Kai (Send Email → lightofkai777@gmail.com, pa-smtp — subject: "🚨 Workflow error — [workflow name]", body includes all error details + n8n execution URL)
+4.  Alert Kai (Send Email → kai@phoenixautomation.ai, pa-smtp — subject: "🚨 Workflow error — [workflow name]", body includes all error details + n8n execution URL)
 
 Connected as errorWorkflow for: all 11 PA workflows
 ```
@@ -691,7 +691,7 @@ Connected as errorWorkflow for: all 11 PA workflows
 6.  Split Client Records (Code — extracts record_id, client_name, client_slug, n8n_api_key, n8n_workspace_id)
 7.  Loop Over Clients (splitInBatches, batch=1)
 8.  Set Status to build.ready (HTTP PATCH → Airtable Clients, project_status="build.ready", pa-airtable, continueOnFail)
-9.  Alert Kai — Build Ready (Send Email → lightofkai777@gmail.com — subject: "✅ Build Ready: [client]", includes client slug + n8n workspace URL + next step instructions, continueOnFail)
+9.  Alert Kai — Build Ready (Send Email → kai@phoenixautomation.ai — subject: "✅ Build Ready: [client]", includes client slug + n8n workspace URL + next step instructions, continueOnFail)
 10. Log to Automation Logs (HTTP POST → automation_logs, event=credentials_received, pa-airtable, continueOnFail)
     → loops back to Node 7
 ```
