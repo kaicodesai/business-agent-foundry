@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 5.6 — Last updated: 2026-04-24 — Updated by: Haris + Claude
+> **Version:** 5.7 — Last updated: 2026-04-27 — Updated by: Haris + Codex
 
 ---
 
@@ -78,21 +78,21 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - Airtable base structured — Clients + Prospects + automation_logs tables
 - All 6 n8n credentials added (pa-airtable, pa-n8n-api, pa-clickup, pa-smtp, pa-apollo-io, pa-anthropic)
 - **[PA] Onboarding Automation** (7RsRJIqBHFpWZoWM) — 58 nodes — rebuilt prospect→client flow 2026-04-22 and patched 2026-04-24: Create Airtable Client Record sends the proper JSON body, stale scope/prospect references were removed, n8n + ClickUp credentials are corrected, ClickUp error path is hardened, summary notifications route to kai@phoenixautomation.ai, and safe smoke test PASS execution 1599 created Client `recBZSa9WsYabJawm` + ClickUp folder `90148889216`.
-- **[PA] Lead Generation** (YO3f5CL9bYbLTBgw) — 13 nodes, Apollo.io paid plan — patched 2026-04-24 for US-only lead generation, Apollo per_page=100, enrichment top 25, broader title/seniority targeting, and rotating industry slices to avoid the same duplicate-heavy result set.
+- **[PA] Lead Generation** (YO3f5CL9bYbLTBgw) — 13 nodes, Apollo.io paid plan — patched 2026-04-27: Apollo bulk enrichment restored to max batch size 10, empty/debug enrichment outputs blocked from Airtable writes, run summaries now log found/added/skipped counts. Latest manual execution 2567 PASS: 56 found, 9 added.
 - **[PA] Morning Brief Delivery** (EKKXeBCEiKXaYBCx) — ACTIVE — daily morning brief workflow, confirmed active 2026-04-20
-- **[PA] Outreach Agent** (Mib6RUtJ2IOaUZ4s) — 52 nodes — rebuilt 2026-04-21, activated 2026-04-22, patched 2026-04-24: Email 1 now has a pre-send Airtable lock to prevent duplicate sends, Email 2/3 lookup field errors were fixed, follow-up branches reference stable loop items, reply notification routes to kai@phoenixautomation.ai, and all loops use batch size 1.
+- **[PA] Outreach Agent** (Mib6RUtJ2IOaUZ4s) — 51 nodes — rebuilt 2026-04-21, active; patched 2026-04-27 so Split in Batches loop branches feed Email 2, Email 3, completion, and reply handling correctly. Email 2 backlog moved to `email_2_sent` after manual run; latest execution 2588 PASS.
 - **[PA] Status Update Agent** (94DpGwRPWGRPqCVU) — 20 nodes, active; branded weekly client status emails working; ClickUp sync/comment nodes added.
 - **[PA] Referral Trigger Agent** (ka6GesSfWVo2FZtU) — 16 nodes, active; uses pa-smtp directly (referral email to client, Day 7 draft/notification to Kai at kai@phoenixautomation.ai).
-- **[PA] ClickUp Sync** (uiTwYIUk6nIFwLtX) — 18 nodes, active; syncs Airtable project_status to ClickUp task statuses every 2 hours. Patched 2026-04-24: automation log timestamp now evaluates correctly and notification email routes to kai@phoenixautomation.ai.
+- **[PA] ClickUp Sync** (uiTwYIUk6nIFwLtX) — 18 nodes, active; syncs Airtable `project_status` to ClickUp task statuses every 2 hours. Patched 2026-04-27: Split in Batches loop branches corrected and task-update splitting fixed. Latest execution 2584 PASS/logged.
 - **[PA] Reporting Agent** (scj61gBYYWpQydMC) — 17 nodes, inactive; monthly retainer reports via Claude → client email → Airtable update; sender/reply-to patched to kai@phoenixautomation.ai; activate after first retainer client is live.
 - **[PA] Typeform Lead Qualification** (kXxN7O77ongTMwKG) — 14 nodes, active; Typeform submission → answer extraction → dedup → Prospects write → Claude score via Anthropic HTTP → Kai notification for Grade A/B leads at kai@phoenixautomation.ai. Safe smoke test PASS execution 1595.
-- **[PA] Credential Follow-Up** (uTnQAq5VlmsHYih4) — 11 nodes, active; daily 10:00 + manual → fetches onboarding.in_progress clients stalled >48h → alerts Kai at kai@phoenixautomation.ai → updates overdue_flagged_at → logs to automation_logs.
-- **[PA] Credential Detector** (hbtSbm2pzrHX1QTn) — 10 nodes, active; every 2h + manual → fetches onboarding.in_progress clients whose n8n_api_key is populated → sets project_status=build.ready → alerts Kai at kai@phoenixautomation.ai → logs to automation_logs.
+- **[PA] Credential Follow-Up** (uTnQAq5VlmsHYih4) — 11 nodes, active; daily 10:00 + manual → fetches onboarding.in_progress clients stalled >48h → alerts Kai at kai@phoenixautomation.ai → updates overdue_flagged_at → logs to automation_logs. Loop branch wiring patched 2026-04-27; latest execution 2416 PASS/no stalled clients.
+- **[PA] Credential Detector** (hbtSbm2pzrHX1QTn) — 10 nodes, active; every 2h + manual → fetches onboarding.in_progress clients whose n8n_api_key is populated → sets project_status=build.ready → alerts Kai at kai@phoenixautomation.ai → logs to automation_logs. Loop branch wiring patched 2026-04-27; latest execution 2586 PASS/no new credentials.
 - **[PA] Website Chatbot** (EPMCxdqKOuwc6hzB) — 15 nodes, built 2026-04-03, fully operational 2026-04-10 — webhook POST /website-chatbot → stateless 3-question chatbot → Claude scores lead (HTTP Request node, not Langchain) → hot: writes Airtable Prospect + returns Calendly link; cold: returns nurture message; borderline: asks clarifying question. Live on phoenixautomation.ai with auto-popup (7s teaser, 13s auto-open). End-to-end verified: hot lead record recRypnI7vsMlisJR created in Airtable Prospects.
 - **3 new Airtable Prospects fields added** — `biggest_operational_pain` (long text), `lead_score_grade` (text), `lead_source` (text) — 2026-04-10; field names aligned to chatbot n8n node output
-- **[PA] Scoping Agent** (E24KwVMam1e8bbjT) — 17 nodes, updated 2026-04-24 — reads/writes **Prospects table**, uses Anthropic HTTP instead of rate-limited OpenRouter, writes Airtable-safe JSON, maps service_tier to valid Prospects values, normalizes tools_required text, sets `project_status=scope_review`, and safe smoke test PASS execution 1596.
-- **[PA] Scope Approval** (UB6ZdrnYpJlYfxD4) — 9 nodes, active; reads/writes Prospects table, locks approved scope, saves proposal_draft to Airtable as source of truth, creates a ClickUp Lead Management review task, emails Kai at kai@phoenixautomation.ai, and safe smoke test PASS execution 1598.
-- **[PA] Workflow Builder Agent** (fy8OuUEGyyWhYzWC) — 21 nodes, inactive; polls build.ready clients hourly → reads scope from Airtable → Claude generates n8n workflow JSON per automation → deploys to client n8n via their API key → sets build_review + emails Kai to review at kai@phoenixautomation.ai.
+- **[PA] Scoping Agent** (E24KwVMam1e8bbjT) — 16 nodes, updated 2026-04-27 — reads/writes **Prospects table**, uses Anthropic HTTP instead of rate-limited OpenRouter, writes Airtable-safe JSON, maps service_tier to valid Prospects values, normalizes tools_required text, sets `project_status=scope_review`, and has corrected loop branch wiring. Latest execution 2587 PASS/no pending clients.
+- **[PA] Scope Approval** (UB6ZdrnYpJlYfxD4) — 8 nodes, active; reads/writes Prospects table, locks approved scope, saves proposal_draft to Airtable as source of truth, creates a ClickUp Lead Management review task in parallel, emails Kai at kai@phoenixautomation.ai, and safe smoke test PASS execution 1598.
+- **[PA] Workflow Builder Agent** (fy8OuUEGyyWhYzWC) — 21 nodes, inactive by design; polls build.ready clients hourly/manual → reads full Client scope from Airtable → Claude generates n8n workflow JSON → deploys to the client's n8n via `n8n_workspace_id` + `n8n_api_key` → sets `build.in_progress` on start and `build.complete` with deployed workflow IDs on completion → emails Kai for review. Patched 2026-04-27; activate only when a real build.ready client exists.
 - **[PA] Scoping Notifier** (nXXsF4E1BPWIS62r) — 13 nodes, active; notifies Kai at kai@phoenixautomation.ai when a prospect is ready for scoping and exposes GET /trigger-scoping for browser-triggered handoff to Scoping Agent.
 - **15 new Airtable Clients fields added** — call_notes, scope_summary, automation_count, automation_1/2/3_name, automation_1/2/3_description, scope_locked_at, proposal_draft, workflows_deployed, build_review_url — 2026-04-03
 - **5 new project_status values added** — call_complete, scoping, scope_review, building, build_review — 2026-04-03
@@ -118,6 +118,14 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 ## In Progress ⏳
 - Default GitHub branch needs switching from `claude/setup-blueprint-agent-YnHBF` to `main` (Kai → Settings → Branches)
 - Airtable PAT `patIwbtd9ndSoj2fJ...` was in local git history (test_outreach.js, now deleted) — rotate this token in Airtable account settings
+
+## Live Audit Snapshot — 2026-04-27
+- Full n8n/Airtable/ClickUp API audit completed at `2026-04-27T16:08:47Z`; all 17 `[PA]` workflows are present and all structural audit warnings are resolved.
+- Active workflows: Onboarding, Lead Generation, Outreach, Status Update, Referral Trigger, ClickUp Sync, Typeform Lead Qualification, Credential Follow-Up, Credential Detector, Website Chatbot, Scoping Agent, Scope Approval, Scoping Notifier, Morning Brief Delivery, Error Handler.
+- Inactive by design: Reporting Agent (`scj61gBYYWpQydMC`) until first retainer client is live; Workflow Builder Agent (`fy8OuUEGyyWhYzWC`) until a real `build.ready` client exists.
+- Current Clients table contains one legacy/test client: Meridian Consulting Group (`rectfzSFPqjRQU4u1`), `project_status=scoping`, ClickUp folder `90148144286` (`meridian-consulting-group`), no `clickup_task_*` IDs, no `n8n_api_key`.
+- Acme Test Co (`recIn0wyE44pjUL4O`) was removed from Airtable Clients on 2026-04-27. Its stored ClickUp folder ID pointed to `brightline-property-management`, so that ClickUp folder was intentionally left untouched.
+- AI model policy: use Claude for external/client-facing copy, proposals, scoping, reporting, workflow generation, and final lead decisions. Free OpenRouter/GLM models are acceptable only for internal low-risk classification, extraction, routing, or rough summaries with deterministic validation.
 
 ## Not Started ❌
 - Stripe webhook integration — payment confirmation currently manual
@@ -490,7 +498,6 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 ### Test Records (delete before first real client)
 | Record | Table | ID |
 |--------|-------|----|
-| Status Test Client | Clients | `rec92eToEuIx06mJr` |
 | Meridian Consulting Group | Clients | `rectfzSFPqjRQU4u1` |
 
 ---
@@ -500,22 +507,22 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | Workflow | ID | Nodes | Trigger | Status |
 |---------|-----|-------|---------|--------|
 | [PA] Onboarding Automation | `7RsRJIqBHFpWZoWM` | 58 | POST /payment-confirmed webhook | 🟢 Active — patched 2026-04-24; safe smoke PASS execution 1599: Prospect → Client, Airtable, ClickUp folder/lists, and emails completed |
-| [PA] Lead Generation | `YO3f5CL9bYbLTBgw` | 13 | Daily 06:45 + manual | 🟢 Active — patched 2026-04-24: US-only Apollo search, per_page=100, enrich top 25, rotating ICP slices |
+| [PA] Lead Generation | `YO3f5CL9bYbLTBgw` | 13 | Daily 06:45 + manual | 🟢 Active — patched 2026-04-27; latest manual execution 2567 PASS, 9 real prospects added |
 | [PA] Morning Brief Delivery | `EKKXeBCEiKXaYBCx` | 4 | Daily (morning) | 🟢 Active — confirmed 2026-04-24 |
-| [PA] Status Update Agent | `94DpGwRPWGRPqCVU` | 20 | Monday 09:00 + manual | 🟢 Active — latest safe audit execution 716 success |
+| [PA] Status Update Agent | `94DpGwRPWGRPqCVU` | 20 | Monday 09:00 + manual | 🟢 Active — latest execution 2540 success |
 | [PA] Referral Trigger Agent | `ka6GesSfWVo2FZtU` | 16 | Daily 08:00 + manual | 🟢 Active — notification routing patched 2026-04-24 |
-| [PA] ClickUp Sync | `uiTwYIUk6nIFwLtX` | 18 | Every 2 hours + manual | 🟢 Active — latest safe audit execution 1531 success; ClickUp credential patched to account 2 |
+| [PA] ClickUp Sync | `uiTwYIUk6nIFwLtX` | 18 | Every 2 hours + manual | 🟢 Active — loop/task split patched 2026-04-27; latest execution 2584 success |
 | [PA] Reporting Agent | `scj61gBYYWpQydMC` | 17 | Monthly 1st + manual | 🔴 Inactive — built; sender/reply-to patched to kai@phoenixautomation.ai; activate after first retainer client is live |
-| [PA] Typeform Lead Qualification | `kXxN7O77ongTMwKG` | 14 | Typeform webhook (POST /typeform-intake) | 🟢 Active — Anthropic HTTP scoring; safe smoke PASS execution 1595 |
-| [PA] Credential Follow-Up | `uTnQAq5VlmsHYih4` | 11 | Daily 10:00 + manual | 🟢 Active — latest safe audit execution 1367 success |
-| [PA] Outreach Agent | `Mib6RUtJ2IOaUZ4s` | 52 | Daily 07:00 + manual + IMAP reply check | 🟢 Active — duplicate Email 1 lock and Email 2/3 branch fixes deployed 2026-04-24; latest safe audit execution 1590 success |
+| [PA] Typeform Lead Qualification | `kXxN7O77ongTMwKG` | 13 | Typeform webhook (POST /typeform-intake) | 🟢 Active — Anthropic HTTP scoring; safe smoke PASS execution 1595 |
+| [PA] Credential Follow-Up | `uTnQAq5VlmsHYih4` | 11 | Daily 10:00 + manual | 🟢 Active — loop branch patched 2026-04-27; latest execution 2416 success |
+| [PA] Outreach Agent | `Mib6RUtJ2IOaUZ4s` | 51 | Daily 07:00 + manual + IMAP reply check | 🟢 Active — Email 2/3/completion/reply loop branches patched 2026-04-27; latest execution 2588 success |
 | [PA] Scoping Notifier | `nXXsF4E1BPWIS62r` | 13 | Every 5 min + GET webhook /trigger-scoping | 🟢 Active — owner email routing confirmed 2026-04-24 |
 | [PA] Error Handler | `JByknkdAgxRmDKp3` | 4 | n8n Error Trigger | 🟢 Active — confirmed 2026-04-20 |
-| [PA] Credential Detector | `hbtSbm2pzrHX1QTn` | 10 | Every 2 hours + manual | 🟢 Active — latest safe audit execution 1533 success |
+| [PA] Credential Detector | `hbtSbm2pzrHX1QTn` | 10 | Every 2 hours + manual | 🟢 Active — loop branch patched 2026-04-27; latest execution 2586 success |
 | [PA] Website Chatbot | `EPMCxdqKOuwc6hzB` | 15 | Webhook POST /website-chatbot | 🟢 Active — live on phoenixautomation.ai since 2026-04-10; 3-question qualifier → Claude HTTP scoring → hot: Airtable write + Calendly; cold: nurture; borderline: clarifying Q. E2E PASS (record recRypnI7vsMlisJR) |
-| [PA] Scoping Agent | `E24KwVMam1e8bbjT` | 17 | Webhook POST /scope-call + poll every 2h | 🟢 Active — Anthropic HTTP, Airtable-safe JSON/tier/tools mapping; safe smoke PASS execution 1596 |
-| [PA] Scope Approval | `UB6ZdrnYpJlYfxD4` | 9 | GET /approve-scope?client_slug=X | 🟢 Active — creates ClickUp proposal review task and stores proposal_draft in Airtable source-of-truth; safe smoke PASS execution 1598 |
-| [PA] Workflow Builder Agent | `fy8OuUEGyyWhYzWC` | 21 | Polls Airtable hourly | 🔴 Inactive — static readiness PASS 2026-04-24; activate only when a real build.ready client exists |
+| [PA] Scoping Agent | `E24KwVMam1e8bbjT` | 16 | Webhook POST /scope-call + poll every 2h | 🟢 Active — loop branch patched 2026-04-27; latest execution 2587 success |
+| [PA] Scope Approval | `UB6ZdrnYpJlYfxD4` | 8 | GET /approve-scope?client_slug=X | 🟢 Active — proposal draft + ClickUp review task + Kai email; safe smoke PASS execution 1598 |
+| [PA] Workflow Builder Agent | `fy8OuUEGyyWhYzWC` | 21 | Polls Airtable hourly + manual | 🔴 Inactive by design — patched 2026-04-27 to current build.in_progress/build.complete flow; activate only when a real build.ready client exists |
 
 ## Workflow Node Summaries
 
@@ -1148,7 +1155,7 @@ business-agent-foundry/
 ## Short-term
 - [x] ✅ **Haris:** Build [PA] Credential Follow-Up (11 nodes, ID: uTnQAq5VlmsHYih4) — daily stall checker, Kai alert email, overdue_flagged_at update, Airtable log — 2026-03-31
 - [x] ✅ **Haris:** Add n8n setup instructions to welcome email — Node 49 of 7RsRJIqBHFpWZoWM; subject updated to "action required before we can start"; n8n signup + API key section inserted before "Your next steps" — 2026-03-31
-- [ ] Update Workflow Builder Agent scope — prerequisite: client n8n API key + instance URL present in Airtable `n8n_workspace_id` before agent runs (Haris)
+- [x] Update Workflow Builder Agent scope/workflow — prerequisite: client n8n API key + instance URL present in Airtable `n8n_workspace_id` before agent runs; live workflow patched to current build status flow (2026-04-27)
 - [x] ✅ Calendly URL updated in Referral Trigger Agent (2026-04-01)
 - [x] ✅ Referral Trigger Agent updated to use pa-smtp directly — Instantly.ai not required for referrals (2026-04-01)
 - [ ] Set up Instantly.ai + pa-instantly credential (Kai — needed for Outreach Agent only, not referrals)
@@ -2151,6 +2158,7 @@ Email account `kai@phoenixautomation.ai` is connected (warmup_status: 0 = warmin
 
 # Change Log
 
+- **[2026-04-27]** — Full live workflow audit via n8n/Airtable/ClickUp APIs: latest runs checked for all 17 `[PA]` workflows; all workflows present; Reporting Agent and Workflow Builder Agent remain inactive by design. Patched Split in Batches loop branch wiring in Outreach Agent, ClickUp Sync, Credential Follow-Up, Credential Detector, Scoping Agent, and Workflow Builder Agent; fixed Outreach reply extraction return shape; updated Workflow Builder Agent to current `build.in_progress` → `build.complete` Airtable flow and removed fragile Airtable field restrictions. Verified final audit has zero structural warnings. Removed Acme Test Co from Airtable Clients while leaving mismatched Brightline ClickUp folder untouched.
 - **[2026-04-24]** — Full live n8n/ClickUp audit via API: fixed Outreach duplicate Email 1 and blocked Email 2/3, patched Onboarding Airtable create body, Credential Detector Airtable field restriction, ClickUp Sync timestamp, owner notification routing to kai@phoenixautomation.ai, Scope Approval ClickUp proposal review task, US-only Lead Gen parameters, and explicit batch size 1 on active loop-back workflows.
 - **[2026-04-24]** — Safe workflow smoke suite PASS: verified scheduled/manual workflow health plus synthetic Website Chatbot, Typeform, Scoping, Scope Approval, and Onboarding chain. Patched Typeform off exhausted free OpenAI credits, Scoping/Scope Approval/Outreach off OpenRouter where needed, Onboarding n8n/ClickUp credentials and stale scope lookup, Scoping Airtable JSON/tier/tools writes, and marked QA Airtable records non-actionable after testing.
 
