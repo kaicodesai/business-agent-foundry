@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 5.7 — Last updated: 2026-04-27 — Updated by: Haris + Codex
+> **Version:** 5.10 — Last updated: 2026-04-27 — Updated by: Haris + Codex
 
 ---
 
@@ -76,23 +76,23 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - 3 coordination docs (handoff-spec, project-status-spec, workflow-sequence)
 - Full local dev stack operational (Node 20, n8n 2.10.4, Claude Code 2.1.77, n8n-MCP)
 - Airtable base structured — Clients + Prospects + automation_logs tables
-- All 6 n8n credentials added (pa-airtable, pa-n8n-api, pa-clickup, pa-smtp, pa-apollo-io, pa-anthropic)
-- **[PA] Onboarding Automation** (7RsRJIqBHFpWZoWM) — 58 nodes — rebuilt prospect→client flow 2026-04-22 and patched 2026-04-24: Create Airtable Client Record sends the proper JSON body, stale scope/prospect references were removed, n8n + ClickUp credentials are corrected, ClickUp error path is hardened, summary notifications route to kai@phoenixautomation.ai, and safe smoke test PASS execution 1599 created Client `recBZSa9WsYabJawm` + ClickUp folder `90148889216`.
+- All core n8n credentials added (pa-airtable, pa-n8n-api, pa-clickup, pa-smtp, pa-apollo-io, pa-anthropic, OpenRouter account)
+- **[PA] Onboarding Automation** (7RsRJIqBHFpWZoWM) — 58 nodes — rebuilt prospect→client flow 2026-04-22 and patched 2026-04-24: Create Airtable Client Record sends the proper JSON body, stale scope/prospect references were removed, n8n + ClickUp credentials are corrected, ClickUp error path is hardened, summary notifications route to kai@phoenixautomation.ai, and latest safe smoke PASS execution 2624 created QA Client `recwECbw0Npdp7Yif` + ClickUp folder `90148944620` before cleanup.
 - **[PA] Lead Generation** (YO3f5CL9bYbLTBgw) — 13 nodes, Apollo.io paid plan — patched 2026-04-27: Apollo bulk enrichment restored to max batch size 10, empty/debug enrichment outputs blocked from Airtable writes, run summaries now log found/added/skipped counts. Latest manual execution 2567 PASS: 56 found, 9 added.
 - **[PA] Morning Brief Delivery** (EKKXeBCEiKXaYBCx) — ACTIVE — daily morning brief workflow, confirmed active 2026-04-20
 - **[PA] Outreach Agent** (Mib6RUtJ2IOaUZ4s) — 51 nodes — rebuilt 2026-04-21, active; patched 2026-04-27 so Split in Batches loop branches feed Email 2, Email 3, completion, and reply handling correctly. Email 2 backlog moved to `email_2_sent` after manual run; latest execution 2588 PASS.
 - **[PA] Status Update Agent** (94DpGwRPWGRPqCVU) — 20 nodes, active; branded weekly client status emails working; ClickUp sync/comment nodes added.
 - **[PA] Referral Trigger Agent** (ka6GesSfWVo2FZtU) — 16 nodes, active; uses pa-smtp directly (referral email to client, Day 7 draft/notification to Kai at kai@phoenixautomation.ai).
 - **[PA] ClickUp Sync** (uiTwYIUk6nIFwLtX) — 18 nodes, active; syncs Airtable `project_status` to ClickUp task statuses every 2 hours. Patched 2026-04-27: Split in Batches loop branches corrected and task-update splitting fixed. Latest execution 2584 PASS/logged.
-- **[PA] Reporting Agent** (scj61gBYYWpQydMC) — 17 nodes, inactive; monthly retainer reports via Claude → client email → Airtable update; sender/reply-to patched to kai@phoenixautomation.ai; activate after first retainer client is live.
-- **[PA] Typeform Lead Qualification** (kXxN7O77ongTMwKG) — 14 nodes, active; Typeform submission → answer extraction → dedup → Prospects write → Claude score via Anthropic HTTP → Kai notification for Grade A/B leads at kai@phoenixautomation.ai. Safe smoke test PASS execution 1595.
+- **[PA] Reporting Agent** (scj61gBYYWpQydMC) — 17 nodes, inactive by design; monthly retainer reports via OpenRouter `z-ai/glm-4.5-air:free` → client email → Airtable update; sender/reply-to patched to kai@phoenixautomation.ai. Readiness patched 2026-04-27: retainer filter now includes `retainer` + `agency-retainer`, OpenRouter call uses HTTP with retries/timeouts, and response parser reads `choices[0].message.content`. Activate after first retainer client is live.
+- **[PA] Typeform Lead Qualification** (kXxN7O77ongTMwKG) — 14 nodes, active; Typeform submission → answer extraction → dedup → Prospects write → OpenRouter `z-ai/glm-4.5-air:free` score → Kai notification for Grade A/B leads at kai@phoenixautomation.ai. Parser patched for OpenRouter `choices[0].message.content`; latest safe smoke PASS execution 2620.
 - **[PA] Credential Follow-Up** (uTnQAq5VlmsHYih4) — 11 nodes, active; daily 10:00 + manual → fetches onboarding.in_progress clients stalled >48h → alerts Kai at kai@phoenixautomation.ai → updates overdue_flagged_at → logs to automation_logs. Loop branch wiring patched 2026-04-27; latest execution 2416 PASS/no stalled clients.
 - **[PA] Credential Detector** (hbtSbm2pzrHX1QTn) — 10 nodes, active; every 2h + manual → fetches onboarding.in_progress clients whose n8n_api_key is populated → sets project_status=build.ready → alerts Kai at kai@phoenixautomation.ai → logs to automation_logs. Loop branch wiring patched 2026-04-27; latest execution 2586 PASS/no new credentials.
-- **[PA] Website Chatbot** (EPMCxdqKOuwc6hzB) — 15 nodes, built 2026-04-03, fully operational 2026-04-10 — webhook POST /website-chatbot → stateless 3-question chatbot → Claude scores lead (HTTP Request node, not Langchain) → hot: writes Airtable Prospect + returns Calendly link; cold: returns nurture message; borderline: asks clarifying question. Live on phoenixautomation.ai with auto-popup (7s teaser, 13s auto-open). End-to-end verified: hot lead record recRypnI7vsMlisJR created in Airtable Prospects.
+- **[PA] Website Chatbot** (EPMCxdqKOuwc6hzB) — 15 nodes, built 2026-04-03, fully operational 2026-04-10 — webhook POST /website-chatbot → stateless 3-question chatbot → OpenRouter `z-ai/glm-4.5-air:free` scores lead (HTTP Request node) → hot: writes Airtable Prospect + returns Calendly link; cold: returns nurture message; borderline: asks clarifying question. Live on phoenixautomation.ai with auto-popup (7s teaser, 13s auto-open). End-to-end verified: hot lead record recRypnI7vsMlisJR created in Airtable Prospects.
 - **3 new Airtable Prospects fields added** — `biggest_operational_pain` (long text), `lead_score_grade` (text), `lead_source` (text) — 2026-04-10; field names aligned to chatbot n8n node output
-- **[PA] Scoping Agent** (E24KwVMam1e8bbjT) — 16 nodes, updated 2026-04-27 — reads/writes **Prospects table**, uses Anthropic HTTP instead of rate-limited OpenRouter, writes Airtable-safe JSON, maps service_tier to valid Prospects values, normalizes tools_required text, sets `project_status=scope_review`, and has corrected loop branch wiring. Latest execution 2587 PASS/no pending clients.
-- **[PA] Scope Approval** (UB6ZdrnYpJlYfxD4) — 8 nodes, active; reads/writes Prospects table, locks approved scope, saves proposal_draft to Airtable as source of truth, creates a ClickUp Lead Management review task in parallel, emails Kai at kai@phoenixautomation.ai, and safe smoke test PASS execution 1598.
-- **[PA] Workflow Builder Agent** (fy8OuUEGyyWhYzWC) — 21 nodes, inactive by design; polls build.ready clients hourly/manual → reads full Client scope from Airtable → Claude generates n8n workflow JSON → deploys to the client's n8n via `n8n_workspace_id` + `n8n_api_key` → sets `build.in_progress` on start and `build.complete` with deployed workflow IDs on completion → emails Kai for review. Patched 2026-04-27; activate only when a real build.ready client exists.
+- **[PA] Scoping Agent** (E24KwVMam1e8bbjT) — 16 nodes, updated 2026-04-27 — reads/writes **Prospects table**, uses OpenRouter `z-ai/glm-4.5-air:free`, writes Airtable-safe JSON, maps service_tier to valid Prospects values, normalizes tools_required text, sets `project_status=scope_review`, and has corrected loop branch wiring. Blank loop-done guard + exact Airtable record lookup patched after smoke test; latest safe smoke PASS execution 2621.
+- **[PA] Scope Approval** (UB6ZdrnYpJlYfxD4) — 8 nodes, active; reads/writes Prospects table, locks approved scope, saves proposal_draft to Airtable as source of truth, creates a ClickUp Lead Management review task in parallel, emails Kai at kai@phoenixautomation.ai, and latest safe smoke PASS execution 2622.
+- **[PA] Workflow Builder Agent** (fy8OuUEGyyWhYzWC) — 21 nodes, inactive by design; polls build.ready clients hourly/manual → reads full Client scope from Airtable → OpenRouter `z-ai/glm-4.5-air:free` generates n8n workflow JSON → deploys to the client's n8n via `n8n_workspace_id` + `n8n_api_key` → sets `build.in_progress` on start and `build.complete` only when at least one workflow deploys; otherwise sets `build.blocked` and emails Kai for review. Patched 2026-04-27; activate only when a real build.ready client exists.
 - **[PA] Scoping Notifier** (nXXsF4E1BPWIS62r) — 13 nodes, active; notifies Kai at kai@phoenixautomation.ai when a prospect is ready for scoping and exposes GET /trigger-scoping for browser-triggered handoff to Scoping Agent.
 - **15 new Airtable Clients fields added** — call_notes, scope_summary, automation_count, automation_1/2/3_name, automation_1/2/3_description, scope_locked_at, proposal_draft, workflows_deployed, build_review_url — 2026-04-03
 - **5 new project_status values added** — call_complete, scoping, scope_review, building, build_review — 2026-04-03
@@ -122,10 +122,10 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 ## Live Audit Snapshot — 2026-04-27
 - Full n8n/Airtable/ClickUp API audit completed at `2026-04-27T16:08:47Z`; all 17 `[PA]` workflows are present and all structural audit warnings are resolved.
 - Active workflows: Onboarding, Lead Generation, Outreach, Status Update, Referral Trigger, ClickUp Sync, Typeform Lead Qualification, Credential Follow-Up, Credential Detector, Website Chatbot, Scoping Agent, Scope Approval, Scoping Notifier, Morning Brief Delivery, Error Handler.
-- Inactive by design: Reporting Agent (`scj61gBYYWpQydMC`) until first retainer client is live; Workflow Builder Agent (`fy8OuUEGyyWhYzWC`) until a real `build.ready` client exists.
+- Inactive by design: Reporting Agent (`scj61gBYYWpQydMC`) until first retainer client is live; Workflow Builder Agent (`fy8OuUEGyyWhYzWC`) until a real `build.ready` client exists. Eligibility check 2026-04-27: 0 retainer clients and 0 build.ready clients.
 - Current Clients table contains one legacy/test client: Meridian Consulting Group (`rectfzSFPqjRQU4u1`), `project_status=scoping`, ClickUp folder `90148144286` (`meridian-consulting-group`), no `clickup_task_*` IDs, no `n8n_api_key`.
 - Acme Test Co (`recIn0wyE44pjUL4O`) was removed from Airtable Clients on 2026-04-27. Its stored ClickUp folder ID pointed to `brightline-property-management`, so that ClickUp folder was intentionally left untouched.
-- AI model policy: use Claude for external/client-facing copy, proposals, scoping, reporting, workflow generation, and final lead decisions. Free OpenRouter/GLM models are acceptable only for internal low-risk classification, extraction, routing, or rough summaries with deterministic validation.
+- Launch AI model policy: all n8n AI nodes use OpenRouter `z-ai/glm-4.5-air:free`. HTTP AI calls include OpenRouter reasoning controls (`effort:none`, `exclude:true`) plus retry/timeout hardening so the free model returns usable `content` instead of burning tokens on reasoning. Post-launch upgrade path: move external/client-facing copy, proposals, scoping, reporting, workflow generation, and final lead decisions back to Claude when budget/API usage is ready.
 
 ## Not Started ❌
 - Stripe webhook integration — payment confirmation currently manual
@@ -139,7 +139,7 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 |-------|------|---------|---------|
 | Workflow automation | n8n | 2.37.1 (Cloud — kaiashley.app.n8n.cloud) | All automated pipelines |
 | AI agents | Claude Code | 2.1.77 | Agent execution, code generation |
-| Anthropic API | claude-sonnet-4-6 | — | Model for all agent AI calls |
+| OpenRouter API | z-ai/glm-4.5-air:free | — | Launch model for all n8n AI calls |
 | Agent-to-n8n bridge | n8n-MCP | czlonkowski (local build) | Claude Code controls n8n via MCP |
 | CRM / data layer | Airtable | — | Lead scoring, client tracking, delivery logs |
 | Project management | ClickUp | — | Client project tracking per engagement |
@@ -242,7 +242,8 @@ claude
 | `pa-clickup` | ClickUp API | — | ✅ Active |
 | `pa-smtp` | SMTP | Gmail, port 465, SSL | ✅ Active — n8n credential name: "SMTP account 2", ID: BMlj5xK8OMFXYMzw — use this ID in all emailSend nodes; "SMTP account" (bDfSSn7mCBqpvb2Y) does NOT exist |
 | `pa-apollo-io` | HTTP Header Auth | `x-api-key` | ✅ Active |
-| `pa-anthropic` | HTTP Header Auth | `x-api-key` | ✅ Active |
+| `pa-anthropic` | HTTP Header Auth | `x-api-key` | ✅ Active — retained for post-launch Claude upgrade path |
+| `OpenRouter account` | OpenRouter API | n8n credential ID `hz6Vtt70sQ6Td1GQ` | ✅ Active — launch AI credential for `z-ai/glm-4.5-air:free` |
 | `pa-instantly` | HTTP Header Auth | `Authorization: Bearer` | ✅ Active — ID: xoSojCyLffw4nNe7 |
 | `pa-imap` (IMAP account) | IMAP | imap.gmail.com:993 SSL, kai@phoenixautomation.ai | ✅ Active — ID: 8MxHTFkPLgLLUO1U — created 2026-04-22 |
 | `pa-tavily` | Hardcoded in Lead Gen Code node | — | ✅ Active — key: `tvly-dev-ytdoA-...` (stored in Tavily Search node jsCode) |
@@ -254,15 +255,16 @@ claude
 | Test / staging emails | ashleyedwards305@gmail.com |
 | SMTP sender | kai@phoenixautomation.ai (Google Workspace, App Password; n8n credential "SMTP account 2") |
 
-## Anthropic API
+## Launch AI API
 | Item | Value |
 |------|-------|
-| Model | `claude-sonnet-4-6` |
+| Provider | OpenRouter |
+| Model | `z-ai/glm-4.5-air:free` |
 | Max tokens | 1000 |
-| Auth header | `x-api-key` |
-| Version header | `anthropic-version: 2023-06-01` |
-| Endpoint | `https://api.anthropic.com/v1/messages` |
-| Console | console.anthropic.com |
+| Credential | `OpenRouter account` (`openRouterApi`, ID `hz6Vtt70sQ6Td1GQ`) |
+| Endpoint | `https://openrouter.ai/api/v1/chat/completions` |
+| Response parser | `choices[0].message.content` with legacy Anthropic fallbacks where useful |
+| Reasoning control | HTTP AI calls send `reasoning: { effort: "none", exclude: true }` |
 
 ## Apollo.io API
 | Item | Value |
@@ -506,23 +508,23 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 
 | Workflow | ID | Nodes | Trigger | Status |
 |---------|-----|-------|---------|--------|
-| [PA] Onboarding Automation | `7RsRJIqBHFpWZoWM` | 58 | POST /payment-confirmed webhook | 🟢 Active — patched 2026-04-24; safe smoke PASS execution 1599: Prospect → Client, Airtable, ClickUp folder/lists, and emails completed |
+| [PA] Onboarding Automation | `7RsRJIqBHFpWZoWM` | 58 | POST /payment-confirmed webhook | 🟢 Active — latest safe smoke PASS execution 2624: Prospect → Client, Airtable, ClickUp folder/lists, and emails completed |
 | [PA] Lead Generation | `YO3f5CL9bYbLTBgw` | 13 | Daily 06:45 + manual | 🟢 Active — patched 2026-04-27; latest manual execution 2567 PASS, 9 real prospects added |
 | [PA] Morning Brief Delivery | `EKKXeBCEiKXaYBCx` | 4 | Daily (morning) | 🟢 Active — confirmed 2026-04-24 |
 | [PA] Status Update Agent | `94DpGwRPWGRPqCVU` | 20 | Monday 09:00 + manual | 🟢 Active — latest execution 2540 success |
 | [PA] Referral Trigger Agent | `ka6GesSfWVo2FZtU` | 16 | Daily 08:00 + manual | 🟢 Active — notification routing patched 2026-04-24 |
 | [PA] ClickUp Sync | `uiTwYIUk6nIFwLtX` | 18 | Every 2 hours + manual | 🟢 Active — loop/task split patched 2026-04-27; latest execution 2584 success |
-| [PA] Reporting Agent | `scj61gBYYWpQydMC` | 17 | Monthly 1st + manual | 🔴 Inactive — built; sender/reply-to patched to kai@phoenixautomation.ai; activate after first retainer client is live |
-| [PA] Typeform Lead Qualification | `kXxN7O77ongTMwKG` | 13 | Typeform webhook (POST /typeform-intake) | 🟢 Active — Anthropic HTTP scoring; safe smoke PASS execution 1595 |
+| [PA] Reporting Agent | `scj61gBYYWpQydMC` | 17 | Monthly 1st + manual | 🔴 Inactive by design — readiness patched 2026-04-27; 0 eligible retainer clients |
+| [PA] Typeform Lead Qualification | `kXxN7O77ongTMwKG` | 13 | Typeform webhook (POST /typeform-intake) | 🟢 Active — OpenRouter `z-ai/glm-4.5-air:free` scoring; latest safe smoke PASS execution 2620 |
 | [PA] Credential Follow-Up | `uTnQAq5VlmsHYih4` | 11 | Daily 10:00 + manual | 🟢 Active — loop branch patched 2026-04-27; latest execution 2416 success |
 | [PA] Outreach Agent | `Mib6RUtJ2IOaUZ4s` | 51 | Daily 07:00 + manual + IMAP reply check | 🟢 Active — Email 2/3/completion/reply loop branches patched 2026-04-27; latest execution 2588 success |
 | [PA] Scoping Notifier | `nXXsF4E1BPWIS62r` | 13 | Every 5 min + GET webhook /trigger-scoping | 🟢 Active — owner email routing confirmed 2026-04-24 |
 | [PA] Error Handler | `JByknkdAgxRmDKp3` | 4 | n8n Error Trigger | 🟢 Active — confirmed 2026-04-20 |
 | [PA] Credential Detector | `hbtSbm2pzrHX1QTn` | 10 | Every 2 hours + manual | 🟢 Active — loop branch patched 2026-04-27; latest execution 2586 success |
-| [PA] Website Chatbot | `EPMCxdqKOuwc6hzB` | 15 | Webhook POST /website-chatbot | 🟢 Active — live on phoenixautomation.ai since 2026-04-10; 3-question qualifier → Claude HTTP scoring → hot: Airtable write + Calendly; cold: nurture; borderline: clarifying Q. E2E PASS (record recRypnI7vsMlisJR) |
-| [PA] Scoping Agent | `E24KwVMam1e8bbjT` | 16 | Webhook POST /scope-call + poll every 2h | 🟢 Active — loop branch patched 2026-04-27; latest execution 2587 success |
-| [PA] Scope Approval | `UB6ZdrnYpJlYfxD4` | 8 | GET /approve-scope?client_slug=X | 🟢 Active — proposal draft + ClickUp review task + Kai email; safe smoke PASS execution 1598 |
-| [PA] Workflow Builder Agent | `fy8OuUEGyyWhYzWC` | 21 | Polls Airtable hourly + manual | 🔴 Inactive by design — patched 2026-04-27 to current build.in_progress/build.complete flow; activate only when a real build.ready client exists |
+| [PA] Website Chatbot | `EPMCxdqKOuwc6hzB` | 15 | Webhook POST /website-chatbot | 🟢 Active — live on phoenixautomation.ai since 2026-04-10; 3-question qualifier → OpenRouter `z-ai/glm-4.5-air:free` scoring → hot: Airtable write + Calendly; cold: nurture; borderline: clarifying Q. E2E PASS (record recRypnI7vsMlisJR) |
+| [PA] Scoping Agent | `E24KwVMam1e8bbjT` | 16 | Webhook POST /scope-call + poll every 2h | 🟢 Active — loop branch + blank-item guard patched 2026-04-27; latest safe smoke PASS execution 2621 |
+| [PA] Scope Approval | `UB6ZdrnYpJlYfxD4` | 8 | GET /approve-scope?client_slug=X | 🟢 Active — proposal draft + ClickUp review task + Kai email; latest safe smoke PASS execution 2622 |
+| [PA] Workflow Builder Agent | `fy8OuUEGyyWhYzWC` | 21 | Polls Airtable hourly + manual | 🔴 Inactive by design — patched 2026-04-27 to current build.in_progress/build.complete/build.blocked flow; 0 eligible build.ready clients |
 
 ## Workflow Node Summaries
 
@@ -619,7 +621,7 @@ FLOW: Payment → look up Prospect → create new Client record → workspace �
 9.  Merge Client and Tasks (Code)
 10. Structure Task Data (Code — categorises tasks: completed/in_progress/blocked)
 11. Build Claude Payload (Code)
-12. Generate Email via Claude (HTTP POST → Anthropic API, pa-anthropic)
+12. Generate Email via Claude (HTTP POST → OpenRouter `z-ai/glm-4.5-air:free`)
 13. Extract Email Body (Code — builds branded HTML)
 14. Send Status Email (SMTP → client email, pa-smtp)
 15. Update Airtable Record (HTTP PATCH → sets last_status_update_sent_at)
@@ -668,7 +670,7 @@ Status cases handled: onboarding.in_progress (overdue check + email), build.read
 10. Merge Client and Executions (Code)
 11. Aggregate Execution Metrics (Code)
 12. Build Claude Payload (Code)
-13. Generate Report via Claude (HTTP POST → Anthropic API, pa-anthropic)
+13. Generate Report via Claude (OpenRouter `z-ai/glm-4.5-air:free` model node)
 14. Extract Report and Build HTML (Code)
 15. Send Report Email (emailSend → client email, pa-smtp)
 16. Update Airtable Record (HTTP PATCH → last_report_sent_at, pa-airtable)
@@ -685,8 +687,8 @@ Status cases handled: onboarding.in_progress (overdue check + email), build.read
 5.  Write to Airtable (HTTP POST → Prospects table, typecast:true, continueOnFail)
 6.  Set New Record Data (Code — extracts record_id from write response, sets is_new:true)
 7.  Build Score Payload (Code — fan-in from 4-TRUE and 6; constructs claude_payload with scoring prompt)
-8.  Score Lead via Claude (HTTP POST → Anthropic API, pa-anthropic, continueOnFail)
-9.  Parse Score (Code — extracts score_total 0-8, score_grade A/B/C/D, pre_call_brief from Claude JSON)
+8.  Score Lead via Claude (HTTP POST → OpenRouter `z-ai/glm-4.5-air:free`, continueOnFail)
+9.  Parse Score (Code — extracts score_total 0-8, score_grade A/B/C/D, pre_call_brief from AI JSON)
 10. Update Airtable Score (HTTP PATCH → Prospects record, writes lead_score_total, continueOnFail)
 11. IF Grade A or B (IF — ["A","B"].includes(score_grade))
     TRUE  → 12
@@ -811,12 +813,11 @@ Output: JSON { message, next_step, done, route?, calendly_url? }
 4.  Question 2 Response (Set — step=1, asks team size)
 5.  Question 3 Response (Set — step=2, asks biggest pain)
 6.  Send Early Step Response (Respond to Webhook — returns message + next_step for steps 0–2)
-7.  Score Lead via Claude (HTTP POST → Anthropic API /v1/messages, pa-anthropic HTTP Header Auth
+7.  Score Lead via Claude (HTTP POST → OpenRouter `z-ai/glm-4.5-air:free`
     — prompt includes all 3 answers, returns JSON { route, pain_summary, clarifying_question }
     — uses $json.body?.pain_description || $json.body?.pain_point as fallback, step=3 only
-    ⚠️ NOTE: was originally a Langchain AI node — replaced 2026-04-10 because Langchain nodes require
-    "Anthropic API" credential type; pa-anthropic is "HTTP Header Auth" — incompatible)
-8.  Parse Claude Score (Code — reads $input.first().json.content?.[0]?.text, strips markdown fences,
+    NOTE: launch model switched to OpenRouter on 2026-04-27; node name kept stable for references)
+8.  Parse Claude Score (Code — reads OpenRouter choices[0].message.content with legacy fallbacks, strips markdown fences,
     parses JSON, extracts route/pain_summary/clarifying_question, merges with prospect context)
 9.  IF Hot Lead (IF — route = "hot")
 10. Write Hot Prospect to Airtable (HTTP POST → Airtable Prospects tbluEsKoQ2p49ktVq,
@@ -1000,7 +1001,7 @@ business-agent-foundry/
 | ClickUp /folder/{id}/task 404 | `Route not found` from ClickUp API | `/folder/{id}/task` endpoint does not exist in ClickUp v2 | Use `/team/{team_id}/task?folder_ids[]={folder_id}` — PA team ID: `90141018999` |
 | Airtable checkbox formula invalid | `INVALID_FILTER_BY_FORMULA` | `{field}=FALSE()` is not valid Airtable formula syntax | Use `NOT({field})` for unchecked checkbox filter |
 | ClickUp nested folder creation fails | `Cannot POST /api/v2/folder/{id}/folder` | ClickUp v2 API does not support sub-folder creation — folders can only be created at space root | Always use `POST /api/v2/space/{space_id}/folder` — the Client Projects folder (90147969224) is a manual UI container only, not a parent via API |
-| Langchain AI node fails with HTTP Header Auth credential | `Credentials of type anthropicApi are not supported` | n8n Langchain AI nodes require "Anthropic API" credential type. `pa-anthropic` is "HTTP Header Auth" — works for HTTP Request nodes but NOT Langchain nodes | Replace Langchain AI nodes with HTTP Request nodes pointing to `https://api.anthropic.com/v1/messages` with `pa-anthropic` credential. Parse response via `$input.first().json.content?.[0]?.text` |
+| Langchain AI node fails with HTTP Header Auth credential | `Credentials of type anthropicApi are not supported` | n8n Langchain AI nodes need provider-native credentials; HTTP Header Auth credentials are not accepted by model nodes | Launch mode uses either HTTP Request nodes to OpenRouter chat completions or native `lmChatOpenRouter` nodes with the `OpenRouter account` credential. Parse HTTP responses via `choices[0].message.content`. |
 | Remote Claude Code session blocks n8n API calls | n8n API calls time out or fail silently | Claude Code web/remote sessions run behind an egress proxy that only allows specific domains. `kaiashley.app.n8n.cloud` is not in the allowlist | All n8n workflow changes must be made via Python scripts run locally in Kai's VS Code terminal |
 | Email HTML expressions render as literal text | Email body shows `={{ $("Node").item.json.field }}` as plain text | Two causes: (1) HTML field starts with `=` (expression mode) but contains `={{ }}` inline — the `=` inside is literal; (2) Fixed mode HTML with `={{ }}` — `=` is always literal text. n8n expression syntax inside HTML should be `{{ expr }}` only, never `={{ expr }}` | Strip `=` from HTML field start (use Fixed mode) and replace all `={{ ` with `{{ ` inside the HTML body |
 | Merge node blocks when one upstream branch has 0 items | Workflow hangs indefinitely; downstream nodes never run | n8n Merge node waits for input from ALL connected upstreams. If a Switch/IF routes all items to one path, the other path produces 0 items and Merge never fires | Remove the Merge node. Connect all upstream paths directly to the first downstream node (a Code/HTTP node runs independently for each upstream that has items) |
@@ -2158,6 +2159,9 @@ Email account `kai@phoenixautomation.ai` is connected (warmup_status: 0 = warmin
 
 # Change Log
 
+- **[2026-04-27]** — Inactive-by-design workflow readiness check completed. Reporting Agent and Workflow Builder Agent remain inactive with no execution history and 0 eligible Airtable records (`retainer`/`agency-retainer` live clients = 0, `build.ready` clients = 0). Patched Reporting Agent to include both retainer tiers and use direct OpenRouter HTTP with retry/timeout + `choices[0].message.content` parsing. Patched Workflow Builder Agent so failed/empty deployments set `project_status=build.blocked` instead of falsely marking `build.complete`.
+- **[2026-04-27]** — Live safe smoke suite PASS after OpenRouter launch-model switch. Verified recent/safe paths for all `[PA]` workflows: Lead Generation latest 2567, Outreach latest 2611, Status Update latest 2540, Referral latest 2527, ClickUp Sync latest 2584, Credential Follow-Up latest 2416, Credential Detector latest 2586, Scoping Notifier latest 2616, Website Chatbot early-step webhook PASS, Typeform PASS execution 2620, Scoping PASS execution 2621, Scope Approval PASS execution 2622, Onboarding PASS execution 2624. Patched OpenRouter HTTP retries/timeouts, added `reasoning: { effort: "none", exclude: true }`, fixed Typeform OpenRouter parser, fixed Scoping blank loop-done guard + exact Airtable lookup, and repaired one real prospect touched during testing (`rec0tuCyrHt6OtZ5T` restored to `project_status=scoping`).
+- **[2026-04-27]** — Launch AI model switch: all live n8n AI-bearing workflows now use OpenRouter `z-ai/glm-4.5-air:free`. Patched HTTP AI nodes to `https://openrouter.ai/api/v1/chat/completions`, patched native LangChain model nodes to `lmChatOpenRouter`, and updated parsers for `choices[0].message.content` while retaining legacy fallbacks. Claude/Anthropic credentials remain available for post-launch upgrade.
 - **[2026-04-27]** — Full live workflow audit via n8n/Airtable/ClickUp APIs: latest runs checked for all 17 `[PA]` workflows; all workflows present; Reporting Agent and Workflow Builder Agent remain inactive by design. Patched Split in Batches loop branch wiring in Outreach Agent, ClickUp Sync, Credential Follow-Up, Credential Detector, Scoping Agent, and Workflow Builder Agent; fixed Outreach reply extraction return shape; updated Workflow Builder Agent to current `build.in_progress` → `build.complete` Airtable flow and removed fragile Airtable field restrictions. Verified final audit has zero structural warnings. Removed Acme Test Co from Airtable Clients while leaving mismatched Brightline ClickUp folder untouched.
 - **[2026-04-24]** — Full live n8n/ClickUp audit via API: fixed Outreach duplicate Email 1 and blocked Email 2/3, patched Onboarding Airtable create body, Credential Detector Airtable field restriction, ClickUp Sync timestamp, owner notification routing to kai@phoenixautomation.ai, Scope Approval ClickUp proposal review task, US-only Lead Gen parameters, and explicit batch size 1 on active loop-back workflows.
 - **[2026-04-24]** — Safe workflow smoke suite PASS: verified scheduled/manual workflow health plus synthetic Website Chatbot, Typeform, Scoping, Scope Approval, and Onboarding chain. Patched Typeform off exhausted free OpenAI credits, Scoping/Scope Approval/Outreach off OpenRouter where needed, Onboarding n8n/ClickUp credentials and stale scope lookup, Scoping Airtable JSON/tier/tools writes, and marked QA Airtable records non-actionable after testing.

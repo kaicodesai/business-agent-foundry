@@ -1,56 +1,56 @@
 {
   "qa": {
-    "company": "QA Smoke mod6au75",
-    "slug": "qa-smoke-mod6au75",
-    "email": "qa-smoke-mod6au75@example.com",
-    "typeformEmail": "qa-typeform-mod6au75@example.com",
-    "chatbotEmail": "qa-chatbot-mod6au75@example.com"
+    "company": "QA Smoke mohfdy0a",
+    "slug": "qa-smoke-mohfdy0a",
+    "email": "qa-smoke-mohfdy0a@example.com",
+    "typeformEmail": "qa-typeform-mohfdy0a@example.com",
+    "chatbotEmail": "qa-chatbot-mohfdy0a@example.com"
   },
   "results": [
     {
       "name": "Production eligibility preflight",
       "status": "pass",
-      "note": "{\"outreachPending\":3,\"outreachEmail2\":33,\"outreachEmail3\":0,\"outreachComplete\":0,\"liveClients\":1,\"stalledCredentials\":0,\"buildReady\":0,\"retainerClients\":0}"
+      "note": "{\"outreachPending\":0,\"outreachEmail2\":0,\"outreachEmail3\":0,\"outreachComplete\":0,\"liveClients\":0,\"stalledCredentials\":0,\"buildReady\":0,\"retainerClients\":0}"
     },
     {
       "name": "Lead Generation recent scheduled/manual execution",
       "status": "pass",
-      "note": "latest 1459"
+      "note": "latest 2567"
     },
     {
       "name": "Outreach Agent recent scheduled/manual execution",
       "status": "pass",
-      "note": "latest 1590"
+      "note": "latest 2611"
     },
     {
       "name": "Status Update Agent recent scheduled/manual execution",
       "status": "pass",
-      "note": "latest 716"
+      "note": "latest 2540"
     },
     {
       "name": "Referral Trigger Agent recent scheduled/manual execution",
       "status": "pass",
-      "note": "latest 1477"
+      "note": "latest 2527"
     },
     {
       "name": "ClickUp Sync recent scheduled/manual execution",
       "status": "pass",
-      "note": "latest 1531"
+      "note": "latest 2584"
     },
     {
       "name": "Credential Follow-Up recent scheduled/manual execution",
       "status": "pass",
-      "note": "latest 1367"
+      "note": "latest 2416"
     },
     {
       "name": "Credential Detector recent scheduled/manual execution",
       "status": "pass",
-      "note": "latest 1533"
+      "note": "latest 2586"
     },
     {
       "name": "Scoping Notifier recent scheduled/manual execution",
       "status": "pass",
-      "note": "latest 1591"
+      "note": "latest 2616"
     },
     {
       "name": "Reporting Agent static readiness",
@@ -80,27 +80,27 @@
     {
       "name": "Typeform Lead Qualification webhook",
       "status": "pass",
-      "note": "execution 1595; prospect reckNZzCFke4a7qwH"
+      "note": "execution 2620; prospect recGxYV4MbXanuT1a"
     },
     {
       "name": "Airtable test prospect setup",
       "status": "pass",
-      "note": "recl0ZUYy59TmmHur"
+      "note": "recI9vAzZKC1WFHMQ"
     },
     {
       "name": "Scoping Agent webhook",
       "status": "pass",
-      "note": "execution 1596; scope_review written"
+      "note": "execution 2621; scope_review written"
     },
     {
       "name": "Scope Approval webhook",
       "status": "pass",
-      "note": "execution 1598; response Submitted"
+      "note": "execution 2622; response Submitted"
     },
     {
       "name": "Onboarding Automation webhook",
       "status": "pass",
-      "note": "execution 1599; client recBZSa9WsYabJawm; folder 90148889216"
+      "note": "execution 2624; client recwECbw0Npdp7Yif; folder 90148944620"
     }
   ]
 }
