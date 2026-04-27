@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 5.10 — Last updated: 2026-04-27 — Updated by: Haris + Codex
+> **Version:** 5.11 — Last updated: 2026-04-27 — Updated by: Haris + Codex
 
 ---
 
@@ -93,7 +93,7 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - **[PA] Scoping Agent** (E24KwVMam1e8bbjT) — 16 nodes, updated 2026-04-27 — reads/writes **Prospects table**, uses OpenRouter `z-ai/glm-4.5-air:free`, writes Airtable-safe JSON, maps service_tier to valid Prospects values, normalizes tools_required text, sets `project_status=scope_review`, and has corrected loop branch wiring. Blank loop-done guard + exact Airtable record lookup patched after smoke test; latest safe smoke PASS execution 2621.
 - **[PA] Scope Approval** (UB6ZdrnYpJlYfxD4) — 8 nodes, active; reads/writes Prospects table, locks approved scope, saves proposal_draft to Airtable as source of truth, creates a ClickUp Lead Management review task in parallel, emails Kai at kai@phoenixautomation.ai, and latest safe smoke PASS execution 2622.
 - **[PA] Workflow Builder Agent** (fy8OuUEGyyWhYzWC) — 21 nodes, inactive by design; polls build.ready clients hourly/manual → reads full Client scope from Airtable → OpenRouter `z-ai/glm-4.5-air:free` generates n8n workflow JSON → deploys to the client's n8n via `n8n_workspace_id` + `n8n_api_key` → sets `build.in_progress` on start and `build.complete` only when at least one workflow deploys; otherwise sets `build.blocked` and emails Kai for review. Patched 2026-04-27; activate only when a real build.ready client exists.
-- **[PA] Scoping Notifier** (nXXsF4E1BPWIS62r) — 13 nodes, active; notifies Kai at kai@phoenixautomation.ai when a prospect is ready for scoping and exposes GET /trigger-scoping for browser-triggered handoff to Scoping Agent.
+- **[PA] Scoping Notifier** (nXXsF4E1BPWIS62r) — 16 nodes, active; webhook-first notifier for Airtable matched-record automations, with hourly fallback poll. Notifies Kai at kai@phoenixautomation.ai when a prospect has `project_status=call_complete`, blank `scoping_notified_at`, and non-empty `call_notes`; exposes GET /trigger-scoping for browser-triggered handoff to Scoping Agent. Patched 2026-04-27 from 5-minute polling to hourly fallback and fixed /scope-call body forwarding.
 - **15 new Airtable Clients fields added** — call_notes, scope_summary, automation_count, automation_1/2/3_name, automation_1/2/3_description, scope_locked_at, proposal_draft, workflows_deployed, build_review_url — 2026-04-03
 - **5 new project_status values added** — call_complete, scoping, scope_review, building, build_review — 2026-04-03
 - **Mock client created** — docs/clients/sarahs-wellness-studio/ (process-map.md + scope-of-work.md) — Typeform program admission use case, ready for workflow-builder-agent test run
@@ -126,6 +126,7 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - Current Clients table contains one legacy/test client: Meridian Consulting Group (`rectfzSFPqjRQU4u1`), `project_status=scoping`, ClickUp folder `90148144286` (`meridian-consulting-group`), no `clickup_task_*` IDs, no `n8n_api_key`.
 - Acme Test Co (`recIn0wyE44pjUL4O`) was removed from Airtable Clients on 2026-04-27. Its stored ClickUp folder ID pointed to `brightline-property-management`, so that ClickUp folder was intentionally left untouched.
 - Launch AI model policy: all n8n AI nodes use OpenRouter `z-ai/glm-4.5-air:free`. HTTP AI calls include OpenRouter reasoning controls (`effort:none`, `exclude:true`) plus retry/timeout hardening so the free model returns usable `content` instead of burning tokens on reasoning. Post-launch upgrade path: move external/client-facing copy, proposals, scoping, reporting, workflow generation, and final lead decisions back to Claude when budget/API usage is ready.
+- Data integrity policy: critical Airtable Prospects/Clients state writes must fail loudly. `continueOnFail` remains acceptable only for low-risk reads, logs, email/ClickUp best-effort side effects, or intentionally non-blocking cleanup.
 
 ## Not Started ❌
 - Stripe webhook integration — payment confirmation currently manual
@@ -518,7 +519,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | [PA] Typeform Lead Qualification | `kXxN7O77ongTMwKG` | 13 | Typeform webhook (POST /typeform-intake) | 🟢 Active — OpenRouter `z-ai/glm-4.5-air:free` scoring; latest safe smoke PASS execution 2620 |
 | [PA] Credential Follow-Up | `uTnQAq5VlmsHYih4` | 11 | Daily 10:00 + manual | 🟢 Active — loop branch patched 2026-04-27; latest execution 2416 success |
 | [PA] Outreach Agent | `Mib6RUtJ2IOaUZ4s` | 51 | Daily 07:00 + manual + IMAP reply check | 🟢 Active — Email 2/3/completion/reply loop branches patched 2026-04-27; latest execution 2588 success |
-| [PA] Scoping Notifier | `nXXsF4E1BPWIS62r` | 13 | Every 5 min + GET webhook /trigger-scoping | 🟢 Active — owner email routing confirmed 2026-04-24 |
+| [PA] Scoping Notifier | `nXXsF4E1BPWIS62r` | 16 | POST /scoping-notifier-airtable + hourly fallback + GET /trigger-scoping | 🟢 Active — webhook-first notifier patched 2026-04-27; no more 5-minute polling |
 | [PA] Error Handler | `JByknkdAgxRmDKp3` | 4 | n8n Error Trigger | 🟢 Active — confirmed 2026-04-20 |
 | [PA] Credential Detector | `hbtSbm2pzrHX1QTn` | 10 | Every 2 hours + manual | 🟢 Active — loop branch patched 2026-04-27; latest execution 2586 success |
 | [PA] Website Chatbot | `EPMCxdqKOuwc6hzB` | 15 | Webhook POST /website-chatbot | 🟢 Active — live on phoenixautomation.ai since 2026-04-10; 3-question qualifier → OpenRouter `z-ai/glm-4.5-air:free` scoring → hot: Airtable write + Calendly; cold: nurture; borderline: clarifying Q. E2E PASS (record recRypnI7vsMlisJR) |
@@ -684,12 +685,12 @@ Status cases handled: onboarding.in_progress (overdue check + email), build.read
 4.  IF Duplicate (IF — records.length > 0)
     TRUE  → 7 (skip write, use existing record_id)
     FALSE → 5
-5.  Write to Airtable (HTTP POST → Prospects table, typecast:true, continueOnFail)
+5.  Write to Airtable (HTTP POST → Prospects table, typecast:true; critical write fails loudly)
 6.  Set New Record Data (Code — extracts record_id from write response, sets is_new:true)
 7.  Build Score Payload (Code — fan-in from 4-TRUE and 6; constructs claude_payload with scoring prompt)
 8.  Score Lead via Claude (HTTP POST → OpenRouter `z-ai/glm-4.5-air:free`, continueOnFail)
 9.  Parse Score (Code — extracts score_total 0-8, score_grade A/B/C/D, pre_call_brief from AI JSON)
-10. Update Airtable Score (HTTP PATCH → Prospects record, writes lead_score_total, continueOnFail)
+10. Update Airtable Score (HTTP PATCH → Prospects record, writes lead_score_total; critical write fails loudly)
 11. IF Grade A or B (IF — ["A","B"].includes(score_grade))
     TRUE  → 12
     FALSE → 13
@@ -714,7 +715,7 @@ Typeform webhook: tag=pa-n8n-intake, secret=pa-typeform-2026, enabled=true
     TRUE  → skip (already alerted within 24h)
     FALSE → 9 (send alert)
 9.  Send Follow-Up Alert to Kai (emailSend → kai@phoenixautomation.ai, pa-smtp, continueOnFail — includes company, contact, hours overdue, action prompt)
-10. Update overdue_flagged_at (HTTP PATCH → Airtable Clients record, pa-airtable, continueOnFail)
+10. Update overdue_flagged_at (HTTP PATCH → Airtable Clients record, pa-airtable; critical write fails loudly)
 11. Log to Automation Logs (HTTP POST → tblL7tDAh1KTLtwpt, event=credential_followup_alert_sent, pa-airtable, continueOnFail)
     → loops back to Node 7 (Loop Over Clients)
 ```
@@ -795,7 +796,7 @@ Connected as errorWorkflow for: all 11 PA workflows
 5.  Exit — No New Credentials (NoOp — FALSE branch)
 6.  Split Client Records (Code — extracts record_id, client_name, client_slug, n8n_api_key, n8n_workspace_id)
 7.  Loop Over Clients (splitInBatches, batch=1)
-8.  Set Status to build.ready (HTTP PATCH → Airtable Clients, project_status="build.ready", pa-airtable, continueOnFail)
+8.  Set Status to build.ready (HTTP PATCH → Airtable Clients, project_status="build.ready", pa-airtable; critical write fails loudly)
 9.  Alert Kai — Build Ready (Send Email → kai@phoenixautomation.ai — subject: "✅ Build Ready: [client]", includes client slug + n8n workspace URL + next step instructions, continueOnFail)
 10. Log to Automation Logs (HTTP POST → automation_logs, event=credentials_received, pa-airtable, continueOnFail)
     → loops back to Node 7
@@ -822,7 +823,7 @@ Output: JSON { message, next_step, done, route?, calendly_url? }
 9.  IF Hot Lead (IF — route = "hot")
 10. Write Hot Prospect to Airtable (HTTP POST → Airtable Prospects tbluEsKoQ2p49ktVq,
     fields: business_type, team_size, biggest_operational_pain, lead_score_grade, lead_source=website_chatbot,
-    outreach_status=pending, pa-airtable, continueOnFail)
+    outreach_status=pending, pa-airtable; critical write fails loudly)
 11. Hot Response Data (Set — returns Calendly URL + personalised message referencing pain_summary)
 12. IF Borderline (IF — route = "borderline")
 13. Borderline Response Data (Set — returns clarifying_question from Claude)
@@ -838,30 +839,39 @@ Website widget features (live on phoenixautomation.ai):
 - Calendly links made clickable automatically
 ```
 
-### [PA] Scoping Notifier (nXXsF4E1BPWIS62r) — 14 nodes
+### [PA] Scoping Notifier (nXXsF4E1BPWIS62r) — 16 nodes
 ```
-Two independent paths in one workflow:
+Three paths in one workflow:
 
-PATH A — Poll every 5 min (email Kai when call is complete):
-1.  Poll Every 5 Minutes (Schedule Trigger — */5 * * * *)
+PATH A — Airtable matched-record webhook (preferred):
+1.  Airtable Match Webhook (POST /scoping-notifier-airtable, responseMode:onReceived)
+2.  Fetch Prospect by Record ID (HTTP GET → Airtable Prospects/{record_id})
+3.  Split Prospect Records (Code — normalizes Airtable record to one prospect item)
+4.  IF Should Notify (project_status=call_complete AND scoping_notified_at blank AND call_notes non-empty)
+5.  Send Scoping Ready Email (emailSend → kai@phoenixautomation.ai, pa-smtp — branded HTML with
+    company/contact/email/industry/lead_grade/slug/Precall Brief/call_notes excerpt +
+    "Start Scoping Now" button)
+6.  Mark Notified (HTTP PATCH → Airtable Prospects record, scoping_notified_at=now, pa-airtable)
+
+Recommended Airtable Automation:
+- Trigger: Prospects record matches conditions: project_status is `call_complete`, call_notes is not empty, scoping_notified_at is empty.
+- Action: Webhook POST to `https://kaiashley.app.n8n.cloud/webhook/scoping-notifier-airtable`
+- JSON body: `{ "record_id": "{{ record.id }}" }`
+
+PATH B — Hourly fallback poll:
+1.  Fallback Poll Hourly (Schedule Trigger — 0 * * * *)
 2.  Manual Trigger
 3.  Fetch call_complete Prospects (HTTP GET → Airtable Prospects, filter: project_status=call_complete
     AND scoping_notified_at="" AND call_notes!="", maxRecords=10, pa-airtable)
 4.  IF Has Prospects (IF — records.length > 0)
 5.  Exit — No Pending (NoOp — FALSE branch)
-6.  Split Prospect Records (Code — flattens records array, one item per prospect)
-7.  Loop Over Prospects (splitInBatches, batch=1)
-8.  Send Scoping Ready Email (emailSend → kai@phoenixautomation.ai, pa-smtp — branded HTML with
-    company/contact/email/industry/lead_grade/slug/Precall Brief/call_notes excerpt +
-    "Start Scoping Now" button linking to /webhook/trigger-scoping?client_slug={slug})
-9.  Mark Notified (HTTP PATCH → Airtable Prospects record, scoping_notified_at=now, pa-airtable)
-    → loops back to Node 7
+6.  Split Prospect Records → IF Should Notify → Send Scoping Ready Email → Mark Notified
 
-PATH B — One-click trigger (Kai clicks button → Claude scopes automatically):
+PATH C — One-click trigger (Kai clicks button → Claude scopes automatically):
 10. Trigger Scoping Webhook (Webhook — GET /trigger-scoping?client_slug=X, responseMode: responseNode)
 11. Fetch Prospect by Slug (HTTP GET → Airtable Prospects, filterByFormula={client_slug}="X", pa-airtable)
 12. Extract Prospect (Code — extracts record_id, company_name, client_slug, industry, call_notes, prospect_name)
-13. Trigger Scope-Call Webhook (HTTP POST → /webhook/scope-call with all prospect data)
+13. Trigger Scope-Call Webhook (HTTP POST → /webhook/scope-call with record_id + all prospect data)
 14. Respond — Scoping Started (respondToWebhook → branded HTML success page "✅ Scoping Started for [Company]")
 ```
 
@@ -1352,7 +1362,7 @@ business-agent-foundry/
 - **Recurring Bugs updated** — 3 new entries: `={{ }}` expression bug, Merge blocking bug, emailSend overwriting `$json`
 
 ### What is in progress (not finished)
-- **Onboarding Automation Airtable write errors** — nodes that write to Airtable (Create Client Record / Update Airtable Record) are failing but `continueOnFail` means the workflow executes anyway without writing data. Root cause under investigation — likely field name mismatch or missing typecast.
+- **Onboarding Automation Airtable write errors** — previously high risk because Airtable writes could continue silently; critical Prospects/Clients state writes now fail loudly after 2026-04-27 audit. Continue monitoring smoke tests for Airtable schema drift.
 
 ### Blockers for next session
 - Onboarding Automation fix needed before first real client can be onboarded end-to-end
@@ -2159,6 +2169,7 @@ Email account `kai@phoenixautomation.ai` is connected (warmup_status: 0 = warmin
 
 # Change Log
 
+- **[2026-04-27]** — Scoping Notifier changed from noisy 5-minute polling (288 runs/day) to webhook-first Airtable matched-record flow with hourly fallback. Added POST `/scoping-notifier-airtable`, condition re-check inside n8n, fixed `/trigger-scoping` → `/scope-call` body forwarding, and removed `continueOnFail` from critical Airtable Prospects/Clients state writes so data-state failures surface instead of reporting success. Remaining `continueOnFail` usage is limited to reads, logging, email/ClickUp best-effort side effects, inactive workflow deployment experiments, or other non-critical paths.
 - **[2026-04-27]** — Inactive-by-design workflow readiness check completed. Reporting Agent and Workflow Builder Agent remain inactive with no execution history and 0 eligible Airtable records (`retainer`/`agency-retainer` live clients = 0, `build.ready` clients = 0). Patched Reporting Agent to include both retainer tiers and use direct OpenRouter HTTP with retry/timeout + `choices[0].message.content` parsing. Patched Workflow Builder Agent so failed/empty deployments set `project_status=build.blocked` instead of falsely marking `build.complete`.
 - **[2026-04-27]** — Live safe smoke suite PASS after OpenRouter launch-model switch. Verified recent/safe paths for all `[PA]` workflows: Lead Generation latest 2567, Outreach latest 2611, Status Update latest 2540, Referral latest 2527, ClickUp Sync latest 2584, Credential Follow-Up latest 2416, Credential Detector latest 2586, Scoping Notifier latest 2616, Website Chatbot early-step webhook PASS, Typeform PASS execution 2620, Scoping PASS execution 2621, Scope Approval PASS execution 2622, Onboarding PASS execution 2624. Patched OpenRouter HTTP retries/timeouts, added `reasoning: { effort: "none", exclude: true }`, fixed Typeform OpenRouter parser, fixed Scoping blank loop-done guard + exact Airtable lookup, and repaired one real prospect touched during testing (`rec0tuCyrHt6OtZ5T` restored to `project_status=scoping`).
 - **[2026-04-27]** — Launch AI model switch: all live n8n AI-bearing workflows now use OpenRouter `z-ai/glm-4.5-air:free`. Patched HTTP AI nodes to `https://openrouter.ai/api/v1/chat/completions`, patched native LangChain model nodes to `lmChatOpenRouter`, and updated parsers for `choices[0].message.content` while retaining legacy fallbacks. Claude/Anthropic credentials remain available for post-launch upgrade.
