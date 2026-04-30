@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 5.12 — Last updated: 2026-04-30 — Updated by: Haris + Codex
+> **Version:** 5.13 — Last updated: 2026-04-30 — Updated by: Haris + Codex
 
 ---
 
@@ -35,6 +35,14 @@
 # Project Overview
 
 **Project Name:** Business Agent Foundry — Phoenix Automation (First Live Implementation)
+
+## Client Summary
+
+Phoenix Automation is an AI automation delivery system for small businesses. It helps move a client from lead capture through qualification, scoping, proposal, onboarding, project tracking, status updates, and live support using a connected stack of n8n, Airtable, ClickUp, email, Typeform, Apollo, and OpenRouter.
+
+For clients, the experience is simple: Phoenix Automation identifies and qualifies opportunities, documents the automation scope, creates the client workspace, tracks delivery tasks, sends project updates, and monitors replies/follow-ups. The system is built so Kai can focus on sales, client strategy, and final approval while the operational work is handled by automated workflows.
+
+Current production posture: the core client lifecycle has passed a full fake-client rehearsal on 2026-04-30, including scoping, proposal approval, onboarding, ClickUp folder creation, build-ready/live transition, weekly status update, and reply detection. Payment confirmation is still manual until Stripe webhook integration is added, and Workflow Builder remains inactive by design until a real build-ready client is approved.
 
 **Purpose:**
 A system that generates fully operational business agents, workflows, SOPs, and operating systems from a structured business blueprint with minimal founder input. Phoenix Automation is the first live test case: an AI automation agency that delivers n8n workflow automation to small business clients.
@@ -80,8 +88,8 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - **[PA] Onboarding Automation** (7RsRJIqBHFpWZoWM) — 58 nodes — rebuilt prospect→client flow 2026-04-22 and patched 2026-04-24: Create Airtable Client Record sends the proper JSON body, stale scope/prospect references were removed, n8n + ClickUp credentials are corrected, ClickUp error path is hardened, summary notifications route to kai@phoenixautomation.ai, and latest safe smoke PASS execution 2624 created QA Client `recwECbw0Npdp7Yif` + ClickUp folder `90148944620` before cleanup.
 - **[PA] Lead Generation** (YO3f5CL9bYbLTBgw) — 13 nodes, Apollo.io paid plan — patched 2026-04-27: Apollo bulk enrichment restored to max batch size 10, empty/debug enrichment outputs blocked from Airtable writes, run summaries now log found/added/skipped counts. Latest manual execution 2567 PASS: 56 found, 9 added.
 - **[PA] Morning Brief Delivery** (EKKXeBCEiKXaYBCx) — ACTIVE — daily morning brief workflow, confirmed active 2026-04-20
-- **[PA] Outreach Agent** (Mib6RUtJ2IOaUZ4s) — 51 nodes — rebuilt 2026-04-21, active; patched 2026-04-27 so Split in Batches loop branches feed Email 2, Email 3, completion, and reply handling correctly. Email 2 backlog moved to `email_2_sent` after manual run; latest execution 2588 PASS. AI model updated 2026-04-30 to OpenRouter `~moonshotai/kimi-latest`.
-- **[PA] Status Update Agent** (94DpGwRPWGRPqCVU) — 20 nodes, active; branded weekly client status emails working; ClickUp sync/comment nodes added. AI model updated 2026-04-30 to OpenRouter `qwen/qwen3.6-flash`.
+- **[PA] Outreach Agent** (Mib6RUtJ2IOaUZ4s) — 51 nodes — rebuilt 2026-04-21, active; patched 2026-04-27 so Split in Batches loop branches feed Email 2, Email 3, completion, and reply handling correctly. Patched 2026-04-30: IMAP reply trigger search expression corrected, IMAP failures now fail loudly, reply filter supports both real IMAP payloads and controlled smoke-test payloads, and reply-processing smoke PASS execution 2880 marked a fake prospect `replied` while workflow stayed active. AI model updated 2026-04-30 to OpenRouter `~moonshotai/kimi-latest`.
+- **[PA] Status Update Agent** (94DpGwRPWGRPqCVU) — 20 nodes, active; branded weekly client status emails working; ClickUp sync/comment nodes added. Patched 2026-04-30: ClickUp task-complete/comment HTTP nodes now use ClickUp auth, valid `$json` expressions, and upstream data propagation for project_status + clickup_task IDs. Controlled live-client smoke PASS execution 2878. AI model updated 2026-04-30 to OpenRouter `qwen/qwen3.6-flash`.
 - **[PA] Referral Trigger Agent** (ka6GesSfWVo2FZtU) — 16 nodes, active; uses pa-smtp directly (referral email to client, Day 7 draft/notification to Kai at kai@phoenixautomation.ai). AI model updated 2026-04-30 to OpenRouter `~moonshotai/kimi-latest`.
 - **[PA] ClickUp Sync** (uiTwYIUk6nIFwLtX) — 18 nodes, active; syncs Airtable `project_status` to ClickUp task statuses every 2 hours. Patched 2026-04-27: Split in Batches loop branches corrected and task-update splitting fixed. Latest execution 2584 PASS/logged.
 - **[PA] Reporting Agent** (scj61gBYYWpQydMC) — 17 nodes, inactive by design; monthly retainer reports via OpenRouter `qwen/qwen3.5-plus-20260420` → client email → Airtable update; sender/reply-to patched to kai@phoenixautomation.ai. Readiness patched 2026-04-27: retainer filter now includes `retainer` + `agency-retainer`, OpenRouter call uses HTTP with retries/timeouts, and response parser reads `choices[0].message.content`. Activate after first retainer client is live.
@@ -90,7 +98,7 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - **[PA] Credential Detector** (hbtSbm2pzrHX1QTn) — 10 nodes, active; every 2h + manual → fetches onboarding.in_progress clients whose n8n_api_key is populated → sets project_status=build.ready → alerts Kai at kai@phoenixautomation.ai → logs to automation_logs. Loop branch wiring patched 2026-04-27; latest execution 2586 PASS/no new credentials.
 - **[PA] Website Chatbot** (EPMCxdqKOuwc6hzB) — 15 nodes, built 2026-04-03, fully operational 2026-04-10 — webhook POST /website-chatbot → stateless 3-question chatbot → OpenRouter `qwen/qwen3.6-flash` scores lead (HTTP Request node) → hot: writes Airtable Prospect + returns Calendly link; cold: returns nurture message; borderline: asks clarifying question. Live on phoenixautomation.ai with auto-popup (7s teaser, 13s auto-open). End-to-end verified: hot lead record recRypnI7vsMlisJR created in Airtable Prospects.
 - **3 new Airtable Prospects fields added** — `biggest_operational_pain` (long text), `lead_score_grade` (text), `lead_source` (text) — 2026-04-10; field names aligned to chatbot n8n node output
-- **[PA] Scoping Agent** (E24KwVMam1e8bbjT) — 16 nodes, updated 2026-04-27 — reads/writes **Prospects table**, uses OpenRouter `qwen/qwen3.6-max-preview`, writes Airtable-safe JSON, maps service_tier to valid Prospects values, normalizes tools_required text, sets `project_status=scope_review`, and has corrected loop branch wiring. Blank loop-done guard + exact Airtable record lookup patched after smoke test; latest safe smoke PASS execution 2621.
+- **[PA] Scoping Agent** (E24KwVMam1e8bbjT) — 16 nodes, updated 2026-04-27 — reads/writes **Prospects table**, uses OpenRouter `qwen/qwen3.6-max-preview`, writes Airtable-safe JSON, maps service_tier to valid Prospects values, normalizes tools_required text, sets `project_status=scope_review`, and has corrected loop branch wiring. Patched 2026-04-30: Scope Call Form no longer depends on stale Client dropdown choices, onboarding form maintenance now sources call-complete Prospects, and Parse Scope JSON fails loudly if AI output is invalid/missing required scope fields. Latest full-rehearsal scoping PASS execution 2874.
 - **[PA] Scope Approval** (UB6ZdrnYpJlYfxD4) — 8 nodes, active; reads/writes Prospects table, locks approved scope, saves proposal_draft to Airtable as source of truth, creates a ClickUp Lead Management review task in parallel, emails Kai at kai@phoenixautomation.ai, and latest safe smoke PASS execution 2622. AI model updated 2026-04-30 to OpenRouter `~moonshotai/kimi-latest`.
 - **[PA] Workflow Builder Agent** (fy8OuUEGyyWhYzWC) — 21 nodes, inactive by design; polls build.ready clients hourly/manual → reads full Client scope from Airtable → OpenRouter `deepseek/deepseek-v4-pro` generates n8n workflow JSON → deploys to the client's n8n via `n8n_workspace_id` + `n8n_api_key` → sets `build.in_progress` on start and `build.complete` only when at least one workflow deploys; otherwise sets `build.blocked` and emails Kai for review. Patched 2026-04-27; activate only when a real build.ready client exists.
 - **[PA] Scoping Notifier** (nXXsF4E1BPWIS62r) — 16 nodes, active; webhook-first notifier for Airtable matched-record automations, with hourly fallback poll. Notifies Kai at kai@phoenixautomation.ai when a prospect has `project_status=call_complete`, blank `scoping_notified_at`, and non-empty `call_notes`; exposes GET /trigger-scoping for browser-triggered handoff to Scoping Agent. Patched 2026-04-27 from 5-minute polling to hourly fallback and fixed /scope-call body forwarding.
@@ -127,6 +135,13 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - Acme Test Co (`recIn0wyE44pjUL4O`) was removed from Airtable Clients on 2026-04-27. Its stored ClickUp folder ID pointed to `brightline-property-management`, so that ClickUp folder was intentionally left untouched.
 - OpenRouter Chinese-model policy updated 2026-04-30: lightweight scoring/status/chatbot workflows use `qwen/qwen3.6-flash`; reporting uses `qwen/qwen3.5-plus-20260420`; scoping uses `qwen/qwen3.6-max-preview`; outreach/referral/proposal copy uses `~moonshotai/kimi-latest`; workflow generation uses `deepseek/deepseek-v4-pro`. All old `z-ai/glm-4.5-air:free`, `claude-sonnet-4-6`, and Anthropic API references were verified removed from live AI workflows.
 - Data integrity policy: critical Airtable Prospects/Clients state writes must fail loudly. `continueOnFail` remains acceptable only for low-risk reads, logs, email/ClickUp best-effort side effects, or intentionally non-blocking cleanup.
+
+## Production Rehearsal Snapshot — 2026-04-30
+- Full fake-client rehearsal completed against live n8n/Airtable/ClickUp using slug `qa-rehearsal-20260430180556`.
+- PASS: fake prospect created, Scoping Agent generated validated scope (`execution 2874`), Scope Approval generated proposal, Onboarding created Airtable Client + ClickUp folder `90149045037`, fake client moved through `build.ready` to `live`, Status Update Agent sent weekly status/update flow (`execution 2878`), and Outreach reply-processing smoke marked fake prospect `replied` (`execution 2880`).
+- Temporary smoke-test webhooks were removed after testing; `[PA] Outreach Agent` and `[PA] Status Update Agent` remained active and have no lingering QA webhook nodes.
+- Fake rehearsal Clients are marked `test-complete`; fake rehearsal Prospects are marked `won` / `completed` so they do not continue through live outreach or delivery flows.
+- Current readiness: core client lifecycle is operational for controlled onboarding/delivery testing. Payment confirmation is still manual until Stripe webhook integration is added. Workflow Builder and Reporting remain inactive by design until a real build-ready or retainer client exists.
 
 ## Not Started ❌
 - Stripe webhook integration — payment confirmation currently manual
@@ -1229,6 +1244,42 @@ business-agent-foundry/
 
 ---
 
+## Session Handoff — 2026-04-30 (Client Readiness Fixes + Full Fake-Client Rehearsal)
+**Worked by:** Haris + Codex
+
+### What was completed
+- Patched `[PA] Outreach Agent` reply detection: fixed IMAP search expression, made IMAP trigger failures fail loudly, and hardened reply filtering for real IMAP and smoke-test payloads.
+- Patched `[PA] Status Update Agent`: added ClickUp auth to task-complete/comment HTTP nodes, fixed `$json` expressions, and carried `project_status` + `clickup_task_*` IDs through the status-email pipeline.
+- Patched `[PA] Scoping Agent`: Scope Call Form no longer depends on stale Client dropdowns, onboarding form maintenance now sources call-complete Prospects, and scope parsing now fails on invalid/missing AI JSON instead of writing weak blanks.
+- Ran a full fake-client rehearsal against live n8n/Airtable/ClickUp:
+  - Scoping PASS execution `2874`
+  - Status Update PASS execution `2878`
+  - Outreach reply-processing PASS execution `2880`
+  - Onboarding created fake ClickUp folder `90149045037`
+- Removed temporary smoke-test webhooks after testing.
+- Marked fake rehearsal Clients `test-complete` and fake rehearsal Prospects `won` / `completed`.
+- Added a short client-facing project summary near the top of this overview.
+- Redacted a stale historical Instantly key from old handoff notes before publishing.
+
+### What is in progress (not finished)
+- Stripe/payment webhook integration is still not built; payment confirmation remains manual.
+- Workflow Builder and Reporting remain inactive by design until a real build-ready or retainer client exists.
+
+### Blockers for next session
+- Rotate the Airtable PAT that was previously noted as exposed in local git history.
+- Add Stripe webhook/idempotency before real paid-client onboarding.
+- Before exposing the dashboard publicly, move any Airtable/n8n API access behind a backend proxy.
+
+### Next person should start with
+1. Pull latest `main` and read this overview.
+2. Confirm Stripe/payment flow requirements.
+3. Run one small non-email smoke test before touching real client data.
+
+### Files changed this session
+- `PROJECT_OVERVIEW.md` — version 5.13, client summary, readiness fixes, rehearsal snapshot, change log, and handoff.
+
+---
+
 ## Session Handoff — 2026-04-30 (OpenRouter Chinese Model Update)
 **Worked by:** Haris + Codex
 
@@ -2207,6 +2258,8 @@ Email account `kai@phoenixautomation.ai` is connected (warmup_status: 0 = warmin
 
 # Change Log
 
+- **[2026-04-30]** — Client-readiness fixes and full fake-client rehearsal completed. Patched Outreach IMAP reply trigger/search + reply filter, patched Status Update ClickUp auth/expressions/data propagation, patched Scoping form/source logic and hard validation for AI scope JSON. Full fake-client rehearsal PASS through scoping (`2874`), scope approval, onboarding + ClickUp folder creation (`90149045037`), build-ready/live transition, status update (`2878`), and reply detection (`2880`). Temporary smoke-test webhook nodes were removed after testing; fake records were marked non-active.
+
 - **[2026-04-30]** — Live OpenRouter Chinese model update completed. Outreach, Referral, and Scope Approval use `~moonshotai/kimi-latest`; Status Update, Typeform Lead Qualification, and Website Chatbot use `qwen/qwen3.6-flash`; Reporting uses `qwen/qwen3.5-plus-20260420`; Scoping uses `qwen/qwen3.6-max-preview`; Workflow Builder uses `deepseek/deepseek-v4-pro`. Verified no old live AI workflow references to `z-ai/glm-4.5-air:free`, `claude-sonnet-4-6`, or Anthropic API endpoint remain. No workflows were executed during this change.
 
 - **[2026-04-27]** — Scoping Notifier changed from noisy 5-minute polling (288 runs/day) to webhook-first Airtable matched-record flow with hourly fallback. Added POST `/scoping-notifier-airtable`, condition re-check inside n8n, fixed `/trigger-scoping` → `/scope-call` body forwarding, and removed `continueOnFail` from critical Airtable Prospects/Clients state writes so data-state failures surface instead of reporting success. Remaining `continueOnFail` usage is limited to reads, logging, email/ClickUp best-effort side effects, inactive workflow deployment experiments, or other non-critical paths.
@@ -2264,7 +2317,7 @@ Email account `kai@phoenixautomation.ai` is connected (warmup_status: 0 = warmin
 - **Welcome email fix** (from Session 10 continuation): removed "reply with credentials" CTA, added security notice, welcome + follow-up framing
 - **Full ClickUp audit completed:** space structure, workflow node audit, Airtable field audit, edge case analysis — all documented
 - **Calendly clarified:** API key not needed for current scope — webhook-only integration sufficient
-- **Instantly.ai API key received** (MWFiM2VjZjMtYWEwYy00YWQ1LWEzYTMtNWNkOWMwYzc5MmViOmFVSkNIYlFSbGNlbQ==) — pa-instantly credential ready to set up
+- **Instantly.ai API key received** (`[redacted]`) — pa-instantly credential ready to set up
 - **Session 11 continuation (same date):**
   - Tested ClickUp list template `t-901414909247` — confirmed template does NOT auto-seed tasks (both test lists created via `template_id` param had `task_count: 0`). Decision: keep 31-node workflow with individual task seeding as-is.
   - Deleted 4 lists: 2 template test lists (901414909658, 901414909660) + 2 stale space-root lists (meridian-consulting-group 901414583912, ashley-edwards 901414584147)
@@ -2280,7 +2333,7 @@ Email account `kai@phoenixautomation.ai` is connected (warmup_status: 0 = warmin
 
 ### Next person should start with
 1. `git pull origin main` then read PROJECT_OVERVIEW.md
-2. **Kai:** Set up pa-instantly credential in n8n using key MWFiM2VjZjMtYWEwYy00YWQ1LWEzYTMtNWNkOWMwYzc5MmViOmFVSkNIYlFSbGNlbQ==
+2. **Kai:** Set up pa-instantly credential in n8n using redacted historical key
 3. **Kai:** Set Brightline `project_status=live` → run Referral Trigger Agent → verify → revert to test-complete
 4. **Kai:** Set up Calendly webhook → paste n8n webhook URL in Calendly → Integrations → Webhooks (no API key needed)
 5. **Haris:** Build [PA] Reporting Agent (scope ready in docs/workflows/build-scopes/)
