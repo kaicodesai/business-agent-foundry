@@ -219,6 +219,74 @@ e.g. "Verify the email template matches your brand voice before activating",
 
 Also update ClickUp: mark the relevant build task as "Built — Awaiting Review".
 
+### Phase F - Automated QA handoff
+
+After generation and build-log documentation, do not deploy directly to the
+client n8n. Create the candidate workflow inside Kai's/current n8n as a QA
+staging workflow, then hand that staged artifact to `[PA] QA Agent` before
+owner review.
+
+Call QA with the native n8n **Execute Sub-workflow** node:
+- Workflow ID: `fpLHEghef9u4yUpY`
+- Workflow name: `[PA] QA Agent`
+- Mode: Run once with all items
+- Wait for sub-workflow completion: true
+
+Payload:
+```json
+{
+  "client_slug": "[client-slug]",
+  "company_name": "[client company]",
+  "staging_workspace_id": "https://kaiashley.app.n8n.cloud",
+  "target_n8n_workspace_id": "[client n8n base URL]",
+  "workflows": [
+    {
+      "id": "[staged workflow ID in Kai n8n]",
+      "staging_id": "[staged workflow ID in Kai n8n]",
+      "staging_url": "[Kai n8n staged workflow URL]",
+      "name": "[automation name]",
+      "trigger": "[Trigger text from scope-of-work.md]",
+      "expected_output": "[Output text from scope-of-work.md]",
+      "workflow_json": "[full staged workflow JSON]",
+      "test_evidence": {
+        "end_to_end": "PASS",
+        "synthetic_data": true,
+        "execution_id": "[n8n execution ID if available]",
+        "summary": "[what test input was used and what output was verified]"
+      },
+      "qa_test": {
+        "allow_live_test": false,
+        "url": "",
+        "payload": {}
+      }
+    }
+  ]
+}
+```
+
+Rules:
+- `test_evidence.end_to_end = "PASS"` is required. If the builder cannot run
+  a safe end-to-end test, do not send a fake pass. Send the workflow to QA and
+  expect `QA FAIL` or `QA BLOCKED`.
+- `test_evidence.synthetic_data = true` is required. Production data cannot be
+  used for QA.
+- `qa_test.allow_live_test` stays `false` unless the workflow has a dedicated
+  safe QA webhook/test trigger that cannot send real emails, charge payments,
+  delete records, or modify production systems.
+- Candidate workflows must remain inactive in Kai n8n. Owner approval happens
+  before the workflow is patched/copied into the client n8n.
+
+Handle the QA response:
+- `QA PASS` or `QA CONDITIONAL PASS`: write the QA summary into the client
+  build handoff, move Airtable to `qa.pass`, and email Kai that the workflow is
+  ready to approve for client-side patching.
+- `QA FAIL` or `QA BLOCKED`: move Airtable to `qa.fail`, email Kai the returned
+  failure list, and return only the failed items to the builder for repair.
+- After Kai approves and the workflow is patched into the client n8n, email Kai
+  the staged workflow IDs and any sample/test credentials that should be removed
+  or reviewed in Kai n8n.
+- Never mark the client `live` from the builder.
+
 ---
 
 ## Owner Review Handoff
@@ -244,7 +312,8 @@ Owner review checklist:
 
 DO NOT activate any workflow without completing owner review.
 
-Next: qa-agent — run before activation or in parallel with owner review.
+Next: qa-agent has run automatically. Owner reviews the QA verdict before
+activation.
 ```
 
 ---
@@ -320,14 +389,19 @@ Read current `workflows_built` value, then PATCH:
 ```
 If `workflows_built` is empty, write `"[workflow name]"` (no leading comma).
 
-**Step 3 — When the full build session is complete (all scope workflows done):**
+**Step 3 — When the full build session is ready for QA (all scope workflows deployed and tested):**
 PATCH:
 ```json
 {
-  "project_status": "build.complete",
+  "project_status": "qa.in_progress",
   "build_completed_at": "[current ISO timestamp]"
 }
 ```
+
+Then call `[PA] QA Agent` via the native Execute Sub-workflow node. The QA
+verdict sets the next status:
+- PASS / CONDITIONAL PASS: `qa.pass`
+- FAIL / BLOCKED: `qa.fail`
 
 **Step 4 — If the build is blocked (BUILD BLOCKED output):**
 PATCH:

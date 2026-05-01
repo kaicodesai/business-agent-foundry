@@ -23,6 +23,82 @@ owner or a precise failure report back to the builder.
 
 ---
 
+## n8n Automated QA Contract
+
+There are two QA execution modes:
+
+1. **Codex/local QA mode** - this file is the checklist for a human/Codex run
+   that reads local client docs and writes `docs/clients/[client-slug]/qa-report.md`.
+2. **n8n automated QA mode** - live workflow `[PA] QA Agent`
+   (`fpLHEghef9u4yUpY`) receives staged build output from `[PA] Workflow Builder
+   Agent`, inspects the candidate workflow created in Kai's/current n8n,
+   validates safe test evidence, emails Kai a QA report, and returns `QA PASS`,
+   `QA CONDITIONAL PASS`, `QA FAIL`, or `QA BLOCKED`.
+
+Workflow Builder calls QA using the native n8n **Execute Sub-workflow** node:
+- Parent node: `Call QA Agent`
+- Child workflow ID: `fpLHEghef9u4yUpY`
+- Child first node: `When Executed by Builder`
+  (`n8n-nodes-base.executeWorkflowTrigger`)
+- Input mode: passthrough / accept all staged build data
+- Parent waits for the QA sub-workflow to finish and receives the final JSON
+  from `Return QA Output`.
+
+Payload:
+```json
+{
+  "client_slug": "[client-slug]",
+  "company_name": "[client company]",
+  "staging_workspace_id": "https://kaiashley.app.n8n.cloud",
+  "target_n8n_workspace_id": "[client n8n base URL]",
+  "workflows": [
+    {
+      "id": "[staged workflow ID in Kai n8n]",
+      "staging_id": "[staged workflow ID in Kai n8n]",
+      "staging_url": "[Kai n8n staged workflow URL]",
+      "name": "[automation name]",
+      "trigger": "[scope trigger text]",
+      "expected_output": "[scope output text]",
+      "workflow_json": "[full staged workflow JSON]",
+      "test_evidence": {
+        "end_to_end": "PASS",
+        "synthetic_data": true,
+        "execution_id": "[optional]",
+        "summary": "[test input and verified output]"
+      },
+      "qa_test": {
+        "allow_live_test": false,
+        "url": "",
+        "payload": {}
+      }
+    }
+  ]
+}
+```
+
+Automated checks:
+- Inspect every staged workflow JSON artifact created in Kai n8n.
+- Confirm trigger nodes exist and production candidate workflows are inactive.
+- Confirm no disabled production nodes.
+- Confirm `settings.errorWorkflow` is configured.
+- Confirm retry limits are not greater than 2.
+- Scan workflow JSON for obvious raw credential/token patterns without echoing
+  any matched values in the output.
+- Confirm credential references exist for integration/API nodes.
+- Confirm builder provided safe end-to-end PASS evidence and synthetic-data
+  evidence.
+- Optionally run a supplied safe QA webhook test only when
+  `qa_test.allow_live_test = true`.
+
+Automated QA does not replace owner activation. It returns a JSON verdict to
+the builder. The builder then updates Airtable to `qa.pass` or `qa.fail` and
+sends the final draft email to Kai. QA also emails Kai the full report, whether
+the workflow is ready to patch into the client n8n, and which staged workflows
+or sample credentials should be removed/reviewed after client-side patching.
+Local Codex QA can still be run afterward to write the full markdown report.
+
+---
+
 ## Inputs
 
 **Required before running QA:**
