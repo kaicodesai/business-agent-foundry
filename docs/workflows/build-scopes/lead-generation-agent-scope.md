@@ -1,6 +1,6 @@
 # Workflow Build Scope — [PA] Lead Generation
-Version: 1.0
-Last updated: 2026-03-19
+Version: 1.1
+Last updated: 2026-05-04
 For: workflow-builder-agent
 
 ---
@@ -8,9 +8,16 @@ For: workflow-builder-agent
 ## Overview
 
 Build an n8n workflow that runs daily at 06:45, queries Apollo.io for up to
-100 ICP-matched prospects, deduplicates against Airtable, writes net-new
-contacts to Airtable with `outreach_status = pending`, and logs a run
-summary. This workflow feeds outreach-agent, which fires at 07:00.
+100 raw ICP-matched prospects, checks Airtable before spending reveal credits,
+reveals up to 10 unseen candidates, deduplicates revealed emails against
+Airtable, writes net-new contacts with `outreach_status = pending`, and logs a
+run summary. This workflow feeds outreach-agent, which fires at 07:00.
+
+**Live architecture note (2026-05-04):** Apollo search and bulk reveal must be
+HTTP Request nodes using the stored `pa-apollo-io` credential. Do not place an
+Apollo API key in a Code node. Current live workflow rotates health/wellness
+keyword slices and Apollo pages, then runs:
+`Fetch ICP Prospects -> Select Reveal Candidates -> Check Existing Search Candidates -> Build Reveal Payload -> Reveal Apollo Prospects -> Normalize Revealed Prospects -> Check Prospect Exists1 -> Write New Prospect1 -> Log Run Summary1`.
 
 ---
 
@@ -30,9 +37,9 @@ Build and test each node before proceeding to the next.
 ### Node 1 — Fetch ICP prospects (HTTP Request — Apollo.io)
 
 **Type:** HTTP Request
-**Credential:** `pa-apollo`
+**Credential:** `pa-apollo-io`
 **Method:** POST
-**URL:** `https://api.apollo.io/v1/mixed_people/search`
+**URL:** `https://api.apollo.io/api/v1/mixed_people/api_search`
 **Headers:**
 ```json
 {
@@ -43,23 +50,27 @@ Build and test each node before proceeding to the next.
 **Body:**
 ```json
 {
-  "api_key": "{{ $credentials['pa-apollo'].api_key }}",
   "person_titles": [
-    "Founder", "Co-Founder", "CEO", "COO",
-    "Operations Manager", "Director of Operations", "Head of Operations"
+    "Founder", "Co-Founder", "Owner", "CEO", "COO", "President",
+    "Clinic Owner", "Practice Owner", "Practice Manager", "Office Manager",
+    "Operations Manager", "Client Care Manager", "Patient Care Coordinator",
+    "Studio Owner", "Wellness Director"
   ],
   "organization_industry_tag_ids": [],
-  "organization_num_employees_ranges": ["10,200"],
-  "person_locations": ["United States", "Australia", "United Kingdom"],
+  "organization_num_employees_ranges": ["5,20"],
+  "organization_locations": ["United States"],
+  "person_locations": ["United States"],
+  "q_keywords": "[rotating health/wellness keyword]",
   "page": 1,
   "per_page": 100
 }
 ```
 **Note to builder:** Apollo.io industry filter uses tag IDs, not plain text.
-Look up the correct tag IDs for: E-commerce, Professional Services,
-Healthcare, Logistics, Marketing Agency. Alternatively, use
-`q_organization_industry_keywords` with plain text if tag IDs are
-unavailable on the plan.
+For the 2026-05-04 to 2026-06-03 sprint, use plain-text health/wellness
+keywords instead of broad industry tags: wellness clinic, functional medicine
+clinic, medical spa, holistic health clinic, nutrition coaching, therapy
+practice, chiropractic clinic, women's health clinic, fertility wellness,
+yoga studio, and pilates studio.
 
 **Output:** Array of prospect objects under `people` key.
 
@@ -187,7 +198,7 @@ Phoenix Automation internal credential store. Do not hardcode API keys.
 
 | Credential name | Type | Used by |
 |----------------|------|---------|
-| `pa-apollo` | HTTP Header Auth (`api_key`) | Node 1 |
+| `pa-apollo-io` | HTTP Header Auth (`x-api-key`) | Apollo search + bulk reveal HTTP nodes |
 | `pa-airtable` | Airtable Token API | Nodes 5, 7, 9 |
 
 ---
@@ -213,7 +224,8 @@ so outreach-agent does not process it.
 ## Expected Output (production)
 
 Each daily run at 06:45 produces:
-1. 30–100 new Airtable prospect records with `outreach_status = pending`
+1. Net-new Airtable prospect records with `outreach_status = pending`, sourced
+   from US health/wellness businesses with 5–20 staff
 2. All records de-duplicated against existing Airtable data
 3. Run summary log in `automation_logs` table
 4. outreach-agent (firing at 07:00) picks up new records automatically
