@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 5.15 — Last updated: 2026-05-04 — Updated by: Haris + Codex
+> **Version:** 5.16 - Last updated: 2026-05-05 - Updated by: Haris + Codex
 
 ---
 
@@ -38,16 +38,14 @@
 
 ## Client Summary
 
-**2026-05-04 growth focus:** For the next 30 days, outbound is narrowed to US
+**2026-05-05 growth focus:** For the next 30 days, outbound is narrowed to US
 health and wellness businesses with 5-20 staff. This uses Kai's domain context
 from Fibroid Queen and Soul & Luna to make outreach more credible around
 manual bookings, client follow-up, onboarding, scheduling, reminders, intake,
 and post-visit check-ins. Outreach copy now comes from the AI prompt as short,
 specific, human email bodies: one business-specific observation, one likely pain
 point, and one simple question. The HTML wrapper was not changed. Live patch
-2026-05-04 also added parser cleanup for dash/hyphen characters and extra
-questions, and filtered first-touch/follow-up sends so non-health/wellness
-pending records are held during this sprint.
+2026-05-05 added expanded single-word Apollo keyword rotation, `reply_type` tracking, pain-angle sequencing, blank-send protection, and Apollo person ID deduplication to prevent repeat reveal-credit spend.
 
 Phoenix Automation is an AI automation delivery system for small businesses. It helps move a client from lead capture through qualification, scoping, proposal, onboarding, project tracking, status updates, and live support using a connected stack of n8n, Airtable, ClickUp, email, Typeform, Apollo, and OpenRouter.
 
@@ -97,9 +95,9 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - Airtable base structured — Clients + Prospects + automation_logs tables
 - All core n8n credentials added (pa-airtable, pa-n8n-api, pa-clickup, pa-smtp, pa-apollo-io, pa-anthropic, OpenRouter account)
 - **[PA] Onboarding Automation** (7RsRJIqBHFpWZoWM) — 58 nodes — rebuilt prospect→client flow 2026-04-22 and patched 2026-04-24: Create Airtable Client Record sends the proper JSON body, stale scope/prospect references were removed, n8n + ClickUp credentials are corrected, ClickUp error path is hardened, summary notifications route to kai@phoenixautomation.ai, and latest safe smoke PASS execution 2624 created QA Client `recwECbw0Npdp7Yif` + ClickUp folder `90148944620` before cleanup.
-- **[PA] Lead Generation** (YO3f5CL9bYbLTBgw) — 18 nodes, Apollo.io paid plan — patched 2026-05-04 for 30-day ICP sprint: US health/wellness businesses, 5-20 staff, owner/operator/practice roles, rotating health/wellness Apollo keywords and date-rotated Apollo pages. Reveal credits are now protected by a pre-reveal Airtable check against existing LinkedIn URLs/emails, Apollo bulk reveal is done through the stored `pa-apollo-io` credential (no hardcoded key), and run notes log page/reveal/pre-seen counts. Prior patch 2026-04-27 restored Apollo bulk enrichment and run summaries.
+- **[PA] Lead Generation** (YO3f5CL9bYbLTBgw) - 21 nodes, Apollo.io paid plan - patched 2026-05-05 for the 30-day US health/wellness 5-20 ICP with expanded single-word keyword rotation (`wellness`, `fitness`, `coach`, `clinic`, `therapy`, `chiropractic`, `nutrition`, `medspa`, `yoga`, `pilates`, `spa`, `massage`, `aesthetics`, `counseling`, `naturopath`, `physio`, `wellbeing`). Reveal credits are now protected by pre-reveal Airtable checks against `apollo_person_id`, LinkedIn URL, and email. Existing duplicate records from execution 3358 were backfilled with Apollo IDs, and a duplicate backfill branch now patches `apollo_person_id` onto older records discovered after reveal. Apollo bulk reveal uses stored `pa-apollo-io`; run notes log page/reveal/pre-seen counts.
 - **[PA] Morning Brief Delivery** (EKKXeBCEiKXaYBCx) — ACTIVE — daily morning brief workflow, confirmed active 2026-04-20
-- **[PA] Outreach Agent** (Mib6RUtJ2IOaUZ4s) — 51 nodes — rebuilt 2026-04-21, active; patched 2026-05-04: `Email Sequence Agent` prompt rewritten for human-sounding short emails: one specific business observation, one likely pain point, one simple question, no feature lists/generic openers/made-up metrics/AI-workflow language/dashes/hyphens. `Parse Email Sequence` now deterministically removes dash characters and excess questions before Airtable/HTML. First-touch and follow-up Airtable fetches are filtered to health/wellness ICP during the sprint, so older non-ICP pending records are held. HTML wrapper was not changed. AI model remains OpenRouter `~moonshotai/kimi-latest`.
+- **[PA] Outreach Agent** (Mib6RUtJ2IOaUZ4s) - 51 nodes - rebuilt 2026-04-21, active; patched 2026-05-05: `Email Sequence Agent` prompt rewritten for human-sounding short emails with coherent pain-angle sequencing (Email 1 missed follow-up, Email 2 manual intake or booking back-and-forth, Email 3 client details falling through cracks + low-pressure call CTA). `Parse Email Sequence` now fails before send if AI output is blank/invalid, cleans dash/hyphen characters and excess questions, and keeps one-question copy. Reply detection now writes `reply_type` (`interested`, `not_now`, `wrong_person`, `unsubscribe`, `negative`). Calendly button remains in Email 2/3 HTML; no HTML wrapper removal. AI model remains OpenRouter `~moonshotai/kimi-latest`.
 - **[PA] Status Update Agent** (94DpGwRPWGRPqCVU) — 20 nodes, active; branded weekly client status emails working; ClickUp sync/comment nodes added. Patched 2026-04-30: ClickUp task-complete/comment HTTP nodes now use ClickUp auth, valid `$json` expressions, and upstream data propagation for project_status + clickup_task IDs. Controlled live-client smoke PASS execution 2878. AI model updated 2026-04-30 to OpenRouter `qwen/qwen3.6-flash`.
 - **[PA] Referral Trigger Agent** (ka6GesSfWVo2FZtU) — 16 nodes, active; uses pa-smtp directly (referral email to client, Day 7 draft/notification to Kai at kai@phoenixautomation.ai). AI model updated 2026-04-30 to OpenRouter `~moonshotai/kimi-latest`.
 - **[PA] ClickUp Sync** (uiTwYIUk6nIFwLtX) — 18 nodes, active; syncs Airtable `project_status` to ClickUp task statuses every 2 hours. Patched 2026-04-27: Split in Batches loop branches corrected and task-update splitting fixed. Latest execution 2584 PASS/logged.
@@ -504,10 +502,12 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | team_size | number (integer) | |
 | email | email | |
 | linkedin_url | url | |
+| apollo_person_id | singleLineText | Apollo person ID for pre-reveal deduplication; added 2026-05-05 |
 | source | singleLineText | apollo / hunter / website_chatbot |
 | sourced_at | dateTime | ISO 8601 |
 | outreach_status | singleSelect: pending, email_1_sent, email_2_sent, email_3_sent, replied, completed, closed, error | pending = ready for outreach; completed = converted to client |
 | outreach_error | multilineText | |
+| reply_type | singleSelect: interested, not_now, wrong_person, unsubscribe, negative | Outreach reply quality classifier; added 2026-05-05 |
 | email_1_text | multilineText | Pre-generated by AI for cost saving |
 | email_2_text | multilineText | |
 | email_3_text | multilineText | |
@@ -566,7 +566,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | Workflow | ID | Nodes | Trigger | Status |
 |---------|-----|-------|---------|--------|
 | [PA] Onboarding Automation | `7RsRJIqBHFpWZoWM` | 58 | POST /payment-confirmed webhook | 🟢 Active — latest safe smoke PASS execution 2624: Prospect → Client, Airtable, ClickUp folder/lists, and emails completed |
-| [PA] Lead Generation | `YO3f5CL9bYbLTBgw` | 18 | Daily 06:45 + manual | 🟢 Active — patched 2026-05-04 for health/wellness 5-20 ICP, date-rotated Apollo pages, pre-reveal Airtable dedup, credential-based Apollo bulk reveal, and reveal/page run notes |
+| [PA] Lead Generation | `YO3f5CL9bYbLTBgw` | 21 | Daily 06:45 + manual | Active - patched 2026-05-05 for expanded health/wellness single-word rotation, Apollo ID pre-reveal dedup/backfill, and duplicate reveal-credit protection |
 | [PA] Morning Brief Delivery | `EKKXeBCEiKXaYBCx` | 4 | Daily (morning) | 🟢 Active — confirmed 2026-04-24 |
 | [PA] Status Update Agent | `94DpGwRPWGRPqCVU` | 20 | Monday 09:00 + manual | 🟢 Active — latest execution 2540 success; AI model `qwen/qwen3.6-flash` |
 | [PA] Referral Trigger Agent | `ka6GesSfWVo2FZtU` | 16 | Daily 08:00 + manual | 🟢 Active — notification routing patched 2026-04-24; AI model `~moonshotai/kimi-latest` |
@@ -574,7 +574,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | [PA] Reporting Agent | `scj61gBYYWpQydMC` | 17 | Monthly 1st + manual | 🔴 Inactive by design — readiness patched 2026-04-27; 0 eligible retainer clients; AI model `qwen/qwen3.5-plus-20260420` |
 | [PA] Typeform Lead Qualification | `kXxN7O77ongTMwKG` | 13 | Typeform webhook (POST /typeform-intake) | 🟢 Active — OpenRouter `qwen/qwen3.6-flash` scoring; latest safe smoke PASS execution 2620 |
 | [PA] Credential Follow-Up | `uTnQAq5VlmsHYih4` | 11 | Daily 10:00 + manual | 🟢 Active — loop branch patched 2026-04-27; latest execution 2416 success |
-| [PA] Outreach Agent | `Mib6RUtJ2IOaUZ4s` | 51 | Daily 07:00 + manual + IMAP reply check | 🟢 Active — patched 2026-05-04 for health/wellness send filter, short human copy prompt, dash/hyphen cleanup, one-question cleanup, and no HTML-wrapper changes; AI model `~moonshotai/kimi-latest` |
+| [PA] Outreach Agent | `Mib6RUtJ2IOaUZ4s` | 51 | Daily 07:00 + manual + IMAP reply check | Active - patched 2026-05-05 for pain-angle email sequence, blank-send guard, reply_type tracking, and low-pressure Email 3 call CTA; Calendly button remains in Email 2/3 HTML |
 | [PA] Scoping Notifier | `nXXsF4E1BPWIS62r` | 16 | POST /scoping-notifier-airtable + hourly fallback + GET /trigger-scoping | 🟢 Active — patched 2026-05-01 so browser/Airtable handoff calls Scoping Agent via Execute Sub-workflow instead of webhook-to-webhook |
 | [PA] Error Handler | `JByknkdAgxRmDKp3` | 4 | n8n Error Trigger | 🟢 Active — confirmed 2026-04-20 |
 | [PA] Credential Detector | `hbtSbm2pzrHX1QTn` | 10 | Every 2 hours + manual | 🟢 Active — loop branch patched 2026-04-27; latest execution 2586 success |
@@ -1151,11 +1151,12 @@ business-agent-foundry/
 | Onboarding Automation Airtable write nodes failing | Workflow executed but errored silently on Airtable POST/PATCH nodes | Create Airtable Client Record had an empty body and stale downstream references | ✅ RESOLVED 2026-04-24 — Create Client body rebuilt, downstream references fixed, summary/welcome email routing corrected | Haris |
 | Outreach Email 1 sent multiple times / Email 2 and 3 never sent | High | ✅ RESOLVED 2026-04-24 — added pre-send Email 1 lock; removed bad Airtable fields[]=record_id restrictions; fixed follow-up branches to use stable loop items | Haris |
 | Owner notification emails went to legacy Gmail | Medium | ✅ RESOLVED 2026-04-24 — all Kai notifications now route to kai@phoenixautomation.ai; stale body/reply-to strings removed from live n8n workflows | Haris |
-| Lead Generation duplicate-heavy reveal credits | Medium | ✅ RESOLVED 2026-05-04 — search is narrowed to health/wellness 5-20 US ICP, Apollo pages rotate by date, Airtable checks existing LinkedIn/email before reveal, Apollo bulk reveal uses `pa-apollo-io` credential, and run notes track page/reveal/pre-seen counts | Haris |
+| Lead Generation duplicate-heavy reveal credits | Medium | RESOLVED 2026-05-05 - added `apollo_person_id` field, pre-reveal Apollo ID/email/LinkedIn dedup, backfilled 8 duplicate records from execution 3358, and added duplicate backfill branch for older records discovered after reveal | Haris |
 | Proposal draft only stored in Airtable | Low | ✅ RESOLVED 2026-04-24 — Airtable remains source of truth for proposal_draft; Scope Approval now also creates a ClickUp Lead Management review task for Kai | Haris |
 | Typeform Lead Qualification blocked by n8n free OpenAI credits | High | ✅ RESOLVED 2026-04-24 — replaced free-credit/OpenAI LangChain path with Anthropic HTTP using the existing Anthropic credential; safe smoke PASS execution 1595 | Haris |
 | Scoping Agent failed on OpenRouter/rate-limit and Airtable field coercion | High | ✅ RESOLVED 2026-04-24 — replaced OpenRouter path with Anthropic HTTP, hardened webhook response, JSON body construction, tools_required text normalization, and Prospects-safe service_tier mapping; safe smoke PASS execution 1596 | Haris |
 | Onboarding Automation failed after approved scope | High | ✅ RESOLVED 2026-04-24 — fixed stale scope lookup, preserved Airtable context, corrected n8n API credential, patched ClickUp credential to account 2, and hardened ClickUp error merge path; safe smoke PASS execution 1599 | Haris |
+| Outreach blank email send risk | Medium | RESOLVED 2026-05-05 - fixed malformed OpenRouter prompt expression that produced NaN prompt pollution and added Parse Email Sequence guard so blank/invalid AI output errors before SMTP send | Haris |
 | Outreach backlog after repairs | Medium | ✅ MITIGATED 2026-05-04 — first-touch and follow-up fetches now filter to the health/wellness ICP; 3 pending legal records remain in Airtable but are held back during the sprint | Kai/Haris |
 | ClickUp internal checklist has fewer tasks than blueprint | Low | Live audit 2026-04-24 shows Lead Management has 3 tasks and Operations has 3 tasks; acceptable for launch, but blueprint lists 5/6 tasks if Kai wants fuller operating checklists | Kai/Haris |
 | Website chatbot not built | High — blueprint requires 24/7 AI qualifier before Typeform | ✅ RESOLVED 2026-04-03 — [PA] Website Chatbot built (EPMCxdqKOuwc6hzB, 15 nodes); embed widget at docs/website-chatbot-embed.html — Kai pastes snippet into website and activates workflow | Haris |
@@ -1173,6 +1174,7 @@ business-agent-foundry/
 # TODO / Roadmap
 
 ## Immediate (before first real client)
+- [ ] **KAI/Haris:** Complete step-by-step full-system E2E rehearsal, one stage at a time: lead capture/source -> qualification -> scoping -> proposal -> onboarding -> credential handoff -> build staging -> QA -> activation/live -> status/update -> reply/referral checks. Start next session with Step 1 only and verify data after each stage.
 - [x] ✅ E2E systems test Steps 1–5 complete. Step 6 (Referral Trigger) ready for manual execution
 - [x] ✅ Status Test Client set to `test-complete` — pollution fix (2026-03-26)
 - [x] ✅ Meridian Consulting ClickUp folder created (90148117751) + 4 lists + Airtable record corrected (2026-03-26)
@@ -1275,6 +1277,36 @@ business-agent-foundry/
 
 ---
 
+## Session Handoff - 2026-05-05 (Lead Gen + Outreach Hardening, E2E Next)
+**Worked by:** Haris + Codex
+**Duration:** live workflow debugging + targeted patches
+
+### What was completed
+- Patched `[PA] Lead Generation`: expanded single-word health/wellness Apollo rotation; fixed stale connection that caused execution 3355 to error after writing 10 leads; added Airtable `apollo_person_id`; changed pre-reveal dedup to check Apollo ID, LinkedIn URL, and email.
+- Investigated execution 3358: 10 Apollo reveals consumed, 2 new prospects written, 8 duplicates skipped only after reveal because older records lacked Apollo IDs. Backfilled all 8 duplicate records with `apollo_person_id` and added a duplicate backfill branch so older records discovered after reveal get Apollo IDs patched automatically.
+- Patched `[PA] Outreach Agent`: added Airtable `reply_type`; reply detection now classifies replies as `interested`, `not_now`, `wrong_person`, `unsubscribe`, or `negative`; prompt now uses pain-angle sequencing across Email 1/2/3 and keeps Email 3 as a low-pressure call CTA.
+- Fixed outreach prompt expression bug found during smoke test: malformed leading unary plus caused OpenRouter prompt pollution and blank emails. `Parse Email Sequence` now throws before SMTP send if generated email JSON is blank/invalid.
+- Confirmed Calendly button remains in Email 2/3 HTML by Kai request.
+- Smoke-tested Apollo fetch with keyword `spa`: 933 entries returned, relevant spa/medspa samples.
+- Smoke-tested Outreach safely with a Kai-addressed temporary prospect: second run generated non-empty Email 1/2/3 and sent one test email to kai@phoenixautomation.ai.
+
+### What is in progress (not finished)
+- Full system E2E rehearsal requested next, one step at a time. Do not run the whole chain blindly; verify data state after each stage before moving forward.
+
+### Blockers for next session
+- None for Lead Generation or Outreach. Payment confirmation remains manual until Stripe webhook is built.
+
+### Next person should start with
+1. Read PROJECT_OVERVIEW.md in full.
+2. Start a complete E2E rehearsal one stage at a time. Begin with Step 1 only: create or source a controlled test prospect and verify Airtable fields before triggering any downstream workflow.
+3. After each stage, inspect Airtable/n8n/ClickUp state and ask/confirm before proceeding to the next stage.
+
+### Files changed this session
+- `PROJECT_OVERVIEW.md`
+- Live n8n workflows via API: `[PA] Lead Generation` (`YO3f5CL9bYbLTBgw`), `[PA] Outreach Agent` (`Mib6RUtJ2IOaUZ4s`)
+- Airtable Prospects schema: added/verified `apollo_person_id`, `reply_type`
+
+---
 ## Session Handoff — 2026-05-04 (Outreach Quality + Apollo Reveal Tracking)
 **Worked by:** Haris + Codex
 **Duration:** live audit + targeted patch
@@ -2319,6 +2351,8 @@ Email account `kai@phoenixautomation.ai` is connected (warmup_status: 0 = warmin
 ---
 
 # Change Log
+
+- **[2026-05-05]** - Lead Generation and Outreach hardening completed. Lead Generation now uses expanded single-word health/wellness Apollo rotation, pre-reveal `apollo_person_id`/LinkedIn/email dedup, Apollo ID backfill for older duplicate records, and repaired stale connection wiring after execution 3355. Execution 3358 revealed 10, wrote 2, and exposed 8 legacy duplicates; all 8 were backfilled to prevent repeat reveal-credit waste. Outreach now tracks `reply_type`, uses pain-angle sequencing across Email 1/2/3, keeps the Calendly button in Email 2/3 HTML, and has a blank-send guard after fixing malformed OpenRouter prompt expression pollution.
 
 - **[2026-05-04]** — Growth/outreach quality patch completed. Lead Generation now targets the 30-day US health/wellness 5-20 staff ICP, rotates Apollo pages, checks Airtable for existing LinkedIn/email before reveal, reveals through `pa-apollo-io` instead of a hardcoded key, and logs page/reveal/pre-seen counts. Outreach now filters first-touch/follow-up sends to the sprint ICP, holds older non-ICP pending records, tightens the OpenRouter prompt for short human one-pain/one-question email bodies, and runs parser cleanup for dash/hyphen characters and excess questions before Airtable/HTML. HTML wrapper unchanged.
 
