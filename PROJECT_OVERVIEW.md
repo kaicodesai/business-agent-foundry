@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 5.16 - Last updated: 2026-05-05 - Updated by: Haris + Codex
+> **Version:** 5.22 - Last updated: 2026-05-06 - Updated by: Haris + Codex
 
 ---
 
@@ -45,7 +45,7 @@ manual bookings, client follow-up, onboarding, scheduling, reminders, intake,
 and post-visit check-ins. Outreach copy now comes from the AI prompt as short,
 specific, human email bodies: one business-specific observation, one likely pain
 point, and one simple question. The HTML wrapper was not changed. Live patch
-2026-05-05 added expanded single-word Apollo keyword rotation, `reply_type` tracking, pain-angle sequencing, blank-send protection, and Apollo person ID deduplication to prevent repeat reveal-credit spend.
+2026-05-05 added expanded single-word Apollo keyword rotation, `reply_type` tracking, pain-angle sequencing, blank-send protection, and Apollo person ID deduplication to prevent repeat reveal-credit spend. 2026-05-06 patched Scoping Agent so `client_slug` is generated automatically before proposal and `outreach_status` is set to `replied` when scoping starts.
 
 Phoenix Automation is an AI automation delivery system for small businesses. It helps move a client from lead capture through qualification, scoping, proposal, onboarding, project tracking, status updates, and live support using a connected stack of n8n, Airtable, ClickUp, email, Typeform, Apollo, and OpenRouter.
 
@@ -72,7 +72,7 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 | Task Type | Owner | Notes |
 |-----------|-------|-------|
 | Workflow activation in n8n | Kai only | Never activated by Haris or agents |
-| Proposal sending | Kai only | Agent drafts, Kai sends |
+| Proposal sending | Kai only | Agent drafts in Airtable/ClickUp, creates a Gmail draft, and sends Kai an owner-review notification; Kai edits, sets final price, and sends manually |
 | API key management | Kai | Shares keys directly — never committed to repo |
 | Agent file creation/editing | Haris (with Kai review) | Always on feature branch, PR before merge |
 | Workflow building in n8n | Haris (via Claude Code) | Uses workflow-builder-agent |
@@ -94,7 +94,7 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - Full local dev stack operational (Node 20, n8n 2.10.4, Claude Code 2.1.77, n8n-MCP)
 - Airtable base structured — Clients + Prospects + automation_logs tables
 - All core n8n credentials added (pa-airtable, pa-n8n-api, pa-clickup, pa-smtp, pa-apollo-io, pa-anthropic, OpenRouter account)
-- **[PA] Onboarding Automation** (7RsRJIqBHFpWZoWM) — 58 nodes — rebuilt prospect→client flow 2026-04-22 and patched 2026-04-24: Create Airtable Client Record sends the proper JSON body, stale scope/prospect references were removed, n8n + ClickUp credentials are corrected, ClickUp error path is hardened, summary notifications route to kai@phoenixautomation.ai, and latest safe smoke PASS execution 2624 created QA Client `recwECbw0Npdp7Yif` + ClickUp folder `90148944620` before cleanup.
+- **[PA] Onboarding Automation** (7RsRJIqBHFpWZoWM) - 58 nodes - active; prospect-to-client payment flow. Latest controlled E2E execution 3436 for Muneeb/Flex Ecomm succeeded: created Client `recgtjF4x2kNLQUUP`, ClickUp folder `90149176056`, four lists, 21 task IDs, sent Kai summary email, sent client welcome email, and marked Prospect `won`/`completed`. Patched 2026-05-06: `n8n_workspace_id` is no longer filled with a placeholder label during onboarding; it must store the real client n8n instance URL once received.
 - **[PA] Lead Generation** (YO3f5CL9bYbLTBgw) - 21 nodes, Apollo.io paid plan - patched 2026-05-05 for the 30-day US health/wellness 5-20 ICP with expanded single-word keyword rotation (`wellness`, `fitness`, `coach`, `clinic`, `therapy`, `chiropractic`, `nutrition`, `medspa`, `yoga`, `pilates`, `spa`, `massage`, `aesthetics`, `counseling`, `naturopath`, `physio`, `wellbeing`). Reveal credits are now protected by pre-reveal Airtable checks against `apollo_person_id`, LinkedIn URL, and email. Existing duplicate records from execution 3358 were backfilled with Apollo IDs, and a duplicate backfill branch now patches `apollo_person_id` onto older records discovered after reveal. Apollo bulk reveal uses stored `pa-apollo-io`; run notes log page/reveal/pre-seen counts.
 - **[PA] Morning Brief Delivery** (EKKXeBCEiKXaYBCx) — ACTIVE — daily morning brief workflow, confirmed active 2026-04-20
 - **[PA] Outreach Agent** (Mib6RUtJ2IOaUZ4s) - 51 nodes - rebuilt 2026-04-21, active; patched 2026-05-05: `Email Sequence Agent` prompt rewritten for human-sounding short emails with coherent pain-angle sequencing (Email 1 missed follow-up, Email 2 manual intake or booking back-and-forth, Email 3 client details falling through cracks + low-pressure call CTA). `Parse Email Sequence` now fails before send if AI output is blank/invalid, cleans dash/hyphen characters and excess questions, and keeps one-question copy. Reply detection now writes `reply_type` (`interested`, `not_now`, `wrong_person`, `unsubscribe`, `negative`). Calendly button remains in Email 2/3 HTML; no HTML wrapper removal. AI model remains OpenRouter `~moonshotai/kimi-latest`.
@@ -104,13 +104,13 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - **[PA] Reporting Agent** (scj61gBYYWpQydMC) — 17 nodes, inactive by design; monthly retainer reports via OpenRouter `qwen/qwen3.5-plus-20260420` → client email → Airtable update; sender/reply-to patched to kai@phoenixautomation.ai. Readiness patched 2026-04-27: retainer filter now includes `retainer` + `agency-retainer`, OpenRouter call uses HTTP with retries/timeouts, and response parser reads `choices[0].message.content`. Activate after first retainer client is live.
 - **[PA] Typeform Lead Qualification** (kXxN7O77ongTMwKG) — 14 nodes, active; Typeform submission → answer extraction → dedup → Prospects write → OpenRouter `qwen/qwen3.6-flash` score → Kai notification for Grade A/B leads at kai@phoenixautomation.ai. Parser patched for OpenRouter `choices[0].message.content`; latest safe smoke PASS execution 2620.
 - **[PA] Credential Follow-Up** (uTnQAq5VlmsHYih4) — 11 nodes, active; daily 10:00 + manual → fetches onboarding.in_progress clients stalled >48h → alerts Kai at kai@phoenixautomation.ai → updates overdue_flagged_at → logs to automation_logs. Loop branch wiring patched 2026-04-27; latest execution 2416 PASS/no stalled clients.
-- **[PA] Credential Detector** (hbtSbm2pzrHX1QTn) — 10 nodes, active; every 2h + manual → fetches onboarding.in_progress clients whose n8n_api_key is populated → sets project_status=build.ready → alerts Kai at kai@phoenixautomation.ai → logs to automation_logs. Loop branch wiring patched 2026-04-27; latest execution 2586 PASS/no new credentials.
+- **[PA] Credential Detector** (hbtSbm2pzrHX1QTn) - 10 nodes, active; every 2h + manual -> fetches `onboarding.in_progress` clients only when both `n8n_api_key` and `n8n_workspace_id` are populated, then sets `project_status=build.ready`, alerts Kai, and logs to automation_logs. Patched 2026-05-06 so URL + API key are both required before build readiness.
 - **[PA] Website Chatbot** (EPMCxdqKOuwc6hzB) — 15 nodes, built 2026-04-03, fully operational 2026-04-10 — webhook POST /website-chatbot → stateless 3-question chatbot → OpenRouter `qwen/qwen3.6-flash` scores lead (HTTP Request node) → hot: writes Airtable Prospect + returns Calendly link; cold: returns nurture message; borderline: asks clarifying question. Live on phoenixautomation.ai with auto-popup (7s teaser, 13s auto-open). End-to-end verified: hot lead record recRypnI7vsMlisJR created in Airtable Prospects.
 - **3 new Airtable Prospects fields added** — `biggest_operational_pain` (long text), `lead_score_grade` (text), `lead_source` (text) — 2026-04-10; field names aligned to chatbot n8n node output
-- **[PA] Scoping Agent** (E24KwVMam1e8bbjT) — 17 nodes, active; reads/writes **Prospects table**, uses OpenRouter `qwen/qwen3.6-max-preview`, writes Airtable-safe JSON, maps service_tier to valid Prospects values, normalizes tools_required text, sets `project_status=scope_review`, and has corrected loop branch wiring. Patched 2026-05-01: added `When Executed by Scoping Notifier` Execute Sub-workflow Trigger so Scoping Notifier no longer calls `/scope-call` by HTTP. Public/manual Scope Call webhook and Scope Call Form remain available.
-- **[PA] Scope Approval** (UB6ZdrnYpJlYfxD4) — 8 nodes, active; reads/writes Prospects table, locks approved scope, saves proposal_draft to Airtable as source of truth, creates a ClickUp Lead Management review task in parallel, emails Kai at kai@phoenixautomation.ai, and latest safe smoke PASS execution 2622. AI model updated 2026-04-30 to OpenRouter `~moonshotai/kimi-latest`.
-- **[PA] Workflow Builder Agent** (fy8OuUEGyyWhYzWC) — 22 nodes, inactive by design; polls build.ready clients hourly/manual → reads full Client scope from Airtable → OpenRouter `deepseek/deepseek-v4-pro` generates n8n workflow JSON → creates inactive `[QA STAGING]` workflows inside Kai's n8n first → calls `[PA] QA Agent` via native Execute Sub-workflow → sets Airtable to `qa.pass` or `qa.fail` from the QA verdict and emails Kai the final draft/cleanup list. Patched 2026-05-01 to stop deploying directly to client n8n before QA/approval.
-- **[PA] QA Agent** (fpLHEghef9u4yUpY) — 4 nodes, inactive sub-workflow; starts with Execute Sub-workflow Trigger (`When Executed by Builder`), accepts Workflow Builder staging output, inspects staged workflow JSON, validates error handling/security/test evidence, emails Kai a QA report with cleanup/removal list, and returns `QA PASS` / `QA CONDITIONAL PASS` / `QA FAIL` / `QA BLOCKED`. Built 2026-05-01; builder/QA specs updated so build output is staged and QA-reviewed before client-side patching.
+- **[PA] Scoping Agent** (E24KwVMam1e8bbjT) - 17 nodes, active; reads/writes **Prospects table**, uses OpenRouter `qwen/qwen3.6-max-preview`, writes Airtable-safe JSON, maps service_tier to valid Prospects values, normalizes tools_required text, sets `project_status=scope_review`, and has corrected loop branch wiring. Patched 2026-05-01: added `When Executed by Scoping Notifier` Execute Sub-workflow Trigger so Scoping Notifier no longer calls `/scope-call` by HTTP. Patched 2026-05-06: `Prepare Client Data` derives `client_slug` from company/prospect name when missing, `Set Status to Scoping` writes the slug and sets `outreach_status=replied`, and `Write Scope to Airtable` persists the slug with generated scope fields. Public/manual Scope Call webhook and Scope Call Form remain available.
+- **[PA] Scope Approval** (UB6ZdrnYpJlYfxD4) - 9 nodes, active; reads/writes Prospects table, locks approved scope, saves `proposal_draft` to Airtable as source of truth, creates a ClickUp Lead Management review task in parallel, creates a real Gmail draft addressed to the prospect via `Gmail account 2`, and emails Kai at kai@phoenixautomation.ai. Patched 2026-05-06: proposal generation now produces a cleaner client-ready email-style draft, uses canonical `kai@phoenixautomation.ai`, forbids exact invented pricing, requires owner-set price placeholder by tier range, discloses client-owned software/API costs separately, and sends Kai a professional "proposal draft created in Gmail" notification instead of rendering the raw proposal body in email.
+- **[PA] Workflow Builder Agent** (fy8OuUEGyyWhYzWC) - 23 nodes, inactive by design; polls build.ready clients hourly/manual, reads full Client scope from Airtable, generates n8n workflow JSON, creates inactive `[QA STAGING]` workflows inside Kai n8n first, calls `[PA] QA Agent`, and writes QA verdict back to Airtable. Patched 2026-05-06: generated JSON is sanitized/validated before staging, read-only n8n fields are forbidden, parse/stage/collect failures now fail loudly instead of continuing, and Builder must provide staged workflow artifacts to QA before any client patch is allowed.
+- **[PA] QA Agent** (fpLHEghef9u4yUpY) - 4 nodes, inactive sub-workflow; inspects staged workflow JSON, validates trigger/security/error-handling/test evidence, emails Kai a QA report, and returns QA verdict. Patched 2026-05-06: `ready_to_patch_to_client` is true only for full `QA PASS`; `QA CONDITIONAL PASS`, `QA FAIL`, and `QA BLOCKED` must not be patched into client n8n.
 - **[PA] Scoping Notifier** (nXXsF4E1BPWIS62r) — 16 nodes, active; webhook-first notifier for Airtable matched-record automations, with hourly fallback poll. Notifies Kai at kai@phoenixautomation.ai when a prospect has `project_status=call_complete`, blank `scoping_notified_at`, and non-empty `call_notes`; exposes GET /trigger-scoping for browser-triggered handoff. Patched 2026-05-01: browser handoff now calls Scoping Agent via native Execute Sub-workflow (`waitForSubWorkflow=false`) instead of webhook-to-webhook, while keeping Airtable/browser inbound webhooks intact.
 - **15 new Airtable Clients fields added** — call_notes, scope_summary, automation_count, automation_1/2/3_name, automation_1/2/3_description, scope_locked_at, proposal_draft, workflows_deployed, build_review_url — 2026-04-03
 - **5 new project_status values added** — call_complete, scoping, scope_review, building, build_review — 2026-04-03
@@ -286,6 +286,7 @@ claude
 | `pa-apollo-io` | HTTP Header Auth | `x-api-key` | ✅ Active |
 | `pa-anthropic` | HTTP Header Auth | `x-api-key` | ✅ Active — retained for post-launch Claude upgrade path |
 | `OpenRouter account` | OpenRouter API | n8n credential ID `hz6Vtt70sQ6Td1GQ` | ✅ Active — live AI credential for workflow-specific Chinese models |
+| `Gmail account 2` | Gmail OAuth2 API | n8n credential ID `bVC6TywRDB63Nrdt` | Active - connected 2026-05-06; used by Scope Approval to create owner-review Gmail proposal drafts |
 | `pa-instantly` | HTTP Header Auth | `Authorization: Bearer` | ✅ Active — ID: xoSojCyLffw4nNe7 |
 | `pa-imap` (IMAP account) | IMAP | imap.gmail.com:993 SSL, kai@phoenixautomation.ai | ✅ Active — ID: 8MxHTFkPLgLLUO1U — created 2026-04-22 |
 | `pa-tavily` | Hardcoded in Lead Gen Code node | — | ✅ Active — key: `tvly-dev-ytdoA-...` (stored in Tavily Search node jsCode) |
@@ -565,7 +566,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 
 | Workflow | ID | Nodes | Trigger | Status |
 |---------|-----|-------|---------|--------|
-| [PA] Onboarding Automation | `7RsRJIqBHFpWZoWM` | 58 | POST /payment-confirmed webhook | 🟢 Active — latest safe smoke PASS execution 2624: Prospect → Client, Airtable, ClickUp folder/lists, and emails completed |
+| [PA] Onboarding Automation | `7RsRJIqBHFpWZoWM` | 58 | POST /payment-confirmed webhook | Active - latest E2E PASS execution 3436 for Flex Ecomm; Client + ClickUp + emails complete; patched so real n8n URL is required later |
 | [PA] Lead Generation | `YO3f5CL9bYbLTBgw` | 21 | Daily 06:45 + manual | Active - patched 2026-05-05 for expanded health/wellness single-word rotation, Apollo ID pre-reveal dedup/backfill, and duplicate reveal-credit protection |
 | [PA] Morning Brief Delivery | `EKKXeBCEiKXaYBCx` | 4 | Daily (morning) | 🟢 Active — confirmed 2026-04-24 |
 | [PA] Status Update Agent | `94DpGwRPWGRPqCVU` | 20 | Monday 09:00 + manual | 🟢 Active — latest execution 2540 success; AI model `qwen/qwen3.6-flash` |
@@ -577,12 +578,12 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | [PA] Outreach Agent | `Mib6RUtJ2IOaUZ4s` | 51 | Daily 07:00 + manual + IMAP reply check | Active - patched 2026-05-05 for pain-angle email sequence, blank-send guard, reply_type tracking, and low-pressure Email 3 call CTA; Calendly button remains in Email 2/3 HTML |
 | [PA] Scoping Notifier | `nXXsF4E1BPWIS62r` | 16 | POST /scoping-notifier-airtable + hourly fallback + GET /trigger-scoping | 🟢 Active — patched 2026-05-01 so browser/Airtable handoff calls Scoping Agent via Execute Sub-workflow instead of webhook-to-webhook |
 | [PA] Error Handler | `JByknkdAgxRmDKp3` | 4 | n8n Error Trigger | 🟢 Active — confirmed 2026-04-20 |
-| [PA] Credential Detector | `hbtSbm2pzrHX1QTn` | 10 | Every 2 hours + manual | 🟢 Active — loop branch patched 2026-04-27; latest execution 2586 success |
+| [PA] Credential Detector | `hbtSbm2pzrHX1QTn` | 10 | Every 2 hours + manual | Active - now requires both n8n_api_key and n8n_workspace_id before promoting to build.ready |
 | [PA] Website Chatbot | `EPMCxdqKOuwc6hzB` | 15 | Webhook POST /website-chatbot | 🟢 Active — live on phoenixautomation.ai since 2026-04-10; 3-question qualifier → OpenRouter `qwen/qwen3.6-flash` scoring → hot: Airtable write + Calendly; cold: nurture; borderline: clarifying Q. E2E PASS (record recRypnI7vsMlisJR) |
 | [PA] Scoping Agent | `E24KwVMam1e8bbjT` | 17 | Webhook POST /scope-call + form + poll every 2h + Execute Sub-workflow Trigger | 🟢 Active — patched 2026-05-01 to accept Scoping Notifier via native sub-workflow; public/manual webhook and form remain available; AI model `qwen/qwen3.6-max-preview` |
-| [PA] Scope Approval | `UB6ZdrnYpJlYfxD4` | 8 | GET /approve-scope?client_slug=X | 🟢 Active — proposal draft + ClickUp review task + Kai email; latest safe smoke PASS execution 2622; AI model `~moonshotai/kimi-latest` |
-| [PA] Workflow Builder Agent | `fy8OuUEGyyWhYzWC` | 22 | Polls Airtable hourly + manual | 🔴 Inactive by design — patched 2026-05-01 to stage generated workflows in Kai n8n, call QA Agent by Execute Sub-workflow, and email final draft/cleanup list before any client-side patch; AI model `deepseek/deepseek-v4-pro` |
-| [PA] QA Agent | `fpLHEghef9u4yUpY` | 4 | Execute Sub-workflow Trigger | 🔴 Inactive sub-workflow — built/patched 2026-05-01; consumes Workflow Builder staging output, inspects staged workflow JSON, validates test evidence/security/error handling, emails Kai QA report, returns QA verdict |
+| [PA] Scope Approval | `UB6ZdrnYpJlYfxD4` | 9 | GET /approve-scope?client_slug=X | Active - creates Gmail proposal draft + ClickUp review task + clean Kai notification; patched 2026-05-06; AI model `~moonshotai/kimi-latest` |
+| [PA] Workflow Builder Agent | `fy8OuUEGyyWhYzWC` | 23 | Polls Airtable hourly + manual | Inactive by design - stages in Kai n8n first; patched 2026-05-06 for strict generated JSON validation/fail-loud staging |
+| [PA] QA Agent | `fpLHEghef9u4yUpY` | 4 | Execute Sub-workflow Trigger | Inactive sub-workflow - patched 2026-05-06 so only QA PASS can be marked ready to patch to client |
 
 ## Workflow Node Summaries
 
@@ -1260,12 +1261,16 @@ business-agent-foundry/
 **Duration:** [approx]
 
 ### What was completed
+- Hardened Workflow Builder/QA after audit: Builder output is not considered safe by default. It now sanitizes generated workflow JSON, rejects missing nodes/triggers/broken connections before staging, strips/forbids read-only n8n fields, fails loudly on parse/stage/collect errors, and QA only sets `ready_to_patch_to_client=true` for full `QA PASS`.
+- Simulated paid client for Muneeb/Flex Ecomm by POSTing to `/payment-confirmed`; Onboarding Automation execution 3436 succeeded, created Client `recgtjF4x2kNLQUUP`, ClickUp folder `90149176056`, lists `901416173538/40/41/42`, seeded task IDs, sent Kai summary, sent client welcome email to `muneebfiaz92@gmail.com`, and marked Prospect `won` / `completed`.
+- Found and fixed onboarding credential handoff gap: Onboarding was writing placeholder `[PA] flex-ecomm` into `n8n_workspace_id`, but docs/workflow builder expect the real client n8n instance URL there. Patched Onboarding to leave `n8n_workspace_id` blank until the real URL arrives, patched Credential Detector to require both `n8n_api_key` and `n8n_workspace_id`, and cleared the placeholder from Muneeb Client `recgtjF4x2kNLQUUP`.
 - 
 
 ### What is in progress (not finished)
 - 
 
 ### Blockers for next session
+- A live Builder smoke test still requires explicit Kai approval to temporarily publish QA Agent and Workflow Builder. Activation was not performed because the project rule says workflow activation is Kai-only.
 - 
 
 ### Next person should start with
@@ -1274,6 +1279,38 @@ business-agent-foundry/
 ### Files changed this session
 - 
 ```
+
+---
+
+## Session Handoff - 2026-05-06 (E2E Step 1 + Gmail Proposal Drafts)
+**Worked by:** Haris + Codex
+**Duration:** live workflow inspection + scoping/proposal/Gmail patch
+
+### What was completed
+- Checked latest Outreach executions: no current failure in recent runs; reported issue appears to be an auto-reply/unmatched inbox item handled successfully by reply detection.
+- Verified latest Lead Generation execution 3415: revealed 10, wrote 8 new prospects, detected 2 duplicate emails, and backfilled Apollo IDs on both duplicate records. Duplicate/backfill logic is working.
+- Patched `[PA] Scoping Agent` so VA/owner no longer needs to know or set `client_slug`. `Prepare Client Data` derives the slug from company/prospect name when missing.
+- Patched Scoping Agent status writes so scoping sets `outreach_status=replied`, preventing downstream outreach follow-ups once a prospect is in the sales/scoping path.
+- Triggered Scoping Agent for Muneeb/Flex Ecomm prospect `recnSY6FLXewKHZpf`; execution 3425 succeeded and moved the record to `project_status=scope_review` with `client_slug=flex-ecomm`.
+- Verified Scope Approval execution 3427 after owner clicked approve scope: record moved to `project_status=proposal_sent`, `scope_locked_at` was written, `proposal_draft` was saved, ClickUp task `86b9tgvqc` was created, and Kai was emailed.
+- Patched `[PA] Scope Approval`: the actual OpenRouter proposal node now generates cleaner client-ready email-style drafts, `Save Proposal to Airtable` no longer has the accidental stray prompt body, ClickUp task JSON uses safer expression syntax, and `Create Gmail Proposal Draft` creates a real Gmail draft using `Gmail account 2` before Kai receives the notification.
+- Repaired Muneeb/Flex Ecomm Airtable `proposal_draft` into a clean client-ready email-style draft. The already-sent Kai email and already-created ClickUp review task may still show the first generated version; Airtable is the source of truth for this test record.
+
+### What is in progress (not finished)
+- Full E2E test is in progress and should continue one step at a time from proposal review/send.
+
+### Blockers for next session
+- Current Muneeb/Flex Ecomm Gmail draft was not auto-created because the approval happened before Gmail OAuth was connected; future approvals will create Gmail drafts automatically.
+- Client welcome email has been sent. Waiting on client-side credential reply: real n8n instance URL and n8n API key. VA/Kai must paste URL into `n8n_workspace_id` and key into `n8n_api_key` on Client `recgtjF4x2kNLQUUP`.
+- Payment/onboarding remains manual until Stripe webhook is built.
+
+### Next person should start with
+1. Inspect Client `recgtjF4x2kNLQUUP` / slug `flex-ecomm` in Airtable.
+2. Enter the client n8n instance URL into `n8n_workspace_id` and the client n8n API key into `n8n_api_key` when received.
+3. Verify Credential Detector moves the client to `build.ready`, then decide whether to activate/run Workflow Builder for the build stage.
+
+### Files changed this session
+- `PROJECT_OVERVIEW.md`
 
 ---
 
@@ -2351,6 +2388,18 @@ Email account `kai@phoenixautomation.ai` is connected (warmup_status: 0 = warmin
 ---
 
 # Change Log
+
+- **[2026-05-06]** - Workflow Builder/QA patch-readiness gate hardened. Builder now sanitizes and validates generated n8n JSON before staging, strips/forbids read-only fields such as `active`, fails loudly on parse/stage/collect errors, and requires staged artifacts before QA. QA now sets `ready_to_patch_to_client=true` only on full `QA PASS`; conditional, failed, or blocked outputs must not be patched to client n8n. A controlled smoke test was prepared but not run because temporary activation requires explicit Kai approval; synthetic record `recVt4pHjhcFBNFgx` was marked `test-complete` and the temporary Builder webhook was removed.
+
+- **[2026-05-06]** - Flex Ecomm payment/onboarding E2E step completed. Posted a controlled paid payload to Onboarding Automation; execution 3436 succeeded, created Client `recgtjF4x2kNLQUUP`, ClickUp folder `90149176056`, Onboarding/Build/QA/Live lists, 21 task IDs, Kai summary email, and client welcome email to `muneebfiaz92@gmail.com`. Prospect `recnSY6FLXewKHZpf` moved to `project_status=won` and `outreach_status=completed`.
+
+- **[2026-05-06]** - Onboarding credential gate patched. Found that Onboarding wrote placeholder `[PA] flex-ecomm` into `n8n_workspace_id`, while docs and Workflow Builder require the real client n8n instance URL. Patched Onboarding to leave `n8n_workspace_id` blank until the client URL is received, patched Credential Detector to require both `n8n_api_key` and `n8n_workspace_id` before promoting to `build.ready`, and cleared the placeholder from Muneeb Client `recgtjF4x2kNLQUUP`.
+
+- **[2026-05-06]** - Scope Approval Gmail draft flow implemented. The newly connected `Gmail account 2` credential (Gmail OAuth2, ID `bVC6TywRDB63Nrdt`) is now used by live Scope Approval to create a real Gmail draft addressed to the prospect after `proposal_draft` is saved to Airtable. The workflow is now 9 nodes: Airtable save branches to ClickUp review task and Gmail draft; Gmail draft then sends Kai a clean notification. Gmail draft node is `continueOnFail` so a credential hiccup does not block the approval page.
+
+- **[2026-05-06]** - Scope Approval owner-review flow improved. Muneeb/Flex Ecomm scope approval execution 3427 succeeded, moved the prospect to `proposal_sent`, saved `proposal_draft`, created ClickUp proposal review task `86b9tgvqc`, and emailed Kai. A proposal quality issue was found in the original notification (`$[X]` placeholder, wrong `.io` email domain, and raw markdown rendering), so the actual OpenRouter proposal node now generates cleaner client-ready email-style drafts, `Save Proposal to Airtable` was cleaned of an accidental stray prompt body, ClickUp proposal review task body now uses safer JSON expression syntax, and Kai's SMTP email is now a professional notification. Muneeb Airtable `proposal_draft` was repaired and is the source of truth for the current test record.
+
+- **[2026-05-06]** - E2E Step 1 and scoping handoff hardening completed. Outreach recent executions checked clean; Lead Generation execution 3415 verified duplicate logic working (10 revealed, 8 written, 2 duplicates backfilled). Scoping Agent now auto-generates `client_slug` when missing and sets `outreach_status=replied` when scoping starts, making VA responsibility limited to call notes plus `project_status=call_complete`. Muneeb/Flex Ecomm prospect `recnSY6FLXewKHZpf` was moved through Scoping Agent successfully to `scope_review` with `client_slug=flex-ecomm`.
 
 - **[2026-05-05]** - Lead Generation and Outreach hardening completed. Lead Generation now uses expanded single-word health/wellness Apollo rotation, pre-reveal `apollo_person_id`/LinkedIn/email dedup, Apollo ID backfill for older duplicate records, and repaired stale connection wiring after execution 3355. Execution 3358 revealed 10, wrote 2, and exposed 8 legacy duplicates; all 8 were backfilled to prevent repeat reveal-credit waste. Outreach now tracks `reply_type`, uses pain-angle sequencing across Email 1/2/3, keeps the Calendly button in Email 2/3 HTML, and has a blank-send guard after fixing malformed OpenRouter prompt expression pollution.
 
