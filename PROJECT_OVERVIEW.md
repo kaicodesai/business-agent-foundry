@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 5.23 - Last updated: 2026-05-07 - Updated by: Haris + Codex
+> **Version:** 5.24 - Last updated: 2026-05-07 - Updated by: Haris + Codex
 
 ---
 
@@ -365,8 +365,9 @@ claude
 | `email` | `G3GmVcDig8e2` | short_text | 6 |
 | `thankyou` (screen) | `7wh9HcO9y3F8` | thankyou_screen | — |
 
+> Typeform thank-you button redirects to `https://calendly.com/kai-phoenixautomation/free-business-assessment?name={{field:full_name}}&email={{field:email}}`, so Calendly pre-fills the submitted name and email after the form. Verified 2026-05-07; webhook `pa-n8n-intake` remained enabled.
+
 > ⚠️ `show_typeform_branding: false` requires a paid Typeform plan — branding is currently visible (free tier). Upgrade to remove.
-> ⚠️ Calendly button URL is placeholder (`https://calendly.com/phoenixautomation/assessment`) — Kai must update to real URL via Typeform UI or API PATCH once Calendly is live.
 
 ## ClickUp API
 | Item | Value |
@@ -2393,6 +2394,8 @@ Email account `kai@phoenixautomation.ai` is connected (warmup_status: 0 = warmin
 ---
 
 # Change Log
+
+- **[2026-05-07]** - Typeform to Calendly handoff improved. The live Typeform thank-you button now redirects to Calendly with Typeform recall tokens for `full_name` and `email`, so invitees should not need to re-enter those details on the Calendly booking page. Readback confirmed the redirect URL and that webhook `pa-n8n-intake` remains enabled.
 
 - **[2026-05-07]** - Conservative workflow audit reliability fixes applied and verified by live readback. Error Handler Airtable logging now uses `JSON.stringify`; Lead Generation now routes Apollo fetch failures into `Handle Apollo Error1`; Morning Brief and QA Agent now use the shared Error Handler as `errorWorkflow`; ClickUp Sync notification emails now include the generated HTML body and keep Airtable overdue updates moving if owner email send fails; Status Update Schedule Trigger upgraded to typeVersion 1.2. Builder, Onboarding, and Reporting internals were intentionally left unchanged to avoid disturbing working paths.
 
