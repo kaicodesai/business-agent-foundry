@@ -15,7 +15,7 @@ export const WORKFLOW_REGISTRY = [
   { id: 'kXxN7O77ongTMwKG', name: 'Typeform Lead Qualification',  description: 'Scores inbound Typeform leads via Claude, emails Kai if Grade A/B' },
   { id: 'uTnQAq5VlmsHYih4', name: 'Credential Follow-Up',        description: 'Daily check for stalled onboarding clients — alerts Kai if credentials not submitted >48h' },
   { id: 'hbtSbm2pzrHX1QTn', name: 'Credential Detector',         description: 'Every 2h — detects n8n_api_key populated, auto-sets project_status to build.ready' },
-  { id: 'EPMCxdqKOuwc6hzB', name: 'Website Chatbot',             description: 'Stateless 3-question lead scoring chatbot — hot leads booked to Calendly' },
+  { id: 'EPMCxdqKOuwc6hzB', name: 'Website Chatbot',             description: 'Stateless 3-question lead scoring chatbot — hot and borderline leads captured before Calendly' },
   { id: 'E24KwVMam1e8bbjT', name: 'Scoping Agent',               description: 'Polls call_complete clients → Claude generates scope → emails Kai with Approve button' },
   { id: 'UB6ZdrnYpJlYfxD4', name: 'Scope Approval',             description: 'GET /approve-scope — locks scope, generates proposal draft, emails Kai' },
   { id: 'fy8OuUEGyyWhYzWC', name: 'Workflow Builder Agent',      description: 'Polls build.ready clients → deploys n8n workflow JSON → sets build_review' },

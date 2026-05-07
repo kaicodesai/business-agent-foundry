@@ -131,7 +131,7 @@ Space: Phoenix Automation (90144568071)
 | # | Task Name | Description | Owner | Cadence |
 |---|-----------|-------------|-------|---------|
 | 1 | Review lead gen results | Check `automation_logs` table in Airtable — how many prospects added this week? Any errors? | Kai | Weekly (Monday) |
-| 2 | Review inbound scored leads | Check Prospects table for any new `outreach_status = replied` or Typeform submissions scored HIGH | Kai | Weekly |
+| 2 | Review inbound scored leads | Check Prospects table for any new `outreach_status = replied` or Typeform/Chatbot submissions scored Grade A or B | Kai | Weekly |
 | 3 | Proposals pending send | Review any `proposal-draft.md` files waiting for owner review and sending | Kai | Weekly |
 | 4 | Follow-ups to action | Review Instantly.ai for replies needing manual response from Kai | Kai | Weekly |
 | 5 | Assessment calls this week | Check Calendly for booked calls and confirm pre-call briefs are ready | Kai | Weekly |

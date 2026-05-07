@@ -82,7 +82,7 @@ flag cannot be processed by process-mapping-agent.
 
 **Agent:** lead-qualification-agent (Mode B)
 **Trigger:** Typeform submission received via n8n webhook
-**Decision: HIGH / MEDIUM / LOW grade**
+**Decision: A / B / C / D grade**
 
 ### Scoring rules `[AUTO]`
 
@@ -99,13 +99,14 @@ Score each dimension 0–2:
 
 | Total score | Grade | Agent action |
 |-------------|-------|-------------|
-| 6–8 | HIGH | Write pre-call brief → email owner alert |
-| 3–5 | MEDIUM | Write pre-call brief → no owner alert (owner sees in Airtable) |
-| 0–2 | LOW | Log grade → no brief → owner must override to proceed |
+| 7-8 | A | Write pre-call brief -> email owner alert |
+| 5-6 | B | Write pre-call brief -> email owner alert |
+| 3-4 | C | Write pre-call brief -> no owner alert (owner sees in Airtable) |
+| 0-2 | D | Log grade -> no brief -> owner must override to proceed |
 
-### Owner override for LOW `[OWNER-OVERRIDE]`
+### Owner override for D `[OWNER-OVERRIDE]`
 
-Owner may proceed with a LOW-grade lead (e.g. referral from a valued contact).
+Owner may proceed with a D-grade lead (e.g. referral from a valued contact).
 Requirement: set Airtable `lead_score_grade = OVERRIDE-PROCEED` and add a note
 explaining the override. Without this, process-mapping-agent blocks on DL-3.
 

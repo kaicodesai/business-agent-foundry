@@ -158,7 +158,7 @@ close. Borderline leads get one clarifying question.
 **Mode B — Typeform (legacy spec — see Mode C for live implementation):**
 Score submission across 4 dimensions (industry, team size, pain
 specificity, time lost). Write score to Airtable. Generate pre-call
-brief. Email brief to owner if HIGH grade.
+brief. Email brief to owner if Grade A or B.
 
 **Mode C — Typeform webhook (live — built 2026-03-31):**
 A Typeform form ([Phoenix Automation — Free Assessment](https://form.typeform.com/to/RSsWJkcf), ID: `RSsWJkcf`)
@@ -182,7 +182,7 @@ The workflow:
 - For Grade A/B leads: Kai receives email with pre-call brief
 
 **Advance condition:** Lead books assessment call.
-**Exit condition:** Cold/LOW lead with no booking → `lead.disqualified`.
+**Exit condition:** Grade D lead with no booking → `lead.disqualified`.
 
 ---
 

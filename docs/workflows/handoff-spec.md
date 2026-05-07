@@ -58,8 +58,8 @@ All must be true before process-mapping-agent proceeds:
   (something a person does repeatedly that could be automated)
 - [ ] **A3** — Client company name is identifiable from the notes
   (required to name the client directory)
-- [ ] **A4** — No `lead_score_grade = LOW` flag blocking this call
-  (if LOW, owner must have explicitly confirmed to proceed)
+- [ ] **A4** — No `lead_score_grade = D` flag blocking this call
+  (if D, owner must have explicitly confirmed to proceed)
 
 ### Rejection criteria — H1
 

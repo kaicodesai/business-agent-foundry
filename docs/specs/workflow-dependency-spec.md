@@ -114,13 +114,13 @@ Stage 8: QA
 | # | Output | Verifier | Destination |
 |---|--------|----------|-------------|
 | O1.1 | `lead_score_total` (0–8) written to Airtable | `[AGENT]` | Airtable lead record |
-| O1.2 | `lead_score_grade` (HIGH / MEDIUM / LOW) written to Airtable | `[AGENT]` | Airtable lead record |
+| O1.2 | `lead_score_grade` (A / B / C / D) written to Airtable | `[AGENT]` | Airtable lead record |
 | O1.3 | `pre_call_brief` written to Airtable | `[AGENT]` | Airtable lead record |
 | O1.4 | Routing decision documented (Calendly link sent / soft close) | `[AGENT]` | Airtable lead record |
 
 ### Boundary condition
 
-If `lead_score_grade = LOW`, the agent routes to soft close. Owner must
+If `lead_score_grade = D`, the agent routes to soft close. Owner must
 explicitly override (`[OWNER]`) to proceed to assessment. The override
 must be recorded in Airtable before Stage 3 begins.
 
@@ -166,7 +166,7 @@ proceed to Stage 3.
 |---|-----------|----------|
 | P3.1 | Raw call notes are present | `[AGENT]` — agent checks at startup |
 | P3.2 | Client company name is identifiable | `[AGENT]` — required to name output file |
-| P3.3 | No `lead_score_grade = LOW` without owner override recorded | `[OWNER]` |
+| P3.3 | No `lead_score_grade = D` without owner override recorded | `[OWNER]` |
 
 ### Post-conditions (guaranteed on exit)
 

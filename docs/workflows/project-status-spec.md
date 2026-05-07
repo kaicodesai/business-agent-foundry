@@ -50,8 +50,8 @@ is the source of truth for what happens next.
 [lead.new]
   → PASS (hot lead routed to Calendly):    → assessment.scheduled
   → PASS (cold lead):                      → lead.disqualified
-  → Typeform scored HIGH/MEDIUM:           → lead.qualified → assessment.scheduled
-  → Typeform scored LOW:                   → lead.qualified (owner decides)
+  → Typeform/Chatbot scored A/B:           → lead.qualified → assessment.scheduled
+  → Typeform/Chatbot scored C/D:           → lead.qualified (owner decides)
 ```
 
 ```

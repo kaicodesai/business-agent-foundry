@@ -202,8 +202,8 @@ them `completed` in Airtable + ClickUp once a configurable grace period passes.
 
 ## Reply Detection
 
-**Trigger:** IMAP read (`Read Inbox` node) fires on the same daily cron.
-**Flow:** Filter real replies (remove auto-responders/bounce) → Loop → Lookup
+**Trigger:** Gmail API search (`Search Gmail Replies` node) fires on the same daily cron using `Gmail account 2`.
+**Flow:** Normalize Gmail replies -> Filter real replies (remove auto-responders/bounce) -> Loop -> Lookup
 prospect by email in Airtable → If match: update `outreach_status = replied`,
 update ClickUp to `Replied`, email Kai at `kai@phoenixautomation.ai`.
 

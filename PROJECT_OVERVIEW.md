@@ -97,7 +97,7 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - **[PA] Onboarding Automation** (7RsRJIqBHFpWZoWM) - 58 nodes - active; prospect-to-client payment flow. Latest controlled E2E execution 3436 for Muneeb/Flex Ecomm succeeded: created Client `recgtjF4x2kNLQUUP`, ClickUp folder `90149176056`, four lists, 21 task IDs, sent Kai summary email, sent client welcome email, and marked Prospect `won`/`completed`. Patched 2026-05-06: `n8n_workspace_id` is no longer filled with a placeholder label during onboarding; it must store the real client n8n instance URL once received.
 - **[PA] Lead Generation** (YO3f5CL9bYbLTBgw) - 21 nodes, Apollo.io paid plan - patched 2026-05-05 for the 30-day US health/wellness 5-20 ICP with expanded single-word keyword rotation (`wellness`, `fitness`, `coach`, `clinic`, `therapy`, `chiropractic`, `nutrition`, `medspa`, `yoga`, `pilates`, `spa`, `massage`, `aesthetics`, `counseling`, `naturopath`, `physio`, `wellbeing`). Reveal credits are now protected by pre-reveal Airtable checks against `apollo_person_id`, LinkedIn URL, and email. Existing duplicate records from execution 3358 were backfilled with Apollo IDs, and a duplicate backfill branch now patches `apollo_person_id` onto older records discovered after reveal. Apollo bulk reveal uses stored `pa-apollo-io`; run notes log page/reveal/pre-seen counts.
 - **[PA] Morning Brief Delivery** (EKKXeBCEiKXaYBCx) — ACTIVE — daily morning brief workflow, confirmed active 2026-04-20
-- **[PA] Outreach Agent** (Mib6RUtJ2IOaUZ4s) - 51 nodes - rebuilt 2026-04-21, active; patched 2026-05-05: `Email Sequence Agent` prompt rewritten for human-sounding short emails with coherent pain-angle sequencing (Email 1 missed follow-up, Email 2 manual intake or booking back-and-forth, Email 3 client details falling through cracks + low-pressure call CTA). `Parse Email Sequence` now fails before send if AI output is blank/invalid, cleans dash/hyphen characters and excess questions, and keeps one-question copy. Reply detection now writes `reply_type` (`interested`, `not_now`, `wrong_person`, `unsubscribe`, `negative`). Calendly button remains in Email 2/3 HTML; no HTML wrapper removal. AI model remains OpenRouter `~moonshotai/kimi-latest`.
+- **[PA] Outreach Agent** (Mib6RUtJ2IOaUZ4s) - 52 nodes - rebuilt 2026-04-21, active; patched 2026-05-07: reply detection now uses `Gmail account 2` via Gmail API search + normalized message parsing instead of the IMAP trigger, preventing IMAP trigger failures from deactivating Outreach. Patched 2026-05-05: `Email Sequence Agent` prompt rewritten for human-sounding short emails with coherent pain-angle sequencing (Email 1 missed follow-up, Email 2 manual intake or booking back-and-forth, Email 3 client details falling through cracks + low-pressure call CTA). `Parse Email Sequence` now fails before send if AI output is blank/invalid, cleans dash/hyphen characters and excess questions, and keeps one-question copy. Reply detection writes `reply_type` (`interested`, `not_now`, `wrong_person`, `unsubscribe`, `negative`). Calendly button remains in Email 2/3 HTML; no HTML wrapper removal. AI model remains OpenRouter `~moonshotai/kimi-latest`.
 - **[PA] Status Update Agent** (94DpGwRPWGRPqCVU) — 20 nodes, active; branded weekly client status emails working; ClickUp sync/comment nodes added. Patched 2026-04-30: ClickUp task-complete/comment HTTP nodes now use ClickUp auth, valid `$json` expressions, and upstream data propagation for project_status + clickup_task IDs. Controlled live-client smoke PASS execution 2878. AI model updated 2026-04-30 to OpenRouter `qwen/qwen3.6-flash`.
 - **[PA] Referral Trigger Agent** (ka6GesSfWVo2FZtU) — 16 nodes, active; uses pa-smtp directly (referral email to client, Day 7 draft/notification to Kai at kai@phoenixautomation.ai). AI model updated 2026-04-30 to OpenRouter `~moonshotai/kimi-latest`.
 - **[PA] ClickUp Sync** (uiTwYIUk6nIFwLtX) — 18 nodes, active; syncs Airtable `project_status` to ClickUp task statuses every 2 hours. Patched 2026-04-27: Split in Batches loop branches corrected and task-update splitting fixed. Latest execution 2584 PASS/logged.
@@ -105,7 +105,7 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - **[PA] Typeform Lead Qualification** (kXxN7O77ongTMwKG) — 14 nodes, active; Typeform submission → answer extraction → dedup → Prospects write → OpenRouter `qwen/qwen3.6-flash` score → Kai notification for Grade A/B leads at kai@phoenixautomation.ai. Parser patched for OpenRouter `choices[0].message.content`; latest safe smoke PASS execution 2620.
 - **[PA] Credential Follow-Up** (uTnQAq5VlmsHYih4) — 11 nodes, active; daily 10:00 + manual → fetches onboarding.in_progress clients stalled >48h → alerts Kai at kai@phoenixautomation.ai → updates overdue_flagged_at → logs to automation_logs. Loop branch wiring patched 2026-04-27; latest execution 2416 PASS/no stalled clients.
 - **[PA] Credential Detector** (hbtSbm2pzrHX1QTn) - 10 nodes, active; every 2h + manual -> fetches `onboarding.in_progress` clients only when both `n8n_api_key` and `n8n_workspace_id` are populated, then sets `project_status=build.ready`, alerts Kai, and logs to automation_logs. Patched 2026-05-06 so URL + API key are both required before build readiness.
-- **[PA] Website Chatbot** (EPMCxdqKOuwc6hzB) — 15 nodes, built 2026-04-03, fully operational 2026-04-10 — webhook POST /website-chatbot → stateless 3-question chatbot → OpenRouter `qwen/qwen3.6-flash` scores lead (HTTP Request node) → hot: writes Airtable Prospect + returns Calendly link; cold: returns nurture message; borderline: asks clarifying question. Live on phoenixautomation.ai with auto-popup (7s teaser, 13s auto-open). End-to-end verified: hot lead record recRypnI7vsMlisJR created in Airtable Prospects.
+- **[PA] Website Chatbot** (EPMCxdqKOuwc6hzB) — 16 nodes, built 2026-04-03, fully operational 2026-04-10; patched 2026-05-07 for the new inbound ICP balance, specific automation-intent question, borderline lead capture, and unified A/B/C/D lead grading. It prefers wellness coaching type businesses, does not automatically disqualify accounting companies or other SMBs, and routes hot any lead with roughly 50-100 people plus intent to automate onboarding, payment processing, workflows, intake, scheduling, follow-up, reporting, or similar repeatable operations. Webhook POST /website-chatbot → stateless 3-question chatbot → OpenRouter `qwen/qwen3.6-flash` scores lead (HTTP Request node) → hot: writes Airtable Prospect with `lead_score_grade=A` + returns Calendly link; borderline: writes Airtable Prospect with `lead_score_grade=B` + returns Calendly link; cold: returns nurture message. Live on phoenixautomation.ai with auto-popup (7s teaser, 13s auto-open). End-to-end verified: hot lead record recRypnI7vsMlisJR created in Airtable Prospects.
 - **3 new Airtable Prospects fields added** — `biggest_operational_pain` (long text), `lead_score_grade` (text), `lead_source` (text) — 2026-04-10; field names aligned to chatbot n8n node output
 - **[PA] Scoping Agent** (E24KwVMam1e8bbjT) - 17 nodes, active; reads/writes **Prospects table**, uses OpenRouter `qwen/qwen3.6-max-preview`, writes Airtable-safe JSON, maps service_tier to valid Prospects values, normalizes tools_required text, sets `project_status=scope_review`, and has corrected loop branch wiring. Patched 2026-05-01: added `When Executed by Scoping Notifier` Execute Sub-workflow Trigger so Scoping Notifier no longer calls `/scope-call` by HTTP. Patched 2026-05-06: `Prepare Client Data` derives `client_slug` from company/prospect name when missing, `Set Status to Scoping` writes the slug and sets `outreach_status=replied`, and `Write Scope to Airtable` persists the slug with generated scope fields. Public/manual Scope Call webhook and Scope Call Form remain available.
 - **[PA] Scope Approval** (UB6ZdrnYpJlYfxD4) - 9 nodes, active; reads/writes Prospects table, locks approved scope, saves `proposal_draft` to Airtable as source of truth, creates a ClickUp Lead Management review task in parallel, creates a real Gmail draft addressed to the prospect via `Gmail account 2`, and emails Kai at kai@phoenixautomation.ai. Patched 2026-05-06: proposal generation now produces a cleaner client-ready email-style draft, uses canonical `kai@phoenixautomation.ai`, forbids exact invented pricing, requires owner-set price placeholder by tier range, discloses client-owned software/API costs separately, and sends Kai a professional "proposal draft created in Gmail" notification instead of rendering the raw proposal body in email.
@@ -286,9 +286,9 @@ claude
 | `pa-apollo-io` | HTTP Header Auth | `x-api-key` | ✅ Active |
 | `pa-anthropic` | HTTP Header Auth | `x-api-key` | ✅ Active — retained for post-launch Claude upgrade path |
 | `OpenRouter account` | OpenRouter API | n8n credential ID `hz6Vtt70sQ6Td1GQ` | ✅ Active — live AI credential for workflow-specific Chinese models |
-| `Gmail account 2` | Gmail OAuth2 API | n8n credential ID `bVC6TywRDB63Nrdt` | Active - connected 2026-05-06; used by Scope Approval to create owner-review Gmail proposal drafts |
+| `Gmail account 2` | Gmail OAuth2 API | n8n credential ID `bVC6TywRDB63Nrdt` | Active - connected 2026-05-06; used by Scope Approval to create owner-review Gmail proposal drafts and Outreach reply detection |
 | `pa-instantly` | HTTP Header Auth | `Authorization: Bearer` | ✅ Active — ID: xoSojCyLffw4nNe7 |
-| `pa-imap` (IMAP account) | IMAP | imap.gmail.com:993 SSL, kai@phoenixautomation.ai | ✅ Active — ID: 8MxHTFkPLgLLUO1U — created 2026-04-22 |
+| `pa-imap` (IMAP account) | IMAP | imap.gmail.com:993 SSL, kai@phoenixautomation.ai | Legacy - no longer used by Outreach reply detection as of 2026-05-07; retained only for rollback |
 | `pa-tavily` | Hardcoded in Lead Gen Code node | — | ✅ Active — key: `tvly-dev-ytdoA-...` (stored in Tavily Search node jsCode) |
 
 ## Email Addresses
@@ -517,7 +517,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | email_3_sent_at | dateTime | Outreach Agent Branch 3 — field ID: fldNGPYLTiHNDgkCg |
 | clickup_outreach_task_id | singleLineText | Outreach Agent — ClickUp Outreach list 901415694346 — field ID: fldaofcgNiifxjNfh |
 | biggest_operational_pain | multilineText | Website Chatbot — step 3 pain description — added 2026-04-10 |
-| lead_score_grade | singleLineText | Chatbot / Typeform — A/B/C/D or hot/borderline/cold |
+| lead_score_grade | singleLineText | Chatbot / Typeform — A/B/C/D only |
 | lead_source | singleLineText | website_chatbot / typeform / outreach |
 | Precall Brief | multilineText | Written by Typeform Lead Qualification agent (Claude) — note: field has capital P and space |
 | lead_score_total | number | Typeform 0–8 score |
@@ -575,11 +575,11 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | [PA] Reporting Agent | `scj61gBYYWpQydMC` | 17 | Monthly 1st + manual | 🔴 Inactive by design — readiness patched 2026-04-27; 0 eligible retainer clients; AI model `qwen/qwen3.5-plus-20260420` |
 | [PA] Typeform Lead Qualification | `kXxN7O77ongTMwKG` | 13 | Typeform webhook (POST /typeform-intake) | 🟢 Active — OpenRouter `qwen/qwen3.6-flash` scoring; latest safe smoke PASS execution 2620 |
 | [PA] Credential Follow-Up | `uTnQAq5VlmsHYih4` | 11 | Daily 10:00 + manual | 🟢 Active — loop branch patched 2026-04-27; latest execution 2416 success |
-| [PA] Outreach Agent | `Mib6RUtJ2IOaUZ4s` | 51 | Daily 07:00 + manual + IMAP reply check | Active - patched 2026-05-05 for pain-angle email sequence, blank-send guard, reply_type tracking, and low-pressure Email 3 call CTA; Calendly button remains in Email 2/3 HTML |
+| [PA] Outreach Agent | `Mib6RUtJ2IOaUZ4s` | 52 | Daily 07:00 + manual + Gmail API reply check | Active - patched 2026-05-07 to replace IMAP reply trigger with Gmail API search via `Gmail account 2`; patched 2026-05-05 for pain-angle email sequence, blank-send guard, reply_type tracking, and low-pressure Email 3 call CTA; Calendly button remains in Email 2/3 HTML |
 | [PA] Scoping Notifier | `nXXsF4E1BPWIS62r` | 16 | POST /scoping-notifier-airtable + hourly fallback + GET /trigger-scoping | 🟢 Active — patched 2026-05-01 so browser/Airtable handoff calls Scoping Agent via Execute Sub-workflow instead of webhook-to-webhook |
 | [PA] Error Handler | `JByknkdAgxRmDKp3` | 4 | n8n Error Trigger | 🟢 Active — confirmed 2026-04-20 |
 | [PA] Credential Detector | `hbtSbm2pzrHX1QTn` | 10 | Every 2 hours + manual | Active - now requires both n8n_api_key and n8n_workspace_id before promoting to build.ready |
-| [PA] Website Chatbot | `EPMCxdqKOuwc6hzB` | 15 | Webhook POST /website-chatbot | 🟢 Active — live on phoenixautomation.ai since 2026-04-10; 3-question qualifier → OpenRouter `qwen/qwen3.6-flash` scoring → hot: Airtable write + Calendly; cold: nurture; borderline: clarifying Q. E2E PASS (record recRypnI7vsMlisJR) |
+| [PA] Website Chatbot | `EPMCxdqKOuwc6hzB` | 16 | Webhook POST /website-chatbot | 🟢 Active — live on phoenixautomation.ai since 2026-04-10; 3-question qualifier → OpenRouter `qwen/qwen3.6-flash` scoring → hot: Airtable Grade A + Calendly; borderline: Airtable Grade B + Calendly; cold: nurture. E2E PASS (record recRypnI7vsMlisJR) |
 | [PA] Scoping Agent | `E24KwVMam1e8bbjT` | 17 | Webhook POST /scope-call + form + poll every 2h + Execute Sub-workflow Trigger | 🟢 Active — patched 2026-05-01 to accept Scoping Notifier via native sub-workflow; public/manual webhook and form remain available; AI model `qwen/qwen3.6-max-preview` |
 | [PA] Scope Approval | `UB6ZdrnYpJlYfxD4` | 9 | GET /approve-scope?client_slug=X | Active - creates Gmail proposal draft + ClickUp review task + clean Kai notification; patched 2026-05-06; AI model `~moonshotai/kimi-latest` |
 | [PA] Workflow Builder Agent | `fy8OuUEGyyWhYzWC` | 23 | Polls Airtable hourly + manual | Inactive by design - stages in Kai n8n first; patched 2026-05-06 for strict generated JSON validation/fail-loud staging |
@@ -818,21 +818,22 @@ BRANCH 4 — Complete (email_3_sent, IS_BEFORE -7 days):
 36. Update Status — Completed (Airtable PATCH → outreach_status=completed)
     → loops back to Node 34
 
-BRANCH 5 — IMAP reply detection:
-37. Read Inbox (emailReadImap → IMAP, filter: UNSEEN + SINCE 1d — ⚠️ needs pa-imap credential)
-38. Filter Real Replies (Code — filters out: mailer-daemon, postmaster, no-reply, out-of-office keywords, auto-reply headers)
-39. Loop Replies (splitInBatches, batch=1)
-40. Lookup Prospect by Email (Airtable GET, filter: {email}="sender", pa-airtable)
-41. IF Prospect Match Found → 42. Exit Not Our Prospect / 43. Extract Reply Data (Code)
-44. Update Status — Replied (Airtable PATCH → outreach_status=replied, pa-airtable)
-45. Update ClickUp — Replied (HTTP PUT → task status "Replied", pa-clickup)
-46. Notify Kai — Reply Received (SMTP → kai@phoenixautomation.ai, pa-smtp — subject: "Reply from [prospect_name]")
-    → loops back to Node 39
+BRANCH 5 - Gmail API reply detection:
+37. Search Gmail Replies (Gmail message.getAll via `Gmail account 2`, query: unread inbox replies newer than 1 day, excluding Kai/no-reply)
+38. Normalize Gmail Replies (Code -> converts Gmail API message output into legacy reply shape)
+39. Filter Real Replies (Code -> filters out: mailer-daemon, postmaster, no-reply, out-of-office keywords, auto-replies, internal notifications)
+40. Loop Replies (splitInBatches, batch=1)
+41. Lookup Prospect by Email (Airtable GET, filter: {email}="sender", pa-airtable)
+42. IF Prospect Match Found -> 43. Exit Not Our Prospect / 44. Extract Reply Data (Code)
+45. Update Status - Replied (Airtable PATCH -> outreach_status=replied, pa-airtable)
+46. Update ClickUp - Replied (HTTP PUT -> task status "Replied", pa-clickup)
+47. Notify Kai - Reply Received (SMTP -> kai@phoenixautomation.ai, pa-smtp - subject: "Reply from [prospect_name]")
+    -> loops back to Node 40
 
 ClickUp Outreach list ID: 901415694346 (statuses: Email 1 Sent / Email 2 Sent / Email 3 Sent / Replied / Error / Completed)
 Airtable new fields: email_1_sent_at (fldAouPeSNvmkYKRY), email_2_sent_at (fldYVg7fK7zVHcMob), email_3_sent_at (fldNGPYLTiHNDgkCg), clickup_outreach_task_id (fldaofcgNiifxjNfh)
-outreach_status values used: pending → email_1_sent → email_2_sent → email_3_sent → completed / replied
-⚠️ INACTIVE — Kai must create pa-imap credential (Google Workspace IMAP, imap.gmail.com:993 SSL, kai@phoenixautomation.ai, same app password as SMTP) before activating
+outreach_status values used: pending -> email_1_sent -> email_2_sent -> email_3_sent -> completed / replied
+Reply detection uses Gmail OAuth instead of IMAP as of 2026-05-07, so IMAP trigger failures can no longer deactivate the workflow.
 ```
 
 ### [PA] Error Handler (JByknkdAgxRmDKp3) — 4 nodes
@@ -860,33 +861,36 @@ Connected as errorWorkflow for: all 11 PA workflows
     → loops back to Node 7
 ```
 
-### [PA] Website Chatbot (EPMCxdqKOuwc6hzB) — 15 nodes
+### [PA] Website Chatbot (EPMCxdqKOuwc6hzB) — 16 nodes
 ```
 Webhook URL: https://kaiashley.app.n8n.cloud/webhook/website-chatbot
-Input: POST { session_id, step (0–3), business_type, team_size, pain_description }
+Input: POST { session_id, step (0–3), business_type, team_size, pain_description, first_name?, last_name?, email?, company_name? }
 Output: JSON { message, next_step, done, route?, calendly_url? }
 
 1.  Chatbot Webhook (Webhook — POST /website-chatbot, responseMode: responseNode)
 2.  Route by Step (Switch — routes on step value 0/1/2/3)
 3.  Greeting Response (Set — step=0, returns opening question)
 4.  Question 2 Response (Set — step=1, asks team size)
-5.  Question 3 Response (Set — step=2, asks biggest pain)
+5.  Question 3 Response (Set — step=2, asks specific automation intent: onboarding, payment processing, workflows, intake, scheduling, follow-up, reporting, or other)
 6.  Send Early Step Response (Respond to Webhook — returns message + next_step for steps 0–2)
 7.  Score Lead via Claude (HTTP POST → OpenRouter `qwen/qwen3.6-flash`
-    — prompt includes all 3 answers, returns JSON { route, pain_summary, clarifying_question }
+    — prompt includes all 3 chatbot answers plus any contact fields already supplied by the website form, returns JSON { route, pain_summary, reasoning }
+    — patched 2026-05-07: preferred ICP is wellness coaching type businesses, but non-wellness website leads are not automatically disqualified; hot route captures roughly 50-100 person businesses looking to automate onboarding, payment processing, workflows, intake, scheduling, follow-up, reporting, or similar repeatable operations
     — uses $json.body?.pain_description || $json.body?.pain_point as fallback, step=3 only
     NOTE: launch model switched to OpenRouter on 2026-04-27; node name kept stable for references)
 8.  Parse Claude Score (Code — reads OpenRouter choices[0].message.content with legacy fallbacks, strips markdown fences,
-    parses JSON, extracts route/pain_summary/clarifying_question, merges with prospect context)
+    parses JSON, extracts route/pain_summary/reasoning)
 9.  IF Hot Lead (IF — route = "hot")
 10. Write Hot Prospect to Airtable (HTTP POST → Airtable Prospects tbluEsKoQ2p49ktVq,
     fields: business_type, team_size, biggest_operational_pain, lead_score_grade, lead_source=website_chatbot,
-    outreach_status=pending, pa-airtable; critical write fails loudly)
+    pa-airtable; critical write fails loudly)
 11. Hot Response Data (Set — returns Calendly URL + personalised message referencing pain_summary)
 12. IF Borderline (IF — route = "borderline")
-13. Borderline Response Data (Set — returns clarifying_question from Claude)
-14. Cold Response Data (Set — returns nurture message with kai@phoenixautomation.ai contact)
-15. Send Response (Respond to Webhook — returns final JSON with CORS headers)
+13. Write Borderline Prospect to Airtable (HTTP POST → Airtable Prospects tbluEsKoQ2p49ktVq,
+    fields match hot write but `lead_score_grade=B`; critical write fails loudly)
+14. Borderline Response Data (Set — returns Calendly URL for a free assessment)
+15. Cold Response Data (Set — returns nurture message with kai@phoenixautomation.ai contact)
+16. Send Response (Respond to Webhook — returns final JSON with CORS headers)
 
 Embed widget: docs/website-chatbot-embed.html — copy/paste before </body> tag
 Website widget features (live on phoenixautomation.ai):
@@ -1006,7 +1010,7 @@ business-agent-foundry/
 
 2. OUTREACH (daily 07:00) ✅ ACTIVE — 5-branch SMTP multi-step sequence
    pending → Email 1 (immediate) → Email 2 (after 1 day) → Email 3 (after 2 days) → Completed (after 7 days)
-   IMAP reply detection → blocks follow-ups on reply → notifies Kai → updates ClickUp Outreach list
+   Gmail API reply detection → blocks follow-ups on reply → notifies Kai → updates ClickUp Outreach list
 
 3. LEAD QUALIFICATION (inbound) ✅ BUILT (inactive — Kai activates)
    Typeform webhook → score via Claude → grade A/B = email Kai → write to Airtable Prospects
@@ -1214,7 +1218,7 @@ business-agent-foundry/
 - [x] ✅ **Haris:** Create pa-instantly credential in n8n (ID: xoSojCyLffw4nNe7) — 2026-04-01
 - [x] ✅ **Haris:** Build [PA] Outreach Agent (ID: Mib6RUtJ2IOaUZ4s, 12 nodes) — 2026-04-01
 - [x] ✅ **Haris:** Build [PA] Error Handler (ID: JByknkdAgxRmDKp3, 4 nodes) + connected to all 9 PA workflows — 2026-04-01
-- [x] ✅ **Haris:** Outreach Agent fully rebuilt — 51 nodes, SMTP multi-step sequence, ClickUp Outreach list, IMAP reply detection — 2026-04-21
+- [x] ✅ **Haris:** Outreach Agent fully rebuilt — 51 nodes, SMTP multi-step sequence, ClickUp Outreach list, Gmail API reply detection — 2026-04-21
 - [ ] **KAI:** Activate [PA] Error Handler (ID: JByknkdAgxRmDKp3) — no dependencies, safe to activate immediately
 - [ ] **KAI:** Activate [PA] Typeform Lead Qualification (ID: kXxN7O77ongTMwKG)
 - [ ] **KAI:** Activate [PA] Credential Follow-Up (ID: uTnQAq5VlmsHYih4) — daily stall alert, no dependencies
@@ -1610,7 +1614,7 @@ business-agent-foundry/
 
 ### What was completed
 - **[PA] Scoping Notifier built and activated** (nXXsF4E1BPWIS62r, 14 nodes) — when Kai marks a Prospect `project_status=call_complete`, within 5 min she receives a branded email with full prospect details + "Start Scoping Now" button; clicking the button fires the Scoping Agent automatically via GET webhook (no form, no copy-paste). `scoping_notified_at` field added to Prospects table (ID: flde95Hj9sw6YsCBo) to prevent duplicate notifications.
-- **[PA] Outreach Agent activated** — pa-imap credential created by Kai (ID: 8MxHTFkPLgLLUO1U); Outreach Agent now fully live including IMAP reply detection (Branch 5).
+- **[PA] Outreach Agent activated** — pa-imap credential created by Kai (ID: 8MxHTFkPLgLLUO1U); Outreach Agent now fully live including Gmail API reply detection (Branch 5).
 - **Prospects table updated** — `scoping_notified_at` field added (dateTime).
 - **`client_slug` auto-derivation added to all 3 prospect creation paths** — Lead Gen (Write New Prospect1), Website Chatbot (Write Hot Prospect to Airtable), Typeform Lead Qualification (Write to Airtable) all now compute client_slug from company_name on write.
 

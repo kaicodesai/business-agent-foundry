@@ -41,7 +41,7 @@
         { "name": "Typeform Lead Qualification", "id": "kXxN7O77ongTMwKG", "description": "Scores inbound Typeform leads via Claude, emails Kai if Grade A/B" },
         { "name": "Credential Follow-Up", "id": "uTnQAq5VlmsHYih4", "description": "Daily check for stalled onboarding clients — alerts Kai if credentials not submitted >48h" },
         { "name": "Credential Detector", "id": "hbtSbm2pzrHX1QTn", "description": "Every 2h — detects when n8n_api_key is populated and auto-sets project_status to build.ready" },
-        { "name": "Website Chatbot", "id": "EPMCxdqKOuwc6hzB", "description": "Stateless 3-question lead scoring chatbot on phoenixautomation.ai — hot leads booked to Calendly" },
+        { "name": "Website Chatbot", "id": "EPMCxdqKOuwc6hzB", "description": "Stateless 3-question lead scoring chatbot on phoenixautomation.ai — hot and borderline leads captured before Calendly" },
         { "name": "Scoping Agent", "id": "E24KwVMam1e8bbjT", "description": "Polls call_complete clients → Claude generates scope → emails Kai with Approve button" },
         { "name": "Scope Approval", "id": "UB6ZdrnYpJlYfxD4", "description": "GET /approve-scope — locks scope, generates proposal draft, emails Kai" },
         { "name": "Workflow Builder Agent", "id": "fy8OuUEGyyWhYzWC", "description": "Polls build.ready clients → generates n8n workflow JSON → deploys to client n8n → sets build_review" }
