@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 5.27 - Last updated: 2026-05-07 - Updated by: Haris + Codex
+> **Version:** 5.29 - Last updated: 2026-05-08 - Updated by: Haris + Codex
 
 ---
 
@@ -95,7 +95,7 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - Airtable base structured — Clients + Prospects + automation_logs tables
 - All core n8n credentials added (pa-airtable, pa-n8n-api, pa-clickup, pa-smtp, pa-apollo-io, pa-anthropic, OpenRouter account)
 - **[PA] Onboarding Automation** (7RsRJIqBHFpWZoWM) - 58 nodes - active; prospect-to-client payment flow. Latest controlled E2E execution 3436 for Muneeb/Flex Ecomm succeeded: created Client `recgtjF4x2kNLQUUP`, ClickUp folder `90149176056`, four lists, 21 task IDs, sent Kai summary email, sent client welcome email, and marked Prospect `won`/`completed`. Patched 2026-05-06: `n8n_workspace_id` is no longer filled with a placeholder label during onboarding; it must store the real client n8n instance URL once received.
-- **[PA] Lead Generation** (YO3f5CL9bYbLTBgw) - 21 nodes, Apollo.io paid plan - patched 2026-05-07 so Apollo fetch failures route through `Handle Apollo Error1` instead of leaving that recovery node orphaned. Patched 2026-05-05 for the 30-day US health/wellness 5-20 ICP with expanded single-word keyword rotation (`wellness`, `fitness`, `coach`, `clinic`, `therapy`, `chiropractic`, `nutrition`, `medspa`, `yoga`, `pilates`, `spa`, `massage`, `aesthetics`, `counseling`, `naturopath`, `physio`, `wellbeing`). Reveal credits are protected by pre-reveal Airtable checks against `apollo_person_id`, LinkedIn URL, and email. Apollo bulk reveal uses stored `pa-apollo-io`; run notes log page/reveal/pre-seen counts.
+- **[PA] Lead Generation** (YO3f5CL9bYbLTBgw) - 21 nodes, Apollo.io paid plan - patched 2026-05-08 so Apollo no longer treats generic `coach` as a health/wellness match; keyword rotation now uses wellness-specific coaching phrases and post-search filtering requires a real wellness signal before reveal. Same-day follow-up patch preserves the vetted pre-reveal company/industry/team-size when Apollo bulk reveal returns a different organization, preventing mismatches like a wellness email being written under a hospital/current-employer company. Patched 2026-05-07 so Apollo fetch failures route through `Handle Apollo Error1` instead of leaving that recovery node orphaned. Patched 2026-05-05 for the 30-day US health/wellness 5-20 ICP. Reveal credits are protected by pre-reveal Airtable checks against `apollo_person_id`, LinkedIn URL, and email. Apollo bulk reveal uses stored `pa-apollo-io`; run notes log page/reveal/pre-seen counts.
 - **[PA] Reliability Patch 2026-05-07** - conservative audit fixes applied only where low-risk: Error Handler Airtable logging now uses `JSON.stringify`, Morning Brief + QA Agent now point to the shared Error Handler, ClickUp Sync notification emails include the generated HTML body and keep Airtable overdue updates moving if owner email send fails, and Status Update Agent schedule trigger is on typeVersion 1.2. Builder, Onboarding, and Reporting internals were intentionally left unchanged.
 - **[PA] Morning Brief Delivery** (EKKXeBCEiKXaYBCx) — ACTIVE — daily morning brief workflow, confirmed active 2026-04-20
 - **[PA] Outreach Agent** (Mib6RUtJ2IOaUZ4s) - 52 nodes - rebuilt 2026-04-21, active; patched 2026-05-07: reply detection now uses `Gmail account 2` via Gmail API search + normalized message parsing instead of the IMAP trigger, preventing IMAP trigger failures from deactivating Outreach. Patched 2026-05-05: `Email Sequence Agent` prompt rewritten for human-sounding short emails with coherent pain-angle sequencing (Email 1 missed follow-up, Email 2 manual intake or booking back-and-forth, Email 3 client details falling through cracks + low-pressure call CTA). `Parse Email Sequence` now fails before send if AI output is blank/invalid, cleans dash/hyphen characters and excess questions, and keeps one-question copy. Reply detection writes `reply_type` (`interested`, `not_now`, `wrong_person`, `unsubscribe`, `negative`). Calendly button remains in Email 2/3 HTML; no HTML wrapper removal. AI model remains OpenRouter `~moonshotai/kimi-latest`.
@@ -135,8 +135,7 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 - All workflow IDs updated to cloud IDs; broken connections and hardcoded PAT fixed post-import
 
 ## In Progress ⏳
-- Default GitHub branch needs switching from `claude/setup-blueprint-agent-YnHBF` to `main` (Kai → Settings → Branches)
-- Airtable PAT `patIwbtd9ndSoj2fJ...` was in local git history (test_outreach.js, now deleted) — rotate this token in Airtable account settings
+- Stripe webhook integration — payment confirmation currently manual
 
 ## Live Audit Snapshot — 2026-04-27
 - Full n8n/Airtable/ClickUp API audit completed at `2026-04-27T16:08:47Z`; all 17 `[PA]` workflows are present and all structural audit warnings are resolved.
@@ -569,7 +568,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | Workflow | ID | Nodes | Trigger | Status |
 |---------|-----|-------|---------|--------|
 | [PA] Onboarding Automation | `7RsRJIqBHFpWZoWM` | 58 | POST /payment-confirmed webhook | Active - latest E2E PASS execution 3436 for Flex Ecomm; Client + ClickUp + emails complete; patched so real n8n URL is required later |
-| [PA] Lead Generation | `YO3f5CL9bYbLTBgw` | 21 | Daily 06:45 + manual | Active - patched 2026-05-05 for expanded health/wellness single-word rotation, Apollo ID pre-reveal dedup/backfill, and duplicate reveal-credit protection |
+| [PA] Lead Generation | `YO3f5CL9bYbLTBgw` | 21 | Daily 06:45 + manual | Active - patched 2026-05-08 for wellness-specific Apollo search, required wellness signal before reveal, Apollo ID pre-reveal dedup/backfill, duplicate reveal-credit protection, and reveal-org mismatch protection |
 | [PA] Morning Brief Delivery | `EKKXeBCEiKXaYBCx` | 4 | Daily (morning) | 🟢 Active — confirmed 2026-04-24 |
 | [PA] Status Update Agent | `94DpGwRPWGRPqCVU` | 20 | Monday 09:00 + manual | 🟢 Active — latest execution 2540 success; AI model `qwen/qwen3.6-flash` |
 | [PA] Referral Trigger Agent | `ka6GesSfWVo2FZtU` | 16 | Daily 08:00 + manual | 🟢 Active — notification routing patched 2026-04-24; AI model `~moonshotai/kimi-latest` |
@@ -2394,6 +2393,10 @@ Email account `kai@phoenixautomation.ai` is connected (warmup_status: 0 = warmin
 ---
 
 # Change Log
+
+- **[2026-05-08]** - Apollo Lead Generation health/wellness filter tightened. Root cause for unrelated records was generic `coach` in both the Apollo keyword rotation and post-search ICP terms, which matched Retail Coach, Travel Coach, Basketball Coach, plumbing/sales coaches, and other non-wellness businesses. Removed generic `coach` from keyword rotation, added wellness-specific coaching phrases, and required a `wellness_match` before candidates can enter the reveal pool.
+
+- **[2026-05-08]** - Apollo Lead Generation reveal normalization hardened. After execution 3650, one prospect showed the right fitness email but the wrong organization because Apollo bulk reveal returned a different/current employer organization than the vetted pre-reveal candidate. `Normalize Revealed Prospects` now matches revealed people back to selected candidates by Apollo person ID and only accepts the revealed organization when it is the same company; otherwise it preserves the vetted company, industry, and team size while storing debug fields for inspection.
 
 - **[2026-05-07]** - Typeform lead scoring aligned with Website Chatbot. `[PA] Typeform Lead Qualification` now uses the same inbound qualification posture: wellness coaching type businesses are preferred, accounting/professional services/other SMBs are not automatically disqualified, Grade A favors roughly 50-100 person teams with clear onboarding/payment/workflow/intake/scheduling/follow-up/reporting/client-data automation intent, and Grade B is used for plausible borderline review. Parse Score now normalizes AI grades to A/B/C/D.
 
