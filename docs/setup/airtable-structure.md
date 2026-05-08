@@ -1,8 +1,8 @@
 # Airtable Structure — Phoenix Automation
-**Version:** 1.1
-**Last updated:** 2026-03-22
+**Version:** 1.2
+**Last updated:** 2026-05-08
 **Base ID:** `appMLHig3CN7WW0iW`
-**Status:** Fully implemented — all fields added as of 2026-03-22
+**Status:** Prospects + Automation Logs sections refreshed from live Airtable on 2026-05-08. Clients section last refreshed 2026-03-22.
 
 > This document is the canonical definition of the Airtable schema for Phoenix Automation.
 > Every field is defined with its type, which agent/workflow writes it, which reads it, and whether it is required.
@@ -135,51 +135,74 @@
 
 ## Table 2 — Prospects (`tbluEsKoQ2p49ktVq`)
 
+> Refreshed from live Airtable on 2026-05-08 by direct field probe. All fields below are confirmed to exist on the table.
+
+### Identity & sourcing (lead-generation-agent)
+
 | Field Name | Type | Written By | Read By | Required | Notes |
 |-----------|------|-----------|---------|----------|-------|
 | `prospect_name` | singleLineText | lead-generation-agent | outreach-agent | ✅ Required | Primary field. Full name of the contact |
 | `company_name` | singleLineText | lead-generation-agent | outreach-agent | ✅ Required | Company the prospect works at |
+| `client_slug` | singleLineText | lead-generation-agent (slugified `company_name`) | outreach-agent, scoping flow | Optional | Lowercased, hyphenated company slug. Bridges Prospects → Clients on conversion |
+| `apollo_person_id` | singleLineText | lead-generation-agent | lead-generation-agent (pre-reveal dedup), Backfill Apollo Person ID node | Optional | Apollo person ID. Used to dedup against already-revealed contacts before spending another reveal credit |
 | `industry` | singleLineText | lead-generation-agent | outreach-agent | ✅ Required | Industry vertical from Apollo |
 | `job_title` | singleLineText | lead-generation-agent | outreach-agent | ✅ Required | e.g. `Founder`, `Operations Manager` |
 | `team_size` | number | lead-generation-agent | outreach-agent, lead-qualification-agent | ✅ Required | Employee count (integer) |
 | `email` | email | lead-generation-agent | outreach-agent | ✅ Required | Contact email for outreach sequencing |
-| `linkedin_url` | url | lead-generation-agent | Owner (research) | Optional | LinkedIn profile URL from Apollo |
-| `outreach_status` | singleSelect | lead-generation-agent (sets `pending`); outreach-agent (sets `in_sequence`) | outreach-agent (filters `pending`) | ✅ Required | Values: `pending`, `in_sequence`, `replied`, `closed`, `error` |
-| `source` | singleLineText | lead-generation-agent | Owner (attribution) | Optional | e.g. `apollo.io` |
+| `linkedin_url` | url | lead-generation-agent | lead-generation-agent (pre-reveal dedup), Owner (research) | Optional | LinkedIn profile URL from Apollo |
+| `source` | singleLineText | lead-generation-agent | Owner (attribution) | Optional | e.g. `apollo` |
 | `sourced_at` | dateTime | lead-generation-agent | Owner (tracking) | Optional | ISO 8601 timestamp |
-| `outreach_started_at` | dateTime | outreach-agent | Owner (tracking) | Optional | ⚠️ PROPOSED — add before building outreach-agent. ISO 8601 — when first email queued |
-| `instantly_campaign_id` | singleLineText | outreach-agent | Owner (Instantly.ai lookup) | Optional | ⚠️ PROPOSED — add before building outreach-agent. Campaign ID from Instantly.ai |
-| `lead_score_total` | number | lead-qualification-agent | Owner | Optional | ⚠️ PROPOSED — add before building lead-qualification-agent. 0–8 Typeform score |
-| `pre_call_brief` | multilineText | lead-qualification-agent | Owner (pre-call review) | Optional | ⚠️ PROPOSED — add before building lead-qualification-agent. Claude-written brief |
+
+### Outreach lifecycle (outreach-agent)
+
+| Field Name | Type | Written By | Read By | Required | Notes |
+|-----------|------|-----------|---------|----------|-------|
+| `outreach_status` | singleSelect | lead-generation-agent (sets `pending`); outreach-agent (advances through sequence) | outreach-agent (filters `pending`, `email_1_sent`, `email_2_sent`) | ✅ Required | Includes `pending`, `email_1_sent`, `email_2_sent`, `email_3_sent`, `replied`, `closed`, `error` |
+| `email_1_text` | multilineText | outreach-agent | outreach-agent | Optional | Body of email 1 — set when generated, read before sending |
+| `email_1_sent_at` | dateTime | outreach-agent | outreach-agent (cadence gate for email 2) | Optional | ISO 8601 |
+| `email_2_text` | multilineText | outreach-agent | outreach-agent | Optional | Body of email 2 (follow-up) |
+| `email_2_sent_at` | dateTime | outreach-agent | outreach-agent (cadence gate for email 3) | Optional | ISO 8601 |
+| `email_3_text` | multilineText | outreach-agent | outreach-agent | Optional | Body of email 3 (final follow-up) |
+| `email_3_sent_at` | dateTime | outreach-agent | Owner (tracking) | Optional | ISO 8601 |
+| `outreach_error` | multilineText | outreach-agent | Owner (debugging) | Optional | Last error message when send/generation fails |
+| `clickup_outreach_task_id` | singleLineText | outreach-agent | outreach-agent, Owner (cross-reference) | Optional | ClickUp task created for the outreach |
+| `project_status` | singleSelect | scoping/onboarding flow | scoping flow | Optional | Mirrors Clients.project_status — set when prospect converts (e.g. `proposal_sent`, `live`). Verify intent — possibly redundant with Clients table |
+
+### Fields NOT present (proposed but never added)
+
+These four fields were proposed in earlier doc revisions but were verified absent from the live table on 2026-05-08:
+
+| Field | Status | Notes |
+|-------|--------|-------|
+| `outreach_started_at` | ❌ Does not exist | Not added. Outreach uses `email_1_sent_at` as the de facto start timestamp |
+| `instantly_campaign_id` | ❌ Does not exist | Not added. Outreach now sends via SMTP rather than Instantly.ai |
+| `lead_score_total` | ❌ Does not exist | Not added. Lead scoring writes to the Clients table only (see Clients.`lead_score_total`) |
+| `pre_call_brief` | ❌ Does not exist | Not added. Lead qualification writes brief to Clients.`pre_call_brief` |
 
 ### Prospects Table — Implementation Summary
 
-**All 10 existing fields confirmed correct.**
-
-**4 proposed fields to add before building outreach and lead qual agents:**
-| Field | Type | Add Before |
-|-------|------|-----------|
-| `outreach_started_at` | dateTime | Building outreach-agent |
-| `instantly_campaign_id` | singleLineText | Building outreach-agent |
-| `lead_score_total` | number | Building lead-qualification-agent |
-| `pre_call_brief` | multilineText | Building lead-qualification-agent |
+**21 fields confirmed live.** The table now spans the full prospect lifecycle (sourcing → outreach sequencing → conversion handoff). The four "proposed" fields from v1.1 have been retired — the agents that would have used them now write to the Clients table or use existing fields.
 
 ---
 
 ## Table 3 — Automation Logs (`tblL7tDAh1KTLtwpt`)
 
+> Refreshed from live Airtable on 2026-05-08. Now serves as a universal run log shared by lead-generation-agent and the Typeform Lead Qualification workflow.
+
 | Field Name | Type | Written By | Read By | Required | Notes |
 |-----------|------|-----------|---------|----------|-------|
-| `workflow` | singleLineText | lead-generation-agent | Owner (monitoring) | ✅ Required | e.g. `[PA] Lead Generation` |
-| `run_at` | dateTime | lead-generation-agent | Owner (monitoring) | ✅ Required | ISO 8601 |
-| `prospects_found` | number | lead-generation-agent | Owner (monitoring) | ✅ Required | Total returned from Apollo |
-| `prospects_added` | number | lead-generation-agent | Owner (monitoring) | ✅ Required | Net new written to Prospects table |
-| `prospects_skipped` | number | lead-generation-agent | Owner (monitoring) | ✅ Required | Duplicates filtered by dedup check |
-| `status` | singleLineText | lead-generation-agent | Owner (monitoring) | ✅ Required | `success` or `error` |
+| `workflow` | singleLineText | lead-generation-agent, lead-qualification-agent | Owner (monitoring) | ✅ Required | e.g. `[PA] Lead Generation`, `[PA] Typeform Lead Qualification` |
+| `run_at` | dateTime | lead-generation-agent, lead-qualification-agent | Owner (monitoring) | ✅ Required | ISO 8601 |
+| `timestamp` | dateTime | lead-qualification-agent | Owner (monitoring) | Optional | Mirror of `run_at` written by Typeform flow. Lead-gen writes `run_at` only |
+| `status` | singleLineText | lead-generation-agent (`completed` or `error: <msg>`); lead-qualification-agent (`completed`) | Owner (monitoring) | ✅ Required | Free text. Lead-gen success path writes `completed`; error paths write `error: ...` |
+| `prospects_found` | number | lead-generation-agent | Owner (monitoring) | Optional | Total returned from Apollo |
+| `prospects_added` | number | lead-generation-agent, lead-qualification-agent | Owner (monitoring) | Optional | Net new written to Prospects/Clients |
+| `prospects_skipped` | number | lead-generation-agent | Owner (monitoring) | Optional | Duplicates / unrevealed / non-wellness skipped |
+| `notes` | multilineText | lead-generation-agent | Owner (monitoring) | Optional | Pipe-delimited run context: ICP sprint, vertical, Apollo page, candidate pool count, reveal count, pre-seen count, skip reasons |
+| `event` | singleLineText | lead-qualification-agent | Owner (monitoring) | Optional | e.g. `typeform_lead_scored` — lets the Typeform flow tag what kind of run it logged |
+| `client` | singleLineText | lead-qualification-agent | Owner (monitoring) | Optional | Company/lead name for Typeform-sourced events |
 
-**All 6 existing fields confirmed correct. No changes needed.**
-
-**Decision for Kai:** Consider whether other workflows should also log to this table (e.g. outreach-agent logs emails sent per run, reporting-agent logs reports sent per run). Recommended: yes — extend this table to be a universal run log. Add `emails_queued` and `reports_sent` fields when those agents are built.
+**10 fields confirmed live.** The original 6-field design has been extended in-place by the Typeform lead-qualification flow (which added `client`, `event`, `timestamp`) and by the lead-generation reveal architecture (which added `notes`).
 
 ---
 
@@ -190,10 +213,10 @@
 | Existing Clients fields (confirmed correct) | 17 | ✅ No changes |
 | Missing Clients fields (add now) | 5 | ⚠️ Add before next agent build |
 | Proposed Clients fields (add before reporting/referral agents) | 10 | 📋 Kai to confirm |
-| Existing Prospects fields (confirmed correct) | 10 | ✅ No changes |
-| Proposed Prospects fields (add before outreach/lead qual agents) | 4 | 📋 Kai to confirm |
-| Existing Automation Logs fields (confirmed correct) | 6 | ✅ No changes |
-| **Total fields when complete** | **52** | |
+| Live Prospects fields (verified 2026-05-08) | 21 | ✅ No changes |
+| Retired Prospects "proposed" fields (never added) | 4 | ❌ Removed from spec |
+| Live Automation Logs fields (verified 2026-05-08) | 10 | ✅ No changes |
+| **Total fields when complete** | **63** | |
 
 ---
 
@@ -203,9 +226,9 @@
 |---|---------|---------------|
 | 1 | Add 5 missing Clients fields now? | **Yes — add now.** All required by agents already defined |
 | 2 | Add 10 proposed reporting/referral Clients fields? | **Yes — add before building reporting-agent** |
-| 3 | Add 4 proposed Prospects fields? | **Yes — add before building outreach-agent** |
-| 4 | Should `lead_score_total` and `pre_call_brief` live on Prospects or Clients? | **Recommendation: Prospects only.** They are lead-stage data. `lead_score_grade` (already on Clients) is sufficient for delivery tracking |
-| 5 | Extend Automation Logs table to cover outreach + reporting runs? | **Yes — recommended** but not urgent |
+| 3 | Add 4 proposed Prospects fields? | **Resolved 2026-05-08:** retired. Outreach uses `email_1_sent_at` instead of `outreach_started_at`; Instantly.ai was dropped for SMTP; lead scoring writes to Clients |
+| 4 | Should `lead_score_total` and `pre_call_brief` live on Prospects or Clients? | **Resolved:** Clients only — both fields are present on the Clients table |
+| 5 | Extend Automation Logs table to cover outreach + reporting runs? | **In progress:** Typeform Lead Qualification already logs here (added `client`, `event`, `timestamp`, `notes`). Outreach + reporting still TODO |
 | 6 | New tables needed? | **No** — current 3 tables are sufficient for all 9 agents |
 
 ---

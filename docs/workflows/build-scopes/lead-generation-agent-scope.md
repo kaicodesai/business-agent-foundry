@@ -1,231 +1,329 @@
 # Workflow Build Scope — [PA] Lead Generation
-Version: 1.1
-Last updated: 2026-05-04
+Version: 2.0
+Last updated: 2026-05-08
 For: workflow-builder-agent
+Source of truth: live n8n workflow `YO3f5CL9bYbLTBgw` (`[PA] Lead Generation`) as of 2026-05-08
 
 ---
 
 ## Overview
 
-Build an n8n workflow that runs daily at 06:45, queries Apollo.io for up to
-100 raw ICP-matched prospects, checks Airtable before spending reveal credits,
-reveals up to 10 unseen candidates, deduplicates revealed emails against
-Airtable, writes net-new contacts with `outreach_status = pending`, and logs a
-run summary. This workflow feeds outreach-agent, which fires at 07:00.
+A daily Apollo.io sourcing pipeline with a two-stage reveal model:
 
-**Live architecture note (2026-05-04):** Apollo search and bulk reveal must be
-HTTP Request nodes using the stored `pa-apollo-io` credential. Do not place an
-Apollo API key in a Code node. Current live workflow rotates health/wellness
-keyword slices and Apollo pages, then runs:
-`Fetch ICP Prospects -> Select Reveal Candidates -> Check Existing Search Candidates -> Build Reveal Payload -> Reveal Apollo Prospects -> Normalize Revealed Prospects -> Check Prospect Exists1 -> Write New Prospect1 -> Log Run Summary1`.
+1. **Search** Apollo for up to 100 ICP-matched contacts (verified emails only).
+2. **Score and rank** results against a wellness regex (with exclude terms) into a top-50 candidate pool.
+3. **Pre-reveal dedup** the candidate pool against Airtable Prospects by `apollo_person_id`, `linkedin_url`, and `email`.
+4. **Reveal** up to 10 unseen candidates via Apollo `/people/bulk_match`.
+5. **Post-reveal dedup** revealed contacts by email.
+6. **Write** net-new prospects with `outreach_status = pending`. PATCH `apollo_person_id` onto existing records that are missing it (backfill).
+7. **Log** a run summary to `automation_logs` and rotate the keyword/page state in workflow staticData.
+
+This scope describes the live workflow. Every node here exists in production today and has been verified against the workflow JSON.
 
 ---
 
 ## Trigger
 
-- **Node type:** Schedule Trigger
-- **Frequency:** Every day
-- **Time:** 06:45 (owner local time — 15 minutes before outreach-agent)
-- **Secondary trigger:** Manual Trigger node (for owner-initiated runs)
+- **Schedule Trigger** — cron `45 6 * * *` (06:45 in the n8n instance's configured timezone — confirm before relying on owner-local time).
+- **Manual Trigger** — for owner-initiated runs. Both triggers feed the same downstream Code node.
 
 ---
 
-## Build Order
+## Data flow (live node graph)
 
-Build and test each node before proceeding to the next.
-
-### Node 1 — Fetch ICP prospects (HTTP Request — Apollo.io)
-
-**Type:** HTTP Request
-**Credential:** `pa-apollo-io`
-**Method:** POST
-**URL:** `https://api.apollo.io/api/v1/mixed_people/api_search`
-**Headers:**
-```json
-{
-  "Content-Type": "application/json",
-  "Cache-Control": "no-cache"
-}
 ```
-**Body:**
+Schedule Trigger / Manual Trigger
+        └─▶ Code in JavaScript (Init Run Context)
+                └─▶ Fetch ICP Prospects (Apollo api_search)
+                        └─▶ IF Apollo Fetch OK
+                                ├─ true ─▶ Select Reveal Candidates
+                                │           └─▶ Check Existing Search Candidates (Airtable)
+                                │                   └─▶ Prepare Search Dedup Result
+                                │                           └─▶ Build Reveal Payload
+                                │                                   └─▶ Route Reveal Candidates
+                                │                                           ├─ has reveals ─▶ Reveal Apollo Prospects
+                                │                                           │                       └─▶ IF Apollo Reveal OK
+                                │                                           │                               ├─ ok ─▶ Normalize Revealed Prospects
+                                │                                           │                               │           └─▶ Check Prospect Exists1 (Airtable)
+                                │                                           │                               │                   └─▶ Dedup and Prepare1
+                                │                                           │                               │                           └─▶ Route New vs Existing1
+                                │                                           │                               │                                   ├─ new ─▶ Write New Prospect1 ─▶ Aggregate Run Stats1
+                                │                                           │                               │                                   └─ existing ─▶ IF Backfill Apollo ID
+                                │                                           │                               │                                                       ├─ backfill ─▶ Backfill Apollo Person ID ─▶ Aggregate Run Stats1
+                                │                                           │                               │                                                       └─ skip ─────────────────────────────▶ Aggregate Run Stats1
+                                │                                           │                               └─ error ─▶ Handle Apollo Reveal Error ─▶ Log Apollo Error1
+                                │                                           └─ no reveals ─────────────────────────────────────────────────────▶ Aggregate Run Stats1
+                                │                                                                                                                       └─▶ Advance Page If Exhausted ─▶ Log Run Summary1
+                                └─ false ─▶ Handle Apollo Error1 ─▶ Log Apollo Error1
+```
+
+---
+
+## Node-by-node spec
+
+### 1. Code in JavaScript (Init Run Context) — Code node
+
+Reads `$getWorkflowStaticData('global')`, picks the next keyword from a 22-term wellness rotation list (does NOT increment the index here — that happens at the end), reads the saved page number per keyword, and emits the run context.
+
+Outputs: `{ vertical, q_keywords, term_index, page, page_key, country, icp_sprint: 'health_wellness_5_20_us', reveal_limit: 10 }`.
+
+Keyword rotation list (22 terms):
+```
+wellness, health coach, wellness coach, fitness coach, nutrition coach, fitness,
+clinic, therapy, chiropractic, nutrition, medspa, yoga, pilates, massage,
+aesthetics, counseling, naturopath, physio, wellbeing, holistic,
+functional medicine, mental health
+```
+
+### 2. Fetch ICP Prospects — HTTP Request
+
+- **Method:** POST
+- **URL:** `https://api.apollo.io/api/v1/mixed_people/api_search`
+- **Credential:** `pa-apollo-io` (HTTP Header Auth)
+- **continueOnFail:** `true`
+- **retryOnFail:** `true`, **maxTries:** 3, **waitBetweenTries:** 2000ms
+- **Body:**
 ```json
 {
+  "page": "{{ $json.page || 1 }}",
+  "per_page": 100,
   "person_titles": [
     "Founder", "Co-Founder", "Owner", "CEO", "COO", "President",
-    "Clinic Owner", "Practice Owner", "Practice Manager", "Office Manager",
-    "Operations Manager", "Client Care Manager", "Patient Care Coordinator",
-    "Studio Owner", "Wellness Director"
+    "Clinic Owner", "Practice Owner", "Studio Owner", "Wellness Director",
+    "Director of Operations", "Operations Manager", "General Manager",
+    "Office Manager", "Practice Manager", "Client Care Manager"
   ],
-  "organization_industry_tag_ids": [],
+  "include_similar_titles": true,
+  "person_seniorities": ["owner", "founder", "c_suite", "head", "director", "manager"],
   "organization_num_employees_ranges": ["5,20"],
   "organization_locations": ["United States"],
   "person_locations": ["United States"],
-  "q_keywords": "[rotating health/wellness keyword]",
-  "page": 1,
-  "per_page": 100
+  "contact_email_status": ["verified"],
+  "q_keywords": "{{ $json.q_keywords }}"
 }
 ```
-**Note to builder:** Apollo.io industry filter uses tag IDs, not plain text.
-For the 2026-05-04 to 2026-06-03 sprint, use plain-text health/wellness
-keywords instead of broad industry tags: wellness clinic, functional medicine
-clinic, medical spa, holistic health clinic, nutrition coaching, therapy
-practice, chiropractic clinic, women's health clinic, fertility wellness,
-yoga studio, and pilates studio.
 
-**Output:** Array of prospect objects under `people` key.
+### 3. IF Apollo Fetch OK — IF node
 
-### Node 2 — Check for empty results (IF node)
+Condition: `Boolean(!$json.error && Array.isArray($json.people))`.
+True → `Select Reveal Candidates`. False → `Handle Apollo Error1`.
 
-**Type:** IF
-**Condition:** `{{ $json.people.length > 0 }}`
-**True branch:** Continue to Node 3
-**False branch:** Route to Node 8 (Log empty run)
+### 4. Select Reveal Candidates — Code node
 
-### Node 3 — Split into items (Code node)
+Scores Apollo results by:
+- ICP title match (regex against title) — +3
+- Wellness match (regex against company + industry + keywords + title) — +5
+- Team size in 5–20 — +2
+- Has email — +2
+- Has company / industry / linkedin — +1 each
 
-**Type:** Code
-**Purpose:** Convert the `people` array from the Apollo response into
-individual n8n items, filtering out contacts with no email.
-```javascript
-const people = $input.first().json.people || [];
-return people
-  .filter(p => p.email && p.email.includes('@'))
-  .map(p => ({
-    json: {
-      prospect_name: `${p.first_name || ''} ${p.last_name || ''}`.trim(),
-      company_name: p.organization?.name || '',
-      industry: p.organization?.industry || '',
-      job_title: p.title || '',
-      team_size: p.organization?.num_employees || null,
-      email: p.email,
-      linkedin_url: p.linkedin_url || null,
-    }
-  }));
+Wellness regex requires either a core term (`/health/`, `/wellness/`, `/fitness/`, `/clinic/`, `/therapy/`, `/therapist/`, `/chiropractic/`, `/nutrition/`, `/dietitian/`, `/med ?spa/`, `/yoga/`, `/pilates/`, `/massage/`, `/aesthetic/`, `/counseling|counselling/`, `/naturopath/`, `/physio/`, `/wellbeing/`, `/holistic/`, `/functional medicine/`, `/mental health/`, `/fertility/`) OR a coach phrase (`/health coach/`, `/wellness coach/`, etc.), AND must NOT match exclude terms (`/retail/`, `/real estate/`, `/travel/`, `/basketball/`, `/sports/`, `/plumbing/`, `/information technology/`, `/software/`, `/professional training/`, `/mba/`, `/sales coach/`, `/business coach/`).
+
+Outputs the top-50 candidate pool plus an `OR(...)` Airtable filter formula concatenating `{apollo_person_id}=`, `{linkedin_url}=`, `{email}=` clauses for every candidate (single-quotes escaped).
+
+### 5. Check Existing Search Candidates — HTTP Request (Airtable)
+
+- **Method:** GET
+- **URL:** `https://api.airtable.com/v0/appMLHig3CN7WW0iW/tbluEsKoQ2p49ktVq`
+- **Credential:** `pa-airtable`
+- **continueOnFail:** `true`
+- **retryOnFail:** `true`, maxTries 3, waitBetweenTries 2000
+- **Query params:** `filterByFormula={{ $json.airtable_filter_formula }}`, `maxRecords=100`, `fields[]=linkedin_url`, `fields[]=email`, `fields[]=apollo_person_id`
+
+### 6. Prepare Search Dedup Result — Code node
+
+Merges the candidate seed with the Airtable response. On error, returns `records: []` and flags `pre_reveal_dedup_failed: true` with the error message in `dedup_lookup_error`. This is the graceful-degradation node — when Airtable fails the workflow continues with no dedup rather than halting.
+
+### 7. Build Reveal Payload — Code node
+
+Builds Sets of seen `apollo_person_id`, `linkedin_url`, `email` (lowercased) from the dedup result. Filters the candidate pool to unseen, slices to `reveal_limit` (10), and emits Apollo bulk_match `details: [{id}]` plus `reveal_count`, `skipped_previously_seen`, `skip` flag and `skip_reason`.
+
+### 8. Route Reveal Candidates — IF node
+
+Condition: `Number($json.reveal_count || 0) > 0`.
+True → `Reveal Apollo Prospects`. False → `Aggregate Run Stats1` (skip reveal entirely).
+
+### 9. Reveal Apollo Prospects — HTTP Request
+
+- **Method:** POST
+- **URL:** `https://api.apollo.io/api/v1/people/bulk_match`
+- **Credential:** `pa-apollo-io`
+- **continueOnFail:** `true`
+- **retryOnFail:** `true`, maxTries 3, waitBetweenTries 2000
+- **Body:** `{ "details": <from Build Reveal Payload>, "reveal_personal_emails": true, "reveal_phone_number": false }`
+
+### 10. IF Apollo Reveal OK — IF node
+
+Condition: `Boolean(!$json.error && (Array.isArray($json.matches) || Array.isArray($json.people)))`.
+True → `Normalize Revealed Prospects`. False → `Handle Apollo Reveal Error`.
+
+### 11. Normalize Revealed Prospects — Code node
+
+Maps each Apollo match into the Prospects schema. Falls back to candidate-pool data when Apollo returns a different `organization` (with name-similarity check). Filters out matches with no email. Emits `apollo_person_id`, `prospect_name`, `first_name`, `last_name`, `company_name`, `industry`, `job_title`, `team_size`, `email`, `linkedin_url`, plus run context (`vertical`, `apollo_search_page`, `icp_sprint`).
+
+If zero matches return emails, emits a single skip-item with `skip: true, skip_reason: 'no_revealed_emails'`.
+
+### 12. Check Prospect Exists1 — HTTP Request (Airtable)
+
+- **Method:** GET
+- **URL:** `https://api.airtable.com/v0/appMLHig3CN7WW0iW/tbluEsKoQ2p49ktVq`
+- **Credential:** `pa-airtable`
+- **continueOnFail:** `true`, retry 3 × 2000ms
+- **filterByFormula:** `{email}='<escaped email>'` (single quotes escaped via `.replace(/'/g, "\\'")`)
+- **maxRecords:** 1, **fields[]:** `email`
+
+### 13. Dedup and Prepare1 — Code node
+
+Pairs each Airtable dedup result with the corresponding Normalize prospect using a key-based lookup:
+1. Build `byEmail` and `byApolloId` Maps from Normalize output.
+2. For each dedup item, look up the prospect by email, then by apollo_person_id, then by `pairedItem.item` index, then by positional index as final fallback.
+3. Compute `write_to_airtable = !skip && hasValidEmail && hasRequiredFields && !exists` (and not affected by dedup error).
+4. Compute `backfill_apollo_person_id = exists && new prospect has apollo_person_id && existing record does not`.
+
+Emits the prospect with these flags plus `existing_record_id`, `dedup_lookup_failed`, `skip_reason`.
+
+### 14. Route New vs Existing1 — IF node
+
+Condition: `String($json.write_to_airtable) === 'true'`.
+True → `Write New Prospect1`. False → `IF Backfill Apollo ID`.
+
+### 15. Write New Prospect1 — HTTP Request (Airtable)
+
+- **Method:** POST
+- **URL:** `https://api.airtable.com/v0/appMLHig3CN7WW0iW/tbluEsKoQ2p49ktVq`
+- **Credential:** `pa-airtable`
+- **retryOnFail:** `true`, maxTries 3, waitBetweenTries 2000
+- **Body:**
+```js
+{ records: [{ fields: {
+  apollo_person_id: $json.apollo_person_id || '',
+  prospect_name: $json.prospect_name,
+  company_name: $json.company_name,
+  client_slug: ($json.company_name || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+  industry: $json.industry,
+  job_title: $json.job_title,
+  team_size: $json.team_size || 0,
+  email: $json.email,
+  linkedin_url: $json.linkedin_url || '',
+  outreach_status: 'pending',
+  source: 'apollo',
+  sourced_at: new Date().toISOString()
+} }] }
 ```
 
-### Node 4 — Loop over prospects (Loop Over Items)
+### 16. IF Backfill Apollo ID + Backfill Apollo Person ID
 
-**Batch size:** 1
+If `backfill_apollo_person_id === 'true'`, PATCH the existing record at `https://api.airtable.com/v0/appMLHig3CN7WW0iW/tbluEsKoQ2p49ktVq/<existing_record_id>` with `{ fields: { apollo_person_id: $json.apollo_person_id } }`. Else fall through to `Aggregate Run Stats1`. The backfill node has `continueOnFail: true`.
 
-### Node 5 — Check if prospect exists in Airtable (Airtable node)
+### 17. Aggregate Run Stats1 — Code node
 
-**Type:** Airtable
-**Credential:** `pa-airtable`
-**Operation:** Search Records
-**Table:** Prospects
-**Filter by formula:** `{email} = '{{ $json.email }}'`
-**Max records:** 1
-**Fields to return:** `email`
+Reads from `Fetch ICP Prospects`, `Build Reveal Payload`, `Dedup and Prepare1`, `Write New Prospect1` to compute:
+- `prospects_found`: Apollo `people` length
+- `prospects_added`: count of successful Airtable writes
+- `prospects_skipped`: max of (found - added, prepared-and-skipped count, pre-seen + (reveals - added))
+- `notes`: `'ICP <sprint> | vertical <v> | page <p> | candidate_pool <n> | revealed <n> | pre_seen <n> [| Skipped: <reasons>]'`
+- `status`: `'completed'`
 
-### Node 6 — Route new vs existing (IF node)
+### 18. Advance Page If Exhausted — Code node
 
-**Type:** IF
-**Condition:** `{{ $input.all().length === 0 }}`
-*(True = no existing record found = new prospect)*
-**True branch:** Node 7 (Write to Airtable)
-**False branch:** Skip — continue loop (no action for existing records)
+Always increments `staticData.health_wellness_term_index` by 1 (rotates to next keyword on next run). If `reveal_count === 0 && candidate_pool_count > 0` (i.e. all candidates already seen), also increments `staticData[page_key]` so the next run pulls a fresh Apollo page for that keyword.
 
-### Node 7 — Write new prospect to Airtable (Airtable node)
+### 19. Log Run Summary1 — HTTP Request (Airtable)
 
-**Type:** Airtable
-**Credential:** `pa-airtable`
-**Operation:** Create Record
-**Table:** Prospects
-**Fields:**
-- `prospect_name`: `{{ $('Loop over prospects').item.json.prospect_name }}`
-- `company_name`: `{{ $('Loop over prospects').item.json.company_name }}`
-- `industry`: `{{ $('Loop over prospects').item.json.industry }}`
-- `job_title`: `{{ $('Loop over prospects').item.json.job_title }}`
-- `team_size`: `{{ $('Loop over prospects').item.json.team_size }}`
-- `email`: `{{ $('Loop over prospects').item.json.email }}`
-- `linkedin_url`: `{{ $('Loop over prospects').item.json.linkedin_url }}`
-- `outreach_status`: `pending`
-- `source`: `apollo`
-- `sourced_at`: `{{ $now.toISO() }}`
+- **Method:** POST
+- **URL:** `https://api.airtable.com/v0/appMLHig3CN7WW0iW/tblL7tDAh1KTLtwpt`
+- **Credential:** `pa-airtable`
+- **retryOnFail:** `true`, maxTries 3, waitBetweenTries 2000
+- **Body fields:** `workflow`, `run_at`, `status`, `prospects_found`, `prospects_added`, `prospects_skipped`, `notes`
 
-### Node 8 — Aggregate run stats (Code node)
+### 20. Error paths — Handle Apollo Error1 / Handle Apollo Reveal Error / Log Apollo Error1
 
-**Type:** Code
-**Purpose:** Calculate totals for the run summary log.
-```javascript
-const apolloCount = $('Fetch ICP prospects').first().json.people?.length || 0;
-const added = $('Write new prospect to Airtable').all().length;
-const skipped = apolloCount - added;
-return [{
-  json: {
-    workflow: '[PA] Lead Generation',
-    run_at: new Date().toISOString(),
-    prospects_found: apolloCount,
-    prospects_added: added,
-    prospects_skipped: skipped,
-  }
-}];
-```
-
-### Node 9 — Log run summary to Airtable (Airtable node)
-
-**Type:** Airtable
-**Credential:** `pa-airtable`
-**Operation:** Create Record
-**Table:** automation_logs
-**Fields:**
-- `workflow`: `{{ $json.workflow }}`
-- `run_at`: `{{ $json.run_at }}`
-- `prospects_found`: `{{ $json.prospects_found }}`
-- `prospects_added`: `{{ $json.prospects_added }}`
-- `prospects_skipped`: `{{ $json.prospects_skipped }}`
+`Handle Apollo Error1` (after `IF Apollo Fetch OK` false) and `Handle Apollo Reveal Error` (after `IF Apollo Reveal OK` false) both build an error log entry and feed `Log Apollo Error1`, which writes to `automation_logs` with `status: 'error: <message>'`. The reveal-error variant includes `notes` with the reveal stage context. The search-error variant does not write `notes`.
 
 ---
 
-## Error Handling
+## Error handling summary
 
-- Connect global error trigger to Phoenix Automation standard error-handling
-  workflow (once built)
-- Node 1 (Apollo API) failure: route to error workflow — this is a hard
-  failure, no prospects to process
-- Node 5 (Airtable dedup) failure: route to error workflow — do not write
-  records without deduplication
-- Node 7 (Airtable write) failure: non-blocking per-record — log error, skip
-  record, continue loop
-- Node 9 (log write) failure: non-blocking — log to n8n execution only
+| Node | continueOnFail | retryOnFail | Failure path |
+|------|----------------|-------------|--------------|
+| Fetch ICP Prospects | ✅ | 3 × 2000ms | IF Apollo Fetch OK → Handle Apollo Error1 → Log Apollo Error1 |
+| Check Existing Search Candidates | ✅ | 3 × 2000ms | Prepare Search Dedup Result returns empty records and flags failure; reveal proceeds without pre-reveal dedup |
+| Reveal Apollo Prospects | ✅ | 3 × 2000ms | IF Apollo Reveal OK → Handle Apollo Reveal Error → Log Apollo Error1 |
+| Check Prospect Exists1 | ✅ | 3 × 2000ms | Dedup and Prepare1 honors `dedup_lookup_failed`; record not written |
+| Write New Prospect1 | — | 3 × 2000ms | Workflow halts after retries (intentional — surfaces hard schema errors) |
+| Backfill Apollo Person ID | ✅ | 3 × 2000ms | Skipped silently on failure |
+| Log Run Summary1 / Log Apollo Error1 | — | 3 × 2000ms | n8n execution log captures any final-stage failure |
+
+A global error workflow (`errorWorkflow: JByknkdAgxRmDKp3`) catches unhandled failures.
 
 ---
 
 ## Credentials
 
-All credential references must use `pa-` prefixed named credentials from the
-Phoenix Automation internal credential store. Do not hardcode API keys.
-
 | Credential name | Type | Used by |
-|----------------|------|---------|
-| `pa-apollo-io` | HTTP Header Auth (`x-api-key`) | Apollo search + bulk reveal HTTP nodes |
-| `pa-airtable` | Airtable Token API | Nodes 5, 7, 9 |
+|-----------------|------|---------|
+| `pa-apollo-io` | HTTP Header Auth (`x-api-key`) | Fetch ICP Prospects, Reveal Apollo Prospects |
+| `pa-airtable` | Airtable Token API (used here as HTTP Header `Authorization: Bearer ...`) | All Airtable HTTP nodes (5 read/write) |
+
+All credential references must use `pa-` prefixed named credentials. Do not hardcode keys.
 
 ---
 
-## Test Data
+## Airtable schema dependencies
 
-Before running end-to-end:
-1. In Apollo.io UI, run the same ICP search manually and confirm it returns
-   results. Note one test contact's email.
-2. Confirm that test contact email does NOT exist in Airtable already.
+This workflow assumes the following fields exist on the live Prospects table (`tbluEsKoQ2p49ktVq`):
+`apollo_person_id`, `prospect_name`, `company_name`, `client_slug`, `industry`, `job_title`, `team_size`, `email`, `linkedin_url`, `outreach_status`, `source`, `sourced_at`.
 
-**Expected test output:**
-- Node 1 returns at least 1 prospect from Apollo
-- Node 5 finds no existing Airtable record for the test contact
-- Node 7 creates a new Airtable record with `outreach_status = pending`
-- Node 9 writes a run log entry with `prospects_added >= 1`
+And on `automation_logs` (`tblL7tDAh1KTLtwpt`):
+`workflow`, `run_at`, `status`, `prospects_found`, `prospects_added`, `prospects_skipped`, `notes`.
 
-After test: update the test Airtable record to `outreach_status = test-complete`
-so outreach-agent does not process it.
+All verified present on 2026-05-08. See [docs/setup/airtable-structure.md](../../setup/airtable-structure.md).
 
 ---
 
-## Expected Output (production)
+## Static data (workflow-scoped)
 
-Each daily run at 06:45 produces:
-1. Net-new Airtable prospect records with `outreach_status = pending`, sourced
-   from US health/wellness businesses with 5–20 staff
-2. All records de-duplicated against existing Airtable data
-3. Run summary log in `automation_logs` table
-4. outreach-agent (firing at 07:00) picks up new records automatically
+The workflow persists rotation state in `$getWorkflowStaticData('global')`:
+
+| Key | Type | Written by | Purpose |
+|-----|------|-----------|---------|
+| `health_wellness_term_index` | number | Advance Page If Exhausted | Index into the 22-term keyword rotation. Incremented every successful run |
+| `apollo_page_<slug>` | number | Advance Page If Exhausted | Per-keyword Apollo search page. Incremented when a vertical's current page is exhausted (reveals=0, pool>0) |
+
+Failed runs (Apollo search or reveal errors) do NOT increment these — the next run retries the same keyword and page.
+
+---
+
+## Behavioural caps
+
+- Apollo search: max 100 raw results per run (`per_page: 100`).
+- Candidate pool: top 50 by score (after wellness regex filter).
+- Reveal: max 10 per run (`reveal_limit: 10`).
+- Title pool: 16 ICP titles + Apollo's `include_similar_titles: true` expansion.
+- Email filter: `contact_email_status: ["verified"]` (Apollo pre-filters non-verified emails out of search results).
+
+---
+
+## Test procedure (pre-activation)
+
+1. In Apollo.io UI, run the same ICP search manually. Confirm at least 1 wellness contact returns.
+2. Confirm one test contact's email does NOT exist in Airtable Prospects.
+3. Trigger the workflow via Manual Trigger.
+4. Verify in this order:
+   - `Fetch ICP Prospects` returns ≥1 result (`people` array)
+   - `Select Reveal Candidates` produces a non-zero candidate pool
+   - `Check Existing Search Candidates` returns 200 (with or without records)
+   - `Build Reveal Payload` has `reveal_count > 0` (assuming unseen candidates exist)
+   - `Reveal Apollo Prospects` returns 200 with `matches` populated
+   - `Write New Prospect1` creates the Airtable record
+   - `Log Run Summary1` writes a row with `status: completed` and a non-empty `notes` field
+5. Verify `staticData.health_wellness_term_index` advanced by 1 in the workflow's static data.
+6. Set the test record's `outreach_status` to `test-complete` so outreach-agent skips it.
+
+---
+
+## Known limitations
+
+- `status` field uses `'completed'` (success) or `'error: <message>'` (failure) — not the originally documented `success` / `error` enum. Filter accordingly when querying logs.
+- Cron runs at `45 6 * * *` in the n8n instance's configured timezone, not necessarily owner-local. Confirm before relying on a specific local-time fire.
+- Pre-reveal dedup degrades gracefully on Airtable failure: reveal credits may be spent on already-seen contacts during an Airtable outage. The post-reveal email dedup still catches most duplicates.
