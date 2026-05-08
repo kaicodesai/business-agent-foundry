@@ -1,5 +1,5 @@
 # PROJECT_OVERVIEW.md
-> **Version:** 5.33 - Last updated: 2026-05-08 - Updated by: Haris + Codex
+> **Version:** 5.34 - Last updated: 2026-05-08 - Updated by: Haris + Codex
 
 ---
 
@@ -143,7 +143,7 @@ Building an AI automation agency requires hundreds of hours of manual setup. Thi
 ## Live Audit Snapshot — 2026-04-27
 - Full n8n/Airtable/ClickUp API audit completed at `2026-04-27T16:08:47Z`; all 17 `[PA]` workflows are present and all structural audit warnings are resolved.
 - Current workflow count after 2026-05-01 QA addition: 18 `[PA]` workflows. New inactive workflow: `[PA] QA Agent` (`fpLHEghef9u4yUpY`).
-- Active workflows: Onboarding, Lead Generation, Outreach, Status Update, Referral Trigger, ClickUp Sync, Typeform Lead Qualification, Credential Follow-Up, Credential Detector, Website Chatbot, Scoping Agent, Scope Approval, Scoping Notifier, Morning Brief Delivery, Error Handler.
+- Active workflows: Onboarding, Lead Generation, Outreach (currently paused — manual outreach in progress), Status Update, Referral Trigger, ClickUp Sync, Typeform Lead Qualification, Credential Follow-Up, Credential Detector, Website Chatbot, Scoping Agent, Scope Approval, Scoping Notifier, Morning Brief Delivery, Error Handler.
 - Inactive by design: Reporting Agent (`scj61gBYYWpQydMC`) until first retainer client is live; Workflow Builder Agent (`fy8OuUEGyyWhYzWC`) until a real `build.ready` client exists. Eligibility check 2026-04-27: 0 retainer clients and 0 build.ready clients.
 - Current Clients table contains one legacy/test client: Meridian Consulting Group (`rectfzSFPqjRQU4u1`), `project_status=scoping`, ClickUp folder `90148144286` (`meridian-consulting-group`), no `clickup_task_*` IDs, no `n8n_api_key`.
 - Acme Test Co (`recIn0wyE44pjUL4O`) was removed from Airtable Clients on 2026-04-27. Its stored ClickUp folder ID pointed to `brightline-property-management`, so that ClickUp folder was intentionally left untouched.
@@ -524,7 +524,6 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | lead_score_grade | singleLineText | Chatbot / Typeform — A/B/C/D only |
 | lead_source | singleLineText | website_chatbot / typeform / outreach |
 | Precall Brief | multilineText | Written by Typeform Lead Qualification agent (Claude) — note: field has capital P and space |
-| lead_score_total | number | Typeform 0–8 score |
 | **— Assessment & Scoping (written by Scoping Agent) —** | | |
 | client_slug | singleLineText | Set by Kai when triggering Scoping Agent (e.g. acme-corp) — used for Scope Approval webhook |
 | call_notes | singleLineText | Assessment call notes — Scoping Agent input |
@@ -571,7 +570,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | Workflow | ID | Nodes | Trigger | Status |
 |---------|-----|-------|---------|--------|
 | [PA] Onboarding Automation | `7RsRJIqBHFpWZoWM` | 58 | POST /payment-confirmed webhook | Active - latest E2E PASS execution 3436 for Flex Ecomm; Client + ClickUp + emails complete; patched so real n8n URL is required later |
-| [PA] Lead Generation | `YO3f5CL9bYbLTBgw` | 24 | Daily 06:45 + manual | Active - patched 2026-05-08 for wellness-specific Apollo search, required wellness signal before reveal, Apollo ID pre-reveal dedup/backfill, duplicate reveal-credit protection, reveal-org mismatch protection, and Apollo/Airtable reliability hardening |
+| [PA] Lead Generation | `YO3f5CL9bYbLTBgw` | 25 | Daily 06:45 + manual | Active - patched 2026-05-08 for wellness-specific Apollo search, required wellness signal before reveal, Apollo ID pre-reveal dedup/backfill, duplicate reveal-credit protection, reveal-org mismatch protection, Apollo/Airtable reliability hardening, and reveal-side error branch (`IF Apollo Reveal OK` + `Handle Apollo Reveal Error`) plus `Prepare Search Dedup Result` graceful degradation when pre-reveal Airtable lookup fails |
 | [PA] Morning Brief Delivery | `EKKXeBCEiKXaYBCx` | 4 | Daily (morning) | 🟢 Active — confirmed 2026-04-24 |
 | [PA] Status Update Agent | `94DpGwRPWGRPqCVU` | 20 | Monday 09:00 + manual | 🟢 Active — latest execution 2540 success; AI model `qwen/qwen3.6-flash` |
 | [PA] Referral Trigger Agent | `ka6GesSfWVo2FZtU` | 16 | Daily 08:00 + manual | 🟢 Active — notification routing patched 2026-04-24; AI model `~moonshotai/kimi-latest` |
@@ -585,7 +584,7 @@ Using `tblfvqqyYukRJQYmQYgdBXXCYhRqJ` (old/wrong ID) causes 403 Forbidden errors
 | [PA] Credential Detector | `hbtSbm2pzrHX1QTn` | 10 | Every 2 hours + manual | Active - now requires both n8n_api_key and n8n_workspace_id before promoting to build.ready |
 | [PA] Website Chatbot | `EPMCxdqKOuwc6hzB` | 16 | Webhook POST /website-chatbot | 🟢 Active — live on phoenixautomation.ai since 2026-04-10; 3-question qualifier → OpenRouter `qwen/qwen3.6-flash` scoring → hot: Airtable Grade A + Calendly; borderline: Airtable Grade B + Calendly; cold: nurture. E2E PASS (record recRypnI7vsMlisJR) |
 | [PA] Scoping Agent | `E24KwVMam1e8bbjT` | 19 | Webhook POST /scope-call + form + poll every 2h + Execute Sub-workflow Trigger | 🟢 Active — patched 2026-05-08 with `max_tokens=1200`, Airtable-valid tier prompt, primary-model guard, and `deepseek/deepseek-v4-pro` fallback; public/manual webhook and form remain available |
-| [PA] Scope Approval | `UB6ZdrnYpJlYfxD4` | 12 | GET /approve-scope?client_slug=X | Active - creates Gmail proposal draft + ClickUp review task + clean Kai notification; patched 2026-05-08 with idempotency gate to prevent duplicate proposal generation; AI model `~moonshotai/kimi-latest` |
+| [PA] Scope Approval | `UB6ZdrnYpJlYfxD4` | 18 | GET /approve-scope?client_slug=X + GET /reject-scope?client_slug=X | Active - creates Gmail proposal draft + ClickUp review task + clean Kai notification; patched 2026-05-08 with idempotency gate to prevent duplicate proposal generation, plus `/reject-scope` path that clears generated scope/proposal fields and returns prospect to `call_complete`; AI model `~moonshotai/kimi-latest` |
 | [PA] Workflow Builder Agent | `fy8OuUEGyyWhYzWC` | 23 | Polls Airtable hourly + manual | Inactive by design - stages in Kai n8n first; patched 2026-05-06 for strict generated JSON validation/fail-loud staging |
 | [PA] QA Agent | `fpLHEghef9u4yUpY` | 4 | Execute Sub-workflow Trigger | Inactive sub-workflow - patched 2026-05-06 so only QA PASS can be marked ready to patch to client |
 
@@ -656,19 +655,79 @@ FLOW: Payment → look up Prospect → create new Client record → workspace �
 58. Update Scoping Form Slugs (HTTP PUT → n8n API /workflows/E24KwVMam1e8bbjT)
 ```
 
-### [PA] Lead Generation (YO3f5CL9bYbLTBgw) — 13 nodes
+### [PA] Lead Generation (YO3f5CL9bYbLTBgw) — 25 nodes
 ```
-1. Schedule Trigger (daily 06:45)
-2. Manual Trigger
-3. Fetch ICP Prospects (HTTP → Apollo.io /mixed_people/search, credential: pa-apollo-io)
-4. Check Empty Results (IF — exits if 0 results)
-5. Split Into Items (Code — normalises Apollo response to array)
-6. Loop Over Items (splitInBatches, batch=1)
-7. Check Prospect Exists (HTTP GET → Airtable Prospects table, filter by email)
-8. Dedup and Prepare (Code — sets write_to_airtable: true/false as string)
-9. Route New vs Existing (IF — checks String($json.write_to_airtable) === "true")
-10. Write New Prospect (HTTP POST → Airtable Prospects table, credential: pa-airtable)
-11. Aggregate Run Stats + Log Run Summary (Code + HTTP POST → automation_logs)
+Triggers
+1.  Schedule Trigger1 (cron 45 6 * * *)
+2.  Manual Trigger
+
+Run-context init
+3.  Code in JavaScript (Init Run Context — rotates 22-term wellness keyword list,
+    reads page from staticData, emits q_keywords/page/icp_sprint/reveal_limit=10)
+
+Apollo search
+4.  Fetch ICP Prospects (HTTP → Apollo /mixed_people/api_search, contact_email_status=verified,
+    pa-apollo-io, continueOnFail, retry 3×2000ms)
+5.  IF Apollo Fetch OK (routes to error branch on $json.error or non-array people)
+    FALSE → 6 → 7 (search-side error branch)
+    TRUE  → 8
+
+Search-side error branch
+6.  Handle Apollo Error1 (Code — builds error log payload, status="error: ...")
+7.  Log Apollo Error1 (HTTP POST → automation_logs)
+
+Pre-reveal dedup
+8.  Select Reveal Candidates (Code — wellness-regex scoring + exclude terms,
+    top-50 candidate pool, builds OR(...) Airtable filter formula)
+9.  Check Existing Search Candidates (HTTP GET Airtable Prospects with filter,
+    continueOnFail, retry 3×2000ms)
+10. Prepare Search Dedup Result (Code — graceful degradation: returns
+    pre_reveal_dedup_failed=true with empty records on Airtable error)
+11. Build Reveal Payload (Code — filters seen by apollo_person_id/linkedin_url/email,
+    slices to reveal_limit=10)
+12. Route Reveal Candidates (IF — reveal_count > 0)
+    TRUE  → 13
+    FALSE → 21 (skip reveal entirely, go to aggregate)
+
+Apollo reveal
+13. Reveal Apollo Prospects (HTTP → Apollo /people/bulk_match, pa-apollo-io,
+    continueOnFail, retry 3×2000ms)
+14. IF Apollo Reveal OK (routes to error branch on reveal failure)
+    FALSE → 15 → 7 (reveal-side error branch shares Log Apollo Error1)
+    TRUE  → 16
+
+Reveal-side error branch
+15. Handle Apollo Reveal Error (Code — builds error log with stage/vertical/page context)
+
+Post-reveal write
+16. Normalize Revealed Prospects (Code — canonicalises fields, name-similarity
+    check against candidate-pool company name, returns skip-item if zero emails)
+17. Check Prospect Exists1 (HTTP GET Airtable, filterByFormula by email,
+    continueOnFail, retry 3×2000ms)
+18. Dedup and Prepare1 (Code — key-based pairing via byEmail/byApolloId Maps with
+    pairedItem fallback, sets write_to_airtable + backfill_apollo_person_id flags)
+19. Route New vs Existing1 (IF — write_to_airtable === "true")
+    TRUE  → 20 → 21
+    FALSE → 22 (backfill branch)
+
+Write path
+20. Write New Prospect1 (HTTP POST Airtable Prospects with apollo_person_id,
+    client_slug, prospect_name, email, outreach_status="pending", source="apollo",
+    sourced_at; retry 3×2000ms)
+
+Backfill path
+22. IF Backfill Apollo ID (only PATCHes apollo_person_id onto existing records
+    that lack it)
+    TRUE  → 23
+    FALSE → 21
+23. Backfill Apollo Person ID (HTTP PATCH Airtable, continueOnFail, retry 3×2000ms)
+
+Aggregate + log
+21. Aggregate Run Stats1 (Code — computes prospects_found/added/skipped, status="completed",
+    notes with ICP sprint/vertical/page/candidate_pool/reveal/pre_seen counts)
+24. Advance Page If Exhausted (Code — increments staticData.health_wellness_term_index;
+    if reveals=0 && pool>0, also increments staticData[apollo_page_<term>])
+25. Log Run Summary1 (HTTP POST → automation_logs, retry 3×2000ms)
 ```
 
 ### [PA] Status Update Agent (94DpGwRPWGRPqCVU) — 20 nodes
@@ -750,9 +809,9 @@ Status cases handled: onboarding.in_progress (overdue check + email), build.read
 5.  Write to Airtable (HTTP POST → Prospects table, typecast:true; critical write fails loudly)
 6.  Set New Record Data (Code — extracts record_id from write response, sets is_new:true)
 7.  Build Score Payload (Code — fan-in from 4-TRUE and 6; constructs claude_payload with scoring prompt)
-8.  Score Lead via Claude (HTTP POST → OpenRouter `qwen/qwen3.6-flash`, continueOnFail)
-9.  Parse Score (Code — extracts score_total 0-8, score_grade A/B/C/D, pre_call_brief from AI JSON)
-10. Update Airtable Score (HTTP PATCH → Prospects record, writes lead_score_total; critical write fails loudly)
+8.  Score Lead via Claude (HTTP POST → OpenRouter `qwen/qwen3.6-flash`, retry 3×default; no fallback model wired)
+9.  Parse Score (Code — extracts score_grade A/B/C/D and pre_call_brief from AI JSON; numeric score_total derived from grade if missing)
+10. Update Airtable Score (HTTP PATCH → Prospects record with `typecast:true`; writes lead_score_grade and `Precall Brief` only — no lead_score_total field exists on Prospects)
 11. IF Grade A or B (IF — ["A","B"].includes(score_grade))
     TRUE  → 12
     FALSE → 13
@@ -2408,6 +2467,8 @@ Email account `kai@phoenixautomation.ai` is connected (warmup_status: 0 = warmin
 - **[2026-05-08]** - Scoping pipeline reliability/idempotency patch applied from live workflow state. Scope Approval now has a `Prepare Approval Request` + `IF Should Create Proposal` guard so duplicate, previewed, or re-clicked `/approve-scope` links return an "already handled" browser page without regenerating proposal drafts, Gmail drafts, ClickUp tasks, or owner emails. Scoping Agent now uses `max_tokens=1200`, prompts for Airtable-valid service tiers, guards primary model output, and falls back to `deepseek/deepseek-v4-pro` before parsing. Scoping Notifier browser handoff now patches `scoping_notified_at` before responding. External HTTP/email nodes across the three workflows received retry/backoff where appropriate. Verified by live readback: all three workflows active, new nodes present, and Code nodes parse cleanly; no smoke run was triggered.
 
 - **[2026-05-08]** - Remaining scoping polish applied. Scoping Agent now writes `outreach_status=converted` for future scoped prospects via Airtable `typecast=true`, instead of overloading `replied`; Outreach reply metrics remain reserved for real email replies. Scoping AI now returns both a concise `scope_summary` and fuller `scope_of_work`; stale `project_status=scoping` records with blank `scope_summary` older than 1 hour are picked up by the polling path for recovery. Scope Approval now includes `/reject-scope?client_slug=X`, the owner review email includes a Reject Scope link, and Kai's proposal-created email reports whether the ClickUp proposal review task was confirmed. Verified by live readback: Scoping Agent and Scope Approval active, code parses cleanly, reject path present, and no smoke run was triggered.
+
+- **[2026-05-08]** - Documentation reconciliation pass against live workflow state. Lead Generation node count corrected (24 → 25 in summary table; full 25-node walk-through replaces stale 13-node single-pass description). Scope Approval node count corrected (12 → 18) and `/reject-scope` path added to its row. Removed `lead_score_total` from Prospects schema section (verified absent on the live table — exists on Clients only). Typeform Lead Qualification walk-through corrected: `Score Lead via Claude` does not have `continueOnFail`, and `Update Airtable Score` writes `lead_score_grade` + `Precall Brief` (not `lead_score_total`). Active workflows list now notes Outreach as paused while manual outreach is in progress. No live workflow changes were made.
 
 - **[2026-05-07]** - Typeform lead scoring aligned with Website Chatbot. `[PA] Typeform Lead Qualification` now uses the same inbound qualification posture: wellness coaching type businesses are preferred, accounting/professional services/other SMBs are not automatically disqualified, Grade A favors roughly 50-100 person teams with clear onboarding/payment/workflow/intake/scheduling/follow-up/reporting/client-data automation intent, and Grade B is used for plausible borderline review. Parse Score now normalizes AI grades to A/B/C/D.
 
