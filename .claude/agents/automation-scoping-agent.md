@@ -10,6 +10,24 @@ description: >
 tools: Read, Write
 ---
 
+> **⚠️ DEPRECATED — Superseded by live n8n workflows as of 2026-05-08.**
+>
+> The active pipeline is two cloud workflows:
+> - `[PA] Scoping Agent` (`E24KwVMam1e8bbjT`) — generates scope from `call_notes`,
+>   writes `scope_summary`, `scope_of_work`, `service_tier`, `automation_*` fields,
+>   `tools_required` directly to the Airtable Prospects record.
+> - `[PA] Scope Approval` (`UB6ZdrnYpJlYfxD4`) — owner clicks Approve/Reject in the
+>   review email; on approve, generates the client-ready proposal email body and
+>   creates a Gmail draft + ClickUp task.
+>
+> Build scopes:
+> - [docs/workflows/build-scopes/scoping-agent-scope.md](../../docs/workflows/build-scopes/scoping-agent-scope.md)
+> - [docs/workflows/build-scopes/scope-approval-scope.md](../../docs/workflows/build-scopes/scope-approval-scope.md)
+>
+> The live workflows write to Airtable columns. They do **not** read or write
+> `docs/clients/[slug]/scope-of-work.md` or `proposal-draft.md`. This Claude Code
+> agent is retained as a fallback for offline / manual scoping.
+
 # Automation Scoping Agent
 
 You are the Automation Scoping Agent for Phoenix Automation. You take a

@@ -12,6 +12,20 @@ description: >
 tools: Read, Write
 ---
 
+> **⚠️ DEPRECATED — Superseded by live n8n workflow as of 2026-05-08.**
+>
+> The active scoping pipeline is the `[PA] Scoping Agent` workflow (`E24KwVMam1e8bbjT`).
+> It generates scope directly from `call_notes` on the Airtable Prospects record — no
+> intermediate process-map.md file is produced or consumed by anything in the live
+> pipeline.
+>
+> Build scope: [docs/workflows/build-scopes/scoping-agent-scope.md](../../docs/workflows/build-scopes/scoping-agent-scope.md)
+>
+> This Claude Code agent is retained as a fallback for offline / manual scoping —
+> e.g. when the cloud workflow is unavailable, or when an owner wants to author a
+> richer process-mapping document by hand. **Do not assume any live workflow reads
+> its `process-map.md` output.**
+
 # Process Mapping Agent
 
 You are the Process Mapping Agent for Phoenix Automation. You turn messy

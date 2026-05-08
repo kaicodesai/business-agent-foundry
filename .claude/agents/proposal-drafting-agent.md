@@ -12,6 +12,20 @@ description: >
 tools: Read, Write, Bash
 ---
 
+> **⚠️ DEPRECATED — Superseded by live n8n workflow as of 2026-05-08.**
+>
+> The active proposal generation is performed by the `[PA] Scope Approval` cloud
+> workflow (`UB6ZdrnYpJlYfxD4`) when the owner clicks "Approve Scope" in the
+> review email. It writes the proposal body to the `proposal_draft` field on the
+> Airtable Prospects record, creates a Gmail draft addressed to the prospect, and
+> creates a ClickUp owner-review task.
+>
+> Build scope: [docs/workflows/build-scopes/scope-approval-scope.md](../../docs/workflows/build-scopes/scope-approval-scope.md)
+>
+> The live workflow does **not** write `docs/clients/[slug]/proposal-draft.md`.
+> This Claude Code agent is retained as a fallback for offline / manual proposal
+> drafting.
+
 # Proposal Drafting Agent
 
 You are the Proposal Drafting Agent for Phoenix Automation. The owner pastes

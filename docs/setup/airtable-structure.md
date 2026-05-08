@@ -168,20 +168,25 @@
 | `clickup_outreach_task_id` | singleLineText | outreach-agent | outreach-agent, Owner (cross-reference) | Optional | ClickUp task created for the outreach |
 | `project_status` | singleSelect | scoping/onboarding flow | scoping flow | Optional | Mirrors Clients.project_status — set when prospect converts (e.g. `proposal_sent`, `live`). Verify intent — possibly redundant with Clients table |
 
+### Pre-call brief — exists under a non-snake_case name
+
+| Field Name | Type | Written By | Read By | Required | Notes |
+|-----------|------|-----------|---------|----------|-------|
+| `Precall Brief` | multilineText | lead-qualification-agent | scoping-notifier (renders in email if present) | Optional | ⚠️ The actual Airtable column name is `Precall Brief` (mixed case, with space). Every reference in n8n uses `$json['Precall Brief']`. PROJECT_OVERVIEW.md and several agent files still call this field `pre_call_brief` — those are doc bugs, not table bugs. Recommended fix: rename the column to `pre_call_brief` to match the rest of the schema |
+
 ### Fields NOT present (proposed but never added)
 
-These four fields were proposed in earlier doc revisions but were verified absent from the live table on 2026-05-08:
+These three fields were proposed in earlier doc revisions but were verified absent from the live table on 2026-05-08:
 
 | Field | Status | Notes |
 |-------|--------|-------|
 | `outreach_started_at` | ❌ Does not exist | Not added. Outreach uses `email_1_sent_at` as the de facto start timestamp |
 | `instantly_campaign_id` | ❌ Does not exist | Not added. Outreach now sends via SMTP rather than Instantly.ai |
 | `lead_score_total` | ❌ Does not exist | Not added. Lead scoring writes to the Clients table only (see Clients.`lead_score_total`) |
-| `pre_call_brief` | ❌ Does not exist | Not added. Lead qualification writes brief to Clients.`pre_call_brief` |
 
 ### Prospects Table — Implementation Summary
 
-**21 fields confirmed live.** The table now spans the full prospect lifecycle (sourcing → outreach sequencing → conversion handoff). The four "proposed" fields from v1.1 have been retired — the agents that would have used them now write to the Clients table or use existing fields.
+**22 fields confirmed live** (21 snake_case + 1 mixed-case `Precall Brief`). The table spans the full prospect lifecycle (sourcing → outreach sequencing → scoping → conversion handoff). Three of the four "proposed" fields from v1.1 have been retired; `pre_call_brief` was previously thought retired but actually exists as `Precall Brief` — see note above.
 
 ---
 
@@ -213,10 +218,10 @@ These four fields were proposed in earlier doc revisions but were verified absen
 | Existing Clients fields (confirmed correct) | 17 | ✅ No changes |
 | Missing Clients fields (add now) | 5 | ⚠️ Add before next agent build |
 | Proposed Clients fields (add before reporting/referral agents) | 10 | 📋 Kai to confirm |
-| Live Prospects fields (verified 2026-05-08) | 21 | ✅ No changes |
-| Retired Prospects "proposed" fields (never added) | 4 | ❌ Removed from spec |
+| Live Prospects fields (verified 2026-05-08) | 22 | ✅ No changes |
+| Retired Prospects "proposed" fields (never added) | 3 | ❌ Removed from spec |
 | Live Automation Logs fields (verified 2026-05-08) | 10 | ✅ No changes |
-| **Total fields when complete** | **63** | |
+| **Total fields when complete** | **64** | |
 
 ---
 
